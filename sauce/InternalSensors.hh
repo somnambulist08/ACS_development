@@ -90,11 +90,6 @@ protected:
 
 
 #define accelerint(a0, a1, dt) (dt * (a1 + a0) / 2.0)  //define because faster than function calls
-/*
-long accelerint(float a0, float a1, float dt); {
-  return dt * (a1 + a0) / 2.0;  //central Reimann sum
-}*/
-
 float pressureAlt(float pressure);
 
 

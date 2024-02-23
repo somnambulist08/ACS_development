@@ -10,13 +10,11 @@
 #define SPOOF_STEPPER_HH
 
 
-#include "StepperStuff.hh"
+#include "StepperInterface.hh"
 
 #define MOTOR_STEPS 200  //steps per rev
 #define RPM 750  //speed?
 #define MICROSTEPS 8
-
-
 
 //extern const unsigned long frame_micros;
 extern const float pps;
@@ -28,7 +26,7 @@ extern const unsigned long pw_on;
 int microStepsFromFlapAngle(float angle);
 
 
-class SpoofStepper : public StepperStepper {
+class SpoofStepper : public StepperInterface {
 public:
   SpoofStepper();
   void stepForTime(unsigned long maxTime, unsigned long startingTime);
