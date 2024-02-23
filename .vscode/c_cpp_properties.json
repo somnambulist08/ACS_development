@@ -1,19 +1,46 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Arduino",
             "includePath": [
+                "src",
+                "${workspaceRoot}",
+                "${workspaceFolder}",
+                "${workspaceRoot}/**",
                 "${workspaceFolder}/**",
-                "C:\\Users\\gylva\\Documents\\Arduino\\libraries\\**"
+                "C:/Users/jonse/Onedrive - USU/Documents/Arduino/RocketCode/nova2_development/src/**",
+                "C:/Users/jonse/Onedrive - USU/Documents/Arduino/libraries/**",
+                "C:/Users/jonse/AppData/Local/Arduino15/**",
+                //"C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.8.6/variants/standard",
+                //"C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.8.6/cores/arduino",
+                "C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1",
+                "C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/variants/ARDUINO_NANO33BLE",
+                "C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/variants/ARDUINO_NANO33BLE/libs",
+                "C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino",
+                "C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/api",
+                "C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/mbed",
+                "C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/mbed/**"
             ],
+            "forcedInclude": [
+                "C:/Users/jonse/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/Arduino.h"
+            ],
+            "intelliSenseMode": "${default}",
+            "compilerPath": "C://Strawberry//c//bin//gcc.exe",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
             "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
+                "USBCON"
             ],
-            "compilerPath": "C:\\TDM-GCC-64\\bin\\gcc.exe",
-            "cppStandard": "gnu++14",
-            "intelliSenseMode": "windows-gcc-x64"
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/**",
+                    "C:/Users/jonse/AppData/Local/Arduino15/**",
+                    "C:/Users/jonse/Onedrive - USU/Documents/Arduino/libraries/**"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+
         }
     ],
     "version": 4
