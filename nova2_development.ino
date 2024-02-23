@@ -96,9 +96,6 @@ void setup() {
   pinMode(DIRECTION,OUTPUT);
   #endif
 
-  #ifdef 
-  
-
 
 
 
