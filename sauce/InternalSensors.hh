@@ -12,7 +12,7 @@
 #define INTERNAL_SENSORS_HH
 
 
-#include "Arduino_BMI270_BMM150.h"  //IMU
+#include <Arduino_BMI270_BMM150.h>  //IMU
 #include <Arduino_HS300x.h>         //temp and humidity
 #include <Arduino_LPS22HB.h>        //pressure
 

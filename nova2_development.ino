@@ -2,9 +2,9 @@
 #include <Arduino.h>
 #include <SD.h>
 
-#include "InternalSensors.hh"
-#include "RealStepper.hh"
-#include "Control.hh"
+#include "sauce/InternalSensors.hh"
+#include "sauce/RealStepper.hh"
+#include "sauce/Control.hh"
 
 
 #define frame_sec 0.01
