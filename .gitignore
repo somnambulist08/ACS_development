@@ -1,8 +1,2 @@
-.vscode/arduino.json
-.vscode/c_cpp_properties.json
-build/.last-used
-build/build.options.json
-build/compile_commands.json
-build/libraries.cache
-build/preproc/ctags_target_for_gcc_minus_e.cpp
-build/sketch/nova2_flight_v0.1.ino.cpp
+.vscode/*
+build/*
