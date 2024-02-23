@@ -8,7 +8,7 @@
 
 class StepperInterface {
 public:
-  StepperInterface()=0;
+  StepperInterface();
   virtual void stepForTime(unsigned long maxTime, unsigned long startingTime)=0;
   virtual void stepOnce(void)=0;
   virtual void setStepsTarget(int newTarget)=0;

@@ -1,6 +1,8 @@
 #include "Control.hh"
 #include <math.h>
 
+
+float integratorState = 0;
 float getDesired(float time) {
   return 480.0f * powf(M_E, -time * 3.0f / 10.0f) + 1143.0f;
 }
