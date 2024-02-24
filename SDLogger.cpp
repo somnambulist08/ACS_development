@@ -4,14 +4,14 @@ SDLogger::SDLogger(){
     openFile();
 }
 
-SDLogger::writeLog(){
+void SDLogger::writeLog(){
 
 }
 
-SDLogger::closeFile(){
+void SDLogger::closeFile(){
 
 }
 
-SDLogger::openFile(){
-    
+void SDLogger::openFile(){
+
 }

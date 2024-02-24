@@ -1,5 +1,5 @@
 #include "SDSpoofer.hh"
-
+#include <Arduino.h>
 
 SDSpoofer::SDSpoofer(){
     Serial.println("SDSpoofer Started");

@@ -14,7 +14,7 @@
 #include "StepperInterface.hh"
 
 #define MOTOR_STEPS 200
-#define RPM
+#define RPM 750
 #define MICROSTEPS 8
 const unsigned long PPS = (RPM / 60) * MOTOR_STEPS * MICROSTEPS;
 const unsigned long PULSE_PERIOD_MS = (unsigned long)(1000.0f/((float)PPS));
@@ -24,7 +24,7 @@ int microStepsFromFlapAngle(float angle);
 
 class SerialSpoofStepper : public StepperInterface {
 public:
-  StepperInterface();
+  SerialSpoofStepper();
   void stepForTime(unsigned long maxTime, unsigned long startingTime);
   void stepOnce(void);
   void setStepsTarget(int newTarget);
