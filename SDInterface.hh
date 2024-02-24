@@ -13,7 +13,7 @@
 
 class SDInterface {
 public:
-    SDInterface(); //Initializer should open the file and write any header collumns //jonse
+    SDInterface(){} //Initializer should open the file and write any header collumns //jonse
     virtual void writeLog()=0;
     virtual void closeFile()=0;
     virtual void openFile()=0;
