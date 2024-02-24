@@ -182,14 +182,19 @@ void loop() {
 
 
 #include <Arduino.h>
+#include "RocketRTOS.hh"
 
 void setup(){
   Serial.begin(9600);
   while(!Serial);
+  Serial.println("Serial Online")
+
+  startRocketRTOS();
 }
 
 void loop(){
-  Serial.println("Hiiii!");
+  Serial.println("Hiiii! I'm the main thread!");
+  delay(500); //twice as fast as the other two
 }
 
 

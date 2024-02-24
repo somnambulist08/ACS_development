@@ -12,6 +12,7 @@
             "includePath": [
                 "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\cores\\arduino",
                 "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\variants\\ARDUINO_NANO33BLE",
+                "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\libraries\\Scheduler\\src",
                 "C:\\Users\\jonse\\OneDrive - USU\\Documents\\Arduino\\libraries\\Arduino_BMI270_BMM150\\src",
                 "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\libraries\\Wire",
                 "C:\\Users\\jonse\\OneDrive - USU\\Documents\\Arduino\\libraries\\Arduino_HS300x\\src",
@@ -28,25 +29,6 @@
             "forcedInclude": [
                 "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\cores\\arduino\\Arduino.h"
             ],
-            "browse": {
-                "limitSymbolsToIncludedHeaders": false,
-                "path": [
-                    "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\cores\\arduino",
-                    "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\variants\\ARDUINO_NANO33BLE",
-                    "C:\\Users\\jonse\\OneDrive - USU\\Documents\\Arduino\\libraries\\Arduino_BMI270_BMM150\\src",
-                    "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\libraries\\Wire",
-                    "C:\\Users\\jonse\\OneDrive - USU\\Documents\\Arduino\\libraries\\Arduino_HS300x\\src",
-                    "C:\\Users\\jonse\\OneDrive - USU\\Documents\\Arduino\\libraries\\Arduino_LPS22HB\\src",
-                    "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\cores\\arduino\\api\\deprecated",
-                    "C:\\Users\\jonse\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\cores\\arduino\\api\\deprecated-avr-comp",
-                    "c:\\users\\jonse\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\arm-none-eabi\\include\\c++\\7.2.1",
-                    "c:\\users\\jonse\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\arm-none-eabi\\include\\c++\\7.2.1\\arm-none-eabi",
-                    "c:\\users\\jonse\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\arm-none-eabi\\include\\c++\\7.2.1\\backward",
-                    "c:\\users\\jonse\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\lib\\gcc\\arm-none-eabi\\7.2.1\\include",
-                    "c:\\users\\jonse\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\lib\\gcc\\arm-none-eabi\\7.2.1\\include-fixed",
-                    "c:\\users\\jonse\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\arm-none-eabi\\include"
-                ]
-            },
             "cStandard": "c11",
             "cppStandard": "c++11",
             "defines": [
