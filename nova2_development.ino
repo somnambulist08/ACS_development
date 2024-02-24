@@ -1,3 +1,6 @@
+#define JON_ALTERNATIVE_INO //Comment this line out to do things normally. This is only here for when I need to do some testing outside of the main loop //jonse
+#ifndef JON_ALTERNATIVE_INO
+
 #include <math.h>
 #include <Arduino.h>
 #include <SD.h>
@@ -168,3 +171,39 @@ void loop() {
 
   //readAndSendFlapsToSimulink();
 }
+
+
+
+
+#else //ifdef JON_ALTERNATIVE_INO
+
+
+
+
+
+#include <Arduino.h>
+
+void setup(){
+  Serial.begin(9600);
+  while(!Serial);
+}
+
+void loop(){
+  Serial.println("Hiiii!");
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif //JON_ALTERNATIVE_INO
