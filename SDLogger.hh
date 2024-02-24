@@ -19,7 +19,7 @@ public:
     void openFile();
 private:
     //FILE
-}
+};
 
 
 

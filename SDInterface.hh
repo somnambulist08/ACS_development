@@ -19,7 +19,7 @@ public:
     virtual void openFile()=0;
 private:
     
-}
+};
 
 
 
