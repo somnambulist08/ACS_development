@@ -28,6 +28,34 @@ void threadHelloWorld(void);
 
 void startRocketRTOS();
 
+#define SERIAL_STEPPER_TEST
+#ifdef SERIAL_STEPPER_TEST
+
+#include "SerialSpoofStepper.hh"
+#include "InternalSensors.hh"
+#include "SDSpoofer.hh"
+#include "Control.hh"
+
+#define STEPS_PER_PREEMPT 10
+void stepperTask();
+extern SerialSpoofStepper stepper;
+
+#define CONTROL_PERIOD_MS 100
+void sensorAndControlTask();
+extern sixteenAMG sensor;
+extern unsigned long oldMicros;
+extern float velocity;
+extern float oldAccel;
+
+#define LOG_PERIOD_MS 1000
+void logTask();
+extern SDSpoofer dummySD;
+
+
+
+
+#endif //SERIAL_STEPPER_TEST
+
 
 //#define LOOP_CHECKIN_TEST
 #ifdef LOOP_CHECKIN_TEST
@@ -35,7 +63,7 @@ void loop2();
 void loop3();
 #endif //LOOP_CHECKIN_TEST
 
-#define DUMMY_FUNCTIONS
+//#define DUMMY_FUNCTIONS
 #ifdef DUMMY_FUNCTIONS
 
 #define SENSOR_PERIOD_MS 100
@@ -79,6 +107,8 @@ void moveStepperTask();
 
 
 #endif //DUMMY_FUNCTIONS
+
+
 
 
 #endif //ROCKET_RTOS_HH

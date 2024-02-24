@@ -8,6 +8,19 @@ void threadHelloWorld(void){
 }
 */
 
+#ifdef SERIAL_STEPPER_TEST
+SerialSpoofStepper stepper;
+sixteenAMG sensor;
+SDSpoofer dummySD;
+unsigned long oldMicros;
+float velocity;
+float oldAccel;
+
+void loop(){
+    yield();
+}
+#endif //SERIAL_STEPPER_TEST
+
 
 void startRocketRTOS(){
 
@@ -22,8 +35,87 @@ void startRocketRTOS(){
     Scheduler.startLoop(moveStepperTask);
 #endif //DUMMY_FUNCTIONS
 
+#ifdef SERIAL_STEPPER_TEST
+    //stepper = new SerialSpoofStepper();
+    //dummySD = new SDSpoofer();
+    //sensor = new sixteenAMG();
+
+    oldAccel = 0;
+    velocity = 0;
+    oldMicros = micros();
+
+    Scheduler.startLoop(sensorAndControlTask);
+    Scheduler.startLoop(logTask);
+    Scheduler.startLoop(stepperTask);
+
+#endif //SERIAL_STEPPER_TEST
 
 }
+
+
+
+#ifdef SERIAL_STEPPER_TEST
+void stepperTask(){
+    if(!stepper.getMoveSteps()) yield(); //if you don't need to run, don't //jonse
+
+    for(int i=0; i<STEPS_PER_PREEMPT; i++){
+        stepper.stepOnce();
+    }
+    
+    delay(PULSE_PERIOD_MS);
+}
+
+
+void sensorAndControlTask(){
+    float x=0, y=0, z=0;
+    sensor.readAcceleration(x,y,z);
+    Serial.print("Acceleration: ");
+    Serial.print(x);
+    Serial.print(", ");
+    Serial.print(y);
+    Serial.print(", ");
+    Serial.println(z);
+
+    
+    float pressure = 80000;
+    Serial.print("Pressure: ");
+    Serial.println(pressure);
+
+    float altitude = pressureAlt(pressure);
+    Serial.print("Altitude: ");
+    Serial.println(altitude);
+
+    float dt = micros() - oldMicros;
+    velocity = accelerint(z, oldAccel,dt);
+    Serial.print("Velocity: ");
+    Serial.println(velocity);
+
+    float flaps = getControl(100, predictAltitude(altitude, velocity), dt);
+    Serial.print("Control angle: ");
+    Serial.println(flaps);
+
+    stepper.setStepsTarget(stepper.microStepsFromFlapAngle(flaps));
+
+
+    delay(CONTROL_PERIOD_MS);
+}
+
+void logTask(){
+    dummySD.writeLog();
+
+    delay(LOG_PERIOD_MS);
+}
+
+
+
+#endif //SERIAL_STEPPER_TEST
+
+
+
+
+
+
+
 
 
 #ifdef DUMMY_FUNCTIONS
