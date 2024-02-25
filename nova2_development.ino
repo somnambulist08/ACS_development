@@ -1,3 +1,6 @@
+#define JON_ALTERNATIVE_INO //Comment this line out to do things normally. This is only here for when I need to do some testing outside of the main loop //jonse
+#ifndef JON_ALTERNATIVE_INO
+
 #include <math.h>
 #include <Arduino.h>
 #include <SD.h>
@@ -168,3 +171,47 @@ void loop() {
 
   //readAndSendFlapsToSimulink();
 }
+
+
+
+
+#else //ifdef JON_ALTERNATIVE_INO
+
+
+
+
+
+#include <Arduino.h>
+#include "RocketRTOS.hh"
+
+
+void setup(){
+  Serial.begin(115200);
+  while(!Serial);
+  Serial.println("Serial Online");
+
+  startRocketRTOS();
+}
+
+/*
+void loop(){
+  Serial.println("Hiiii! I'm the main thread!");
+  delay(1); //even just delay 1 is able to make room for the other tasks, wowza! (but only because everything is so short rn)
+}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif //JON_ALTERNATIVE_INO

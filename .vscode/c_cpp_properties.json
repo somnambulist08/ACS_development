@@ -10,25 +10,31 @@
             ],
             "intelliSenseMode": "gcc-x64",
             "includePath": [
-                "C:\\Users\\gylva\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\cores\\arduino",
-                "C:\\Users\\gylva\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\variants\\ARDUINO_NANO33BLE",
-                "C:\\Users\\gylva\\Documents\\Arduino\\libraries\\SD\\src",
-                "C:\\Users\\gylva\\Documents\\Arduino\\libraries\\Arduino_HS300x\\src",
-                "C:\\Users\\gylva\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\libraries\\Wire",
-                "C:\\Users\\gylva\\Documents\\Arduino\\libraries\\Arduino_BMI270_BMM150\\src",
-                "C:\\Users\\gylva\\Documents\\Arduino\\libraries\\Arduino_LPS22HB\\src",
-                "C:\\Users\\gylva\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\libraries\\SPI",
-                "C:\\Users\\gylva\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\cores\\arduino\\api\\deprecated",
-                "C:\\Users\\gylva\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\cores\\arduino\\api\\deprecated-avr-comp",
-                "c:\\users\\gylva\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\arm-none-eabi\\include\\c++\\7.2.1",
-                "c:\\users\\gylva\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\arm-none-eabi\\include\\c++\\7.2.1\\arm-none-eabi",
-                "c:\\users\\gylva\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\arm-none-eabi\\include\\c++\\7.2.1\\backward",
-                "c:\\users\\gylva\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\lib\\gcc\\arm-none-eabi\\7.2.1\\include",
-                "c:\\users\\gylva\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\lib\\gcc\\arm-none-eabi\\7.2.1\\include-fixed",
-                "c:\\users\\gylva\\appdata\\local\\arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\arm-none-eabi\\include"
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/variants/ARDUINO_NANO33BLE",
+                "C:/Users/gylva/Documents/Arduino/libraries/SD/src",
+                "C:/Users/gylva/Documents/Arduino/libraries/Arduino_HS300x/src",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/libraries/**",
+                "C:/Users/gylva/Documents/Arduino/libraries/Arduino_BMI270_BMM150/src",
+                "C:/Users/gylva/Documents/Arduino/libraries/Arduino_LPS22HB/src",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/libraries/SPI",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/api/deprecated",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/api/deprecated-avr-comp",
+                "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include/c++/7.2.1",
+                "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include/c++/7.2.1/arm-none-eabi",
+                "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include/c++/7.2.1/backward",
+                "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/lib/gcc/arm-none-eabi/7.2.1/include",
+                "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/lib/gcc/arm-none-eabi/7.2.1/include-fixed",
+                "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/mbed/hal/tests/pinvalidate/test_files",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/mbed/drivers/include",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/mbed/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_NRF52/TARGET_MCU_NRF52840/device",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/mbed/targets/TARGET_NORDIC/TARGET_NRF5x/TARGET_SDK_15_0/modules/nrfx/mdk",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/mbed/platform/include",
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/mbed/platform/cxxsupport"
             ],
             "forcedInclude": [
-                "C:\\Users\\gylva\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\mbed_nano\\4.1.1\\cores\\arduino\\Arduino.h"
+                "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/Arduino.h"
             ],
             "cStandard": "c11",
             "cppStandard": "c++11",
@@ -487,7 +493,31 @@
                 "__ATOMIC_ACQ_REL=4",
                 "__ATOMIC_RELEASE=3",
                 "USBCON"
-            ]
+            ],
+            "compilerPathInCppPropertiesJson": "C:\\Users\\gylva\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4\\bin\\arm-none-eabi-g++",
+            "mergeConfigurations": false,
+            "browse": {
+                "path": [
+                    "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino",
+                    "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/variants/ARDUINO_NANO33BLE",
+                    "C:/Users/gylva/Documents/Arduino/libraries/SD/src",
+                    "C:/Users/gylva/Documents/Arduino/libraries/Arduino_HS300x/src",
+                    "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/libraries/Wire",
+                    "C:/Users/gylva/Documents/Arduino/libraries/Arduino_BMI270_BMM150/src",
+                    "C:/Users/gylva/Documents/Arduino/libraries/Arduino_LPS22HB/src",
+                    "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/libraries/SPI",
+                    "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/api/deprecated",
+                    "C:/Users/gylva/AppData/Local/Arduino15/packages/arduino/hardware/mbed_nano/4.1.1/cores/arduino/api/deprecated-avr-comp",
+                    "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include/c++/7.2.1",
+                    "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include/c++/7.2.1/arm-none-eabi",
+                    "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include/c++/7.2.1/backward",
+                    "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/lib/gcc/arm-none-eabi/7.2.1/include",
+                    "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/lib/gcc/arm-none-eabi/7.2.1/include-fixed",
+                    "c:/users/gylva/appdata/local/arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include",
+                    "c:/Users/gylva/Documents/Arduino/nova2_flight_v0.1/nova2_development"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
         }
     ]
 }
