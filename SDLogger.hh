@@ -14,7 +14,6 @@
 
 #include "SDInterface.hh"
 #include <SD.h>
-#include "GetData.hh"
 
 class SDLogger : public SDInterface {
 public:
@@ -27,7 +26,6 @@ private:
     static File flightData;
     static String fileName="";
     unsigned long lastWrite = -1;
-    GetData source; //change to whatever subclass the data's coming from
 };
 
 
