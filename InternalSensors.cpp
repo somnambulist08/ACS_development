@@ -136,4 +136,7 @@ class InternalSensors : public GetData
   void readAltitude(float &H){
     H = pressureAlt(BARO.readPressure()*1000.0f); 
   }
+  void readPressure(float &P){
+    P = BARO.readPressure()*1000.0f;
+  }
 };

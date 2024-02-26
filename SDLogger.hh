@@ -8,8 +8,13 @@
 ******************************************************************************/
 #ifndef SD_LOGGER_HH
 #define SD_LOGGER_HH
+#define RED 22
+#define BLUE 23
+#define GREEN 24
 
 #include "SDInterface.hh"
+#include <SD.h>
+#include "GetData.hh"
 
 class SDLogger : public SDInterface {
 public:
@@ -19,6 +24,10 @@ public:
     void openFile();
 private:
     //FILE
+    static File flightData;
+    static String fileName="";
+    unsigned long lastWrite = -1;
+    GetData source; //change to whatever subclass the data's coming from
 };
 
 

@@ -16,6 +16,7 @@ public:
 	virtual void readGyroscope(float &x, float &y, float &z) = 0;
 	virtual void readTemperature(float &T) = 0;
 	virtual void readAltitude(float &H) = 0;
+	virtual void readPressure(float &P) = 0;
 };
 
 #endif
