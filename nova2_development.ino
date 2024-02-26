@@ -182,7 +182,10 @@ void loop() {
 
 
 #include <Arduino.h>
-#include "RocketRTOS.hh"
+//#include "RocketRTOS.hh"
+//#include <nrf.h>
+//#include <nrf_delay.h>
+//#include <nrf_gpio.h>
 
 
 void setup(){
@@ -190,7 +193,13 @@ void setup(){
   while(!Serial);
   Serial.println("Serial Online");
 
-  startRocketRTOS();
+  //startRocketRTOS();
+}
+void loop(){
+  uint32_t timerMode = NRF_TIMER0->MODE;
+  uint32_t p = P0_16;
+  Serial.println(p);
+  delay(100);
 }
 
 /*

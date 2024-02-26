@@ -10,7 +10,7 @@ void threadHelloWorld(void){
 
 #ifdef SERIAL_STEPPER_TEST
 SerialSpoofStepper stepper;
-sixteenAMG sensor;
+//sixteenAMG sensor;
 SDSpoofer dummySD;
 unsigned long oldMicros;
 float velocity;
@@ -67,8 +67,8 @@ void stepperTask(){
 
 
 void sensorAndControlTask(){
-    float x=0, y=0, z=0;
-    sensor.readAcceleration(x,y,z);
+    float x=2, y=0, z=4;
+    //sensor.readAcceleration(x,y,z);
     Serial.print("Acceleration: ");
     Serial.print(x);
     Serial.print(", ");
@@ -81,12 +81,12 @@ void sensorAndControlTask(){
     Serial.print("Pressure: ");
     Serial.println(pressure);
 
-    float altitude = pressureAlt(pressure);
+    float altitude = (1 - powf((pressure / 101325), 0.190284)) * 145366.45 * 0.3048;
     Serial.print("Altitude: ");
     Serial.println(altitude);
 
     float dt = micros() - oldMicros;
-    velocity = accelerint(z, oldAccel,dt);
+    velocity = (dt * (z + oldAccel) / 2.0);
     Serial.print("Velocity: ");
     Serial.println(velocity);
 
