@@ -1,10 +1,5 @@
 #include "InternalSensors.hh"
 
-/*
-long accelerint(float a0, float a1, float dt) {
-  return dt * (a1 + a0) / 2.0;  //central Reimann sum
-}*/
-
 class sixteenIMU : public BoschSensorClass
 {
 public:
