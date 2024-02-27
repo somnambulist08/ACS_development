@@ -1,12 +1,6 @@
 #include "RocketRTOS.hh"
 
-/*
-void threadHelloWorld(void){
-    while(1){
-        Serial.println("I'm in a Thread!");
-    }
-}
-*/
+
 
 #ifdef SERIAL_STEPPER_TEST
 SerialSpoofStepper stepper;
