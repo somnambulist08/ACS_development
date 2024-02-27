@@ -28,11 +28,11 @@ void threadHelloWorld(void);
 
 void startRocketRTOS();
 
-//#define SERIAL_STEPPER_TEST
+#define SERIAL_STEPPER_TEST
 #ifdef SERIAL_STEPPER_TEST
 
 #include "SerialSpoofStepper.hh"
-//#include "InternalSensors.hh"
+#include "InternalSensors.hh"
 #include "SDSpoofer.hh"
 #include "Control.hh"
 
@@ -42,7 +42,7 @@ extern SerialSpoofStepper stepper;
 
 #define CONTROL_PERIOD_MS 100
 void sensorAndControlTask();
-//extern sixteenAMG sensor;
+extern sixteenAMG sensor;
 extern unsigned long oldMicros;
 extern float velocity;
 extern float oldAccel;

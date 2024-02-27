@@ -178,37 +178,18 @@ void loop() {
 #else //ifdef JON_ALTERNATIVE_INO
 
 
-
-
-
 #include <Arduino.h>
-//#include "RocketRTOS.hh"
-//#include <nrf.h>
-//#include <nrf_delay.h>
-//#include <nrf_gpio.h>
-//#include "HardwarePWM.hh"
+#include "RocketRTOS.hh"
 
 
 void setup(){
   Serial.begin(115200);
   while(!Serial);
   Serial.println("Serial Online");
-
-  //pwmSetup();
-  //startRocketRTOS();
+  
+  
+  startRocketRTOS();
 }
-void loop(){
-  p//wmPulseNPulses(1000);
-  Serial.println("Still Alive");
-  delay(100);
-}
-
-/*
-void loop(){
-  Serial.println("Hiiii! I'm the main thread!");
-  delay(1); //even just delay 1 is able to make room for the other tasks, wowza! (but only because everything is so short rn)
-}
-*/
 
 
 
