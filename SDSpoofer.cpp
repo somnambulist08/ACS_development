@@ -1,22 +1,14 @@
 #include "SDSpoofer.hh"
 #include <Arduino.h>
 
-SDSpoofer::SDSpoofer()
-{
-    Serial.println("SDSpoofer Started");
-    source.startupTasks();
-    Serial.println("Writing Headers:");
-    Serial.print("Time[us], Temp[C], Pressure[hPa],");
-    Serial.print(" Omega_1[rad/s], Omega_2[rad/s], Omega_3[rad/s], acc_1[g], acc_2[g], acc_3[g],");
-    Serial.println(" mag_1[uT], mag_2[uT], mag_3[uT]");
-
-    openFile();
+SDSpoofer::SDSpoofer(){
+    //Serial.println("SDSpoofer Started");
+    //openFile();
 }
 
-void SDSpoofer::writeLog()
-{
-    for (int i = 0; i < 100; i++)
-    {
+void SDSpoofer::writeLog(){
+    for(int i=0; i<100; i++){
+        for(volatile int j=0; j<1000; j++);
         Serial.print("Writing to Log... ");
         Serial.print(i);
         Serial.println("%");
