@@ -26,12 +26,14 @@
 #ifndef HARDWARE_PWM_HH
 #define HARDWARE_PWM_HH
 
-
+#include <Arduino.h>
 //750RPM -> 2500 Steps/s -> 20000 Microsteps/s
 #define PWM_PPS 20000U
+#define SEQUENCE_LENGTH 2U
 
+extern nrf_pwm_sequence_t seq0;
 void pwmSetup();
-void pwmPulseNPulses(unsigned long int pulses);
+void pwmPulseNPulses(uint32_t pulses);
 
 
 
