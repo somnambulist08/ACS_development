@@ -186,7 +186,7 @@ void loop() {
 //#include <nrf.h>
 //#include <nrf_delay.h>
 //#include <nrf_gpio.h>
-#include "HardwarePWM.hh"
+//#include "HardwarePWM.hh"
 
 
 void setup(){
@@ -194,11 +194,11 @@ void setup(){
   while(!Serial);
   Serial.println("Serial Online");
 
-  pwmSetup();
+  //pwmSetup();
   //startRocketRTOS();
 }
 void loop(){
-  pwmPulseNPulses(1000);
+  p//wmPulseNPulses(1000);
   Serial.println("Still Alive");
   delay(100);
 }
