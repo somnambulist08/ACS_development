@@ -179,16 +179,34 @@ void loop() {
 
 
 #include <Arduino.h>
+#include <USB/PluggableUSBSerial.h>
+#include <mbed.h>
 #include "RocketRTOS.hh"
 
 
-void setup(){
+int main(){
+  init(); //General Arduino startup tasks
+	initVariant(); //BLE Sense specific Startup tasks
+
+//Opens the virtual COM port
+#if defined(SERIAL_CDC)
+  PluggableUSBD().begin();
+  _SerialUSB.begin(115200);
+#endif
+
+/********************************
+ * === Our Code Begins Here === *
+ ********************************/
+
+
   Serial.begin(115200);
   while(!Serial);
-  Serial.println("Serial Online");
-  
-  
-  startRocketRTOS();
+
+  while(1){
+    Serial.println("Running Custom Main");
+  }
+
+  return -1; 
 }
 
 
