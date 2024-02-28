@@ -2,6 +2,7 @@
 #include <Arduino.h>
 
 SDSpoofer::SDSpoofer(){
+    //Cannot make any calls to Serial in constructor or system will crash
     //Serial.println("SDSpoofer Started");
     //openFile();
 }
@@ -38,4 +39,8 @@ void SDSpoofer::closeFile()
 void SDSpoofer::openFile()
 {
     Serial.println("New File");
+    Serial.println("Writing Headers...");
+
+    //Write headers here...
+    Serial.println();
 }
