@@ -179,11 +179,17 @@ void loop() {
 
 
 #include <Arduino.h>
-#include <USB/PluggableUSBSerial.h>
-#include <mbed.h>
+//#include <USB/PluggableUSBSerial.h>
+//#include <mbed.h>
 #include "RocketRTOS.hh"
 
+void setup(){
+  Serial.begin(115200);
+  while(!Serial);
+  startRocketRTOS();
+}
 
+/*
 int main(){
   init(); //General Arduino startup tasks
 	initVariant(); //BLE Sense specific Startup tasks
@@ -193,11 +199,11 @@ int main(){
   PluggableUSBD().begin();
   _SerialUSB.begin(115200);
 #endif
-
+*/
 /********************************
  * === Our Code Begins Here === *
  ********************************/
-
+/*
 
   Serial.begin(115200);
   while(!Serial);
@@ -213,7 +219,7 @@ int main(){
 
   return -1; 
 }
-
+*/
 
 
 

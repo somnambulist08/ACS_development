@@ -28,12 +28,11 @@ extern rtos::Thread *threads[NUM_THREADS];
 
 #endif //CUSTOM_SCHEDULER
 
+
+
 #ifndef CUSTOM_SCHEDULER
 #include <Scheduler.h>
 #endif
-
-
-
 
 
 //#define SERIAL_STEPPER_TEST

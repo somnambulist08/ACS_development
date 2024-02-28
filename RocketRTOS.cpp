@@ -13,11 +13,20 @@ unsigned long oldMicros;
 float velocity;
 float oldAccel;
 
-/*
+#ifndef CUSTOM_SCHEDULER
 void loop(){
     yield();
-}*/
+}
+#else //defined: CUSTOM_SCHEDULER
+//Main thread loop, lower priority than other threads
+void loop(){
+    //if(!stepper.getMoveSteps()) yield(); //if no steps needed, go idle until next scheduled task
+    stepper.stepOnce(); //run this in the gaps
+    //Serial.println("Main");
+}
+#endif //CUSTOM_SCHEDULER
 #endif //SERIAL_STEPPER_TEST
+
 
 
 void startRocketRTOS(){
@@ -54,8 +63,8 @@ void startRocketRTOS(){
     threads[0]->start(sensorAndControlTask);
     threads[1] = new rtos::Thread(osPriorityHigh, THREADS_STACK_DEPTH);
     threads[1]->start(logTask);
-    threads[2] = new rtos::Thread(osPriorityHigh, THREADS_STACK_DEPTH);
-    threads[2]->start(stepperTask);
+    //threads[2] = new rtos::Thread(osPriorityHigh, THREADS_STACK_DEPTH);
+    //threads[2]->start(stepperTask);
 #endif //ifndef CUSTOM SCHEDULER
 
 #endif //SERIAL_STEPPER_TEST
@@ -122,14 +131,14 @@ void sensorAndControlTask(){
     Serial.print("Control angle: ");
     Serial.println(flaps);
 
-    stepper.setStepsTarget(stepper.microStepsFromFlapAngle(flaps));
-
+    //stepper.setStepsTarget(stepper.microStepsFromFlapAngle(flaps));
+    stepper.setStepsTarget(1000000);
 
     delay(CONTROL_PERIOD_MS);
 }
 #ifdef CUSTOM_SCHEDULER
 }
-#endif CUSTOM_SCHEDULER
+#endif //CUSTOM_SCHEDULER
 
 void logTask(){
 #ifdef CUSTOM_SCHEDULER
