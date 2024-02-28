@@ -202,8 +202,13 @@ int main(){
   Serial.begin(115200);
   while(!Serial);
 
+
+  startRocketRTOS();
+
+
+
   while(1){
-    Serial.println("Running Custom Main");
+    Serial.println("MAIN");
   }
 
   return -1; 

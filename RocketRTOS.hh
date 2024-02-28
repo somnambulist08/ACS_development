@@ -11,24 +11,32 @@
 #define ROCKET_RTOS_HH
 
 
-/*************************************************************************
- * Turns out I have even more reason to hate Arduino because they have
- * suppressed the mbed library and made their own shitty verion. YAY!!!!
-**************************************************************************/
-/*
+void startRocketRTOS();
+
+#define CUSTOM_SCHEDULER
+#ifdef CUSTOM_SCHEDULER
+
 #include <mbed.h>
 #include <rtos.h>
 
-extern Thread t;
+#define NUM_THREADS 3
+#define THREADS_STACK_DEPTH 1024
+extern rtos::Thread *threads[NUM_THREADS];
 
-void threadHelloWorld(void);
-*/
+#define SERIAL_STEPPER_TEST //if doing this test, also do another test
 
+
+#endif //CUSTOM_SCHEDULER
+
+#ifndef CUSTOM_SCHEDULER
 #include <Scheduler.h>
+#endif
 
-void startRocketRTOS();
 
-#define SERIAL_STEPPER_TEST
+
+
+
+//#define SERIAL_STEPPER_TEST
 #ifdef SERIAL_STEPPER_TEST
 
 #include "SerialSpoofStepper.hh"

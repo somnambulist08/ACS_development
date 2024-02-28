@@ -1,5 +1,8 @@
 #include "RocketRTOS.hh"
 
+#ifdef CUSTOM_SCHEDULER
+rtos::Thread *threads[NUM_THREADS] = {}; //array of pointers to threads
+#endif //CUSTOM_SCHEDULER
 
 
 #ifdef SERIAL_STEPPER_TEST
@@ -10,13 +13,18 @@ unsigned long oldMicros;
 float velocity;
 float oldAccel;
 
+/*
 void loop(){
     yield();
-}
+}*/
 #endif //SERIAL_STEPPER_TEST
 
 
 void startRocketRTOS(){
+
+#ifdef CUSTOM_SCHEDULER
+    
+#endif //CUSTOM_SCHEDULER
 
 #ifdef LOOP_CHECKIN_TEST
     Scheduler.startLoop(loop2);
@@ -37,10 +45,18 @@ void startRocketRTOS(){
     oldAccel = 0;
     velocity = 0;
     oldMicros = micros();
-
+#ifndef CUSTOM_SCHEDULER
     Scheduler.startLoop(sensorAndControlTask);
     Scheduler.startLoop(logTask);
     Scheduler.startLoop(stepperTask);
+#else //defined: CUSTOM SCHEDULER
+    threads[0] = new rtos::Thread(osPriorityHigh, THREADS_STACK_DEPTH);
+    threads[0]->start(sensorAndControlTask);
+    threads[1] = new rtos::Thread(osPriorityHigh, THREADS_STACK_DEPTH);
+    threads[1]->start(logTask);
+    threads[2] = new rtos::Thread(osPriorityHigh, THREADS_STACK_DEPTH);
+    threads[2]->start(stepperTask);
+#endif //ifndef CUSTOM SCHEDULER
 
 #endif //SERIAL_STEPPER_TEST
 
@@ -48,8 +64,20 @@ void startRocketRTOS(){
 
 
 
+#ifdef CUSTOM_SCHEDULER
+
+
+
+
+#endif //CUSTOM_SCHEDULER
+
+
+
 #ifdef SERIAL_STEPPER_TEST
 void stepperTask(){
+#ifdef CUSTOM_SCHEDULER
+    while(1){
+#endif CUSTOM_SCHEDULER
     if(!stepper.getMoveSteps()) yield(); //if you don't need to run, don't //jonse
 
     for(int i=0; i<STEPS_PER_PREEMPT; i++){
@@ -58,9 +86,15 @@ void stepperTask(){
     
     delay(PULSE_PERIOD_MS);
 }
+#ifdef CUSTOM_SCHEDULER
+}
+#endif CUSTOM_SCHEDULER
 
 
 void sensorAndControlTask(){
+#ifdef CUSTOM_SCHEDULER
+    while(1){
+#endif CUSTOM_SCHEDULER
     float x=0, y=0, z=0;
     sensor.readAcceleration(x,y,z);
     Serial.print("Acceleration: ");
@@ -93,12 +127,21 @@ void sensorAndControlTask(){
 
     delay(CONTROL_PERIOD_MS);
 }
+#ifdef CUSTOM_SCHEDULER
+}
+#endif CUSTOM_SCHEDULER
 
 void logTask(){
+#ifdef CUSTOM_SCHEDULER
+    while(1){
+#endif CUSTOM_SCHEDULER
     dummySD.writeLog();
 
     delay(LOG_PERIOD_MS);
 }
+#ifdef CUSTOM_SCHEDULER
+}
+#endif CUSTOM_SCHEDULER
 
 
 
