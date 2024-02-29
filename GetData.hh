@@ -8,7 +8,7 @@
 #define GET_DATA_HH
 class GetData {
 public:
-	GetData();
+	GetData(){}
 	virtual void startupTasks() = 0;
 	virtual void readAcceleration(float &x, float &y, float &z) = 0;
 	virtual void readMagneticField(float &x, float &y, float &z) = 0;

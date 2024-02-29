@@ -21,7 +21,7 @@ public:
     SDLogger();
     SDLogger(String newFileName);
     void openFile(String newFileName);
-    void writeLog(float acc1, float acc2, float acc3, float gy1, float gy2, float gy3, float mag1, float mag2, float mag3, float temp, float pressure);
+    void writeLog(float acc1, float acc2, float acc3, float gy1, float gy2, float gy3, float mag1, float mag2, float mag3, float temp, float pressure, float t_now);
 
     //inherited
     void writeLog()=0;

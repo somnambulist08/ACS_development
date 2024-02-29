@@ -74,7 +74,7 @@ void SDLogger::openFile(){
 }
 
 void SDLogger::openFile(String newFileName){
-  fileName = newFilename;
+  fileName = newFileName;
   flightData = SD.open(fileName, FILE_WRITE);
   if(Serial) Serial.println("Writing to File: " + fileName);
   // Write the headers:
@@ -98,7 +98,7 @@ void SDLogger::openFile(String newFileName){
   }
 }
 
-void SDLogger::writeLog(float acc1, float acc2, float acc3, float gy1, float gy2, float gy3, float mag1, float mag2, float mag3, float temp, float pressure){
+void SDLogger::writeLog(float acc1, float acc2, float acc3, float gy1, float gy2, float gy3, float mag1, float mag2, float mag3, float temp, float pressure, float t_now){
     flightData.print(String(t_now) + ',' + String(temp) + ',' + String(pressure) + ',');
     flightData.print(String(gy1) + ',' + String(gy2) + ',' + String(gy3) + ',');
     flightData.print(String(acc1) + ',' + String(acc2) + ',' + String(acc3) + ',');

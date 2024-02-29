@@ -11,8 +11,8 @@ class SimulinkFile : public GetData {
 public:
 	//personal
 	SimulinkFile();
-	bool readLine();
-	bool readVals();
+	bool readLine(File &f, char* line, size_t maxLen);
+	bool readVals(float* alt, float* acc, float* t);
 	void readFrame(float &t);
 
 	//inherited
