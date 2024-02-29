@@ -17,6 +17,7 @@
 void startRocketRTOS();
 
 #define THREAD_STACK_DEPTH 1024
+//extern to expose them just in case
 extern rtos::Thread sensorAndControlThread;
 extern rtos::Thread loggingThread;
 
