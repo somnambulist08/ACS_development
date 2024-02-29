@@ -1,7 +1,7 @@
 #include "RocketRTOS.hh"
 
 //Threads at higher priority than main
-rtos::Thread sensorAndControlThread(osPriorityHigh, THREADS_STACK_DEPTH);
+rtos::Thread sensorAndControlThread(osPriorityRealtime, THREADS_STACK_DEPTH);
 rtos::Thread loggingThread(osPriorityHigh, THREADS_STACK_DEPTH);
 //Threads at lower priority than main
 rtos::Thread stepperThread(osPriorityLow, THREADS_STACK_DEPTH);
@@ -96,7 +96,7 @@ void stepperCallback(){
 void loop(){
     while(1){
         determineState();
-        delay(STATE_CHECKING_DELAY_MS);
+        delay(STATE_CHECKING_DELAY_MS); //make an opening for the stepper
     }
 }
 
