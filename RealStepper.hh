@@ -18,7 +18,7 @@
 #define STEP 9
 #define DIRECTION 8
 
-extern const unsigned long frame_micros;
+//extern const unsigned long frame_micros;
 const unsigned long pps = (RPM / 60) * MOTOR_STEPS * MICROSTEPS;
 const unsigned long pwmicros = 1000000 / (pps);
 const unsigned long pw_on = pwmicros / 2;
