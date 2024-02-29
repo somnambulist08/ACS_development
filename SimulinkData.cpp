@@ -9,7 +9,6 @@ std::list<float> time_steps={};
 std::list<float>::iterator alt_iter;
 std::list<float>::iterator acc_iter;
 std::list<float>::iterator time_iter;
-class SimulinkData : public GetData {
     bool readLine(File &f, char* line, size_t maxLen) {
         for (size_t n = 0; n < maxLen; n++) {
             int c = f.read();
@@ -20,7 +19,7 @@ class SimulinkData : public GetData {
             }
         line[n] = c;
         }
-    return false; // line too long
+        return false; // line too long
     }
 
     bool readVals(float* alt, float* acc, float* t) {
