@@ -367,7 +367,6 @@ void stepper_CLOSE(){
 #include "SDSpoofer.hh"
 #include "SDLogger.hh"
 
-
 SDSpoofer dummySD;
 SDLogger sd;
 //SerialSpoofStepper stepper;
@@ -381,13 +380,14 @@ float vel=0;
 float h=0;
 float ang=0;
 
-float magfield_data_x = 0;
-float magfield_data_y = 0;
-float magfield_data_z = 0;
-float gyro_data_x = 0;
-float gyro_data_y = 0;
-float gyro_data_z = 0;
-float altitude_data = 0;
+float magfield_data_x = 0; // variable that holds the measured magnetometer x-data
+float magfield_data_y = 0; // variable that holds the measured magnetometer y-data
+float magfield_data_z = 0; // variable that holds the measured magnetometer z-data
+float gyro_data_x = 0; // variable that holds the measured gyroscope x-data
+float gyro_data_y = 0; // variable that holds the measured gyroscope x-data
+float gyro_data_z = 0; // variable that holds the measured gyroscope x-data
+float altitude_data = 0; // variable that holds the measured altitude
+
 
 
 void setup(){
@@ -402,10 +402,8 @@ void setup(){
   startRocketRTOS();
 }
 
-//patmer Test: orientation & altitude gathering
-
-//patmer get orientation & altitude
-void getOrientationAltitude(){
+/* patmer Orientation & altitude gathering functions*/
+void getOrientationAltitude(){ //patmer get orientation & altitude
   Serial.println("Getting orientation and altitude");
   
   intSensors.readMagneticField(magfield_data_x, magfield_data_y, magfield_data_z);
@@ -413,20 +411,22 @@ void getOrientationAltitude(){
   intSensors.readAltitude(altitude_data);
 }
 
-//patmer Use scheduler & control to display results over serial with SDSpoofer
-void displayOrientationAltitude_SDSpoof(){
+void displayOrientationAltitude_SDSpoof(){ //patmer Display results over serial with SDSpoofer
   Serial.println("Displaying data to SDSpoofer");
 
   dummySD.writeLog(accel, vel, h, ang);
 }
 
-//patmer Use scheduler to save results to a real SD card
-void displayOrientationAltitude_SD(){
+void displayOrientationAltitude_SD(){ //patmer Ssave results to a real SD card
   Serial.println("Displaying data to real SD");
 
   sd.writeLog(accel, vel, h, ang);
 }
+/* patmer Orientation & altitude gathering functions END*/
 
+
+
+/* Scheduler functions*/
 void sensorAndControl_FULL(){
   getOrientationAltitude();
 }
@@ -435,6 +435,7 @@ void logging_RUN(){
   displayOrientationAltitude_SDSpoof();
   displayOrientationAltitude_SD();
 }
+/* Scheduler functions END*/
 
 #endif //SENSORTEST
 
