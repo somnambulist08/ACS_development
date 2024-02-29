@@ -112,3 +112,5 @@ void SDLogger::closeFile(){
         flightData.close();
     }
 }
+
+void SDLogger::writeLog(){}
