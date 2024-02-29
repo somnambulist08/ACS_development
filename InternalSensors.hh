@@ -7,7 +7,7 @@
 * 02/15/2024 - Created file
 ******************************************************************************/
 
-
+/*
 #ifndef INTERNAL_SENSORS_HH
 #define INTERNAL_SENSORS_HH
 #define accelerint(a0, a1, dt) (dt * (a1 + a0) / 2.0)  //define because faster than function calls
@@ -23,3 +23,4 @@
 #include "GetData.hh"
 
 #endif  //INTERNAL_SENSORS_HH
+*/

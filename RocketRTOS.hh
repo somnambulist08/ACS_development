@@ -16,7 +16,7 @@
 
 void startRocketRTOS();
 
-#define THREAD_STACK_DEPTH 1024
+#define THREADS_STACK_DEPTH 1024
 //extern to expose them just in case
 extern rtos::Thread sensorAndControlThread;
 extern rtos::Thread loggingThread;
@@ -24,15 +24,8 @@ extern rtos::Thread loggingThread;
 #define SENSOR_AND_CONTROL_DELAY_MS 100
 #define LOGGING_DELAY_MS 1000
 
-
-//Tasks will do nothing unless re-defined by another file
-void stepperTask() __attribute__((weak));
-void stepperTask(){while(1) yield();}
-
-void sensorAndControlTask() __attribute__((weak));
-void sensorAndControlTask(){while(1) yield();}
-
-void loggingTask() __attribute__((weak));
-void loggingTask(){while(1) yield();}
+void stepperTask();
+void sensorAndControlTask();
+void loggingTask();
 
 #endif //ROCKET_RTOS_HH

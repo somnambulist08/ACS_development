@@ -17,7 +17,7 @@
 #include "RocketRTOS.hh"
 #include "SerialSpoofStepper.hh"
 #include "Control.hh"
-#include "InternalSensors.hh"
+//#include "InternalSensors.hh"
 #include "SDSpoofer.hh"
 
 #define sensorPeriod
@@ -25,22 +25,30 @@
 SDSpoofer dummySD;
 SerialSpoofStepper stepper;
 
+unsigned long oldMicros;
+float velocity;
+unsigned long oldAccel;
+
+
 void setup(){
   Serial.begin(115200);
   while(!Serial);
 
   dummySD.openFile();
+  oldMicros = micros();
+  velocity = 0;
+  oldAccel = 0;
 
   startRocketRTOS();
 }
-
+/*
 void stepperTask(){
   stepper.stepOnce();
-}
+}*/
 
 void sensorAndControlTask(){
-  float x=0, y=0, z=0;
-  sensor.readAcceleration(x,y,z);
+  float x=4, y=0, z=8;
+  //sensor.readAcceleration(x,y,z);
   Serial.print("Acceleration: ");
   Serial.print(x);
   Serial.print(", ");

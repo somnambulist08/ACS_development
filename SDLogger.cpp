@@ -1,5 +1,5 @@
 #include "SDLogger.hh"
-
+/*
 SDLogger::SDLogger(){
     source.startupTasks();
     Serial.println("Initializing SD card...");
@@ -54,8 +54,8 @@ SDLogger::SDLogger(){
   }
   lastWrite = micros();
   openFile();
-}
-
+}*/
+/*
 void SDLogger::writeLog(){
     float acc1, acc2, acc3;
     float gy1, gy2, gy3;
@@ -75,7 +75,8 @@ void SDLogger::writeLog(){
   flightData.flush();
 
 }
-
+*/
+/*
 void SDLogger::closeFile(){
     if (flightData){
         flightData = flightData.close();
@@ -87,3 +88,4 @@ void SDLogger::openFile(){
     if(SD.exists(fileName))
         flightData = SD.open(index, FILE_WRITE);
 }
+*/

@@ -6,6 +6,7 @@
  * 
  * 02/23/23 - created file
 ******************************************************************************/
+/*
 #ifndef SD_LOGGER_HH
 #define SD_LOGGER_HH
 #define RED 22
@@ -36,3 +37,4 @@ private:
 
 
 #endif //SD_LOGGER_HH
+*/
