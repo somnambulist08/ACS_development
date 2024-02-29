@@ -17,7 +17,7 @@ float getControl(float desired, float predicted, float dt){
   integratorState += CONTROL_I*err*dt;
  
   control += CONTROL_BIAS;
-  if (control > PI/2) control = PI/2;
+  if (control > M_PI_2) control = M_PI_2;
   if (control < 0) control = 0;
   return control;
 }
