@@ -8,9 +8,9 @@
 ******************************************************************************/
 //#define DEVELOPMENT
 //#define STATE_TEST
-#define CONTROL_TEST
+//#define CONTROL_TEST
 //#define FLIGHT
-//#define SENSORTEST
+#define SENSORTEST
 
 /*****************************************************************************
  * DEVELOPMENT
