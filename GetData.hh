@@ -3,6 +3,7 @@
 * Abstract class for reading flight parameters from 
 * "somewhere" - files, simulink, sensors...
 ****************************************************************************/
+/*
 #ifndef GET_DATA_HH
 #define GET_DATA_HH
 #include <ArduinoAPI.h>
@@ -20,4 +21,4 @@ public:
 };
 
 #endif
-
+*/

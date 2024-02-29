@@ -1,167 +1,123 @@
 #include "RocketRTOS.hh"
 
-/*
-void threadHelloWorld(void){
-    while(1){
-        Serial.println("I'm in a Thread!");
-    }
-}
-*/
+//Threads at higher priority than main
+rtos::Thread sensorAndControlThread(osPriorityHigh, THREADS_STACK_DEPTH);
+rtos::Thread loggingThread(osPriorityHigh, THREADS_STACK_DEPTH);
+//Threads at lower priority than main
+rtos::Thread stepperThread(osPriorityLow, THREADS_STACK_DEPTH);
 
-#ifdef SERIAL_STEPPER_TEST
-SerialSpoofStepper stepper;
-sixteenAMG sensor;
-SDSpoofer dummySD;
-unsigned long oldMicros;
-float velocity;
-float oldAccel;
+RocketState_t rocketState = ROCKET_BOOT;
 
-void loop(){
-    yield();
-}
-#endif //SERIAL_STEPPER_TEST
+void sensorAndControlCallback();
+void loggingCallback();
+void stepperCallback();
 
+//This file provides a definition for deterimining state, but if any other file wants to define it they may
+void determineState() __attribute__((weak));
+
+//Tasks form this file should only be used if they are not defined in any other file
+void stepper_RUN() __attribute__((weak)); 
+void stepper_CLOSE() __attribute__((weak));
+void stepper_IDLE() __attribute__((weak));
+
+void sensorAndControl_PRE() __attribute__((weak));
+void sensorAndControl_LAUNCH() __attribute__((weak));
+void sensorAndControl_FULL() __attribute__((weak));
+void sensorAndControl_IDLE() __attribute__((weak));
+
+void logging_RUN() __attribute__((weak));
+void logging_CLOSE() __attribute__((weak));
+void logging_IDLE() __attribute__((weak));
 
 void startRocketRTOS(){
+    rocketState = ROCKET_PRE;
+    sensorAndControlThread.start(sensorAndControlCallback);
+    loggingThread.start(loggingCallback);
+    stepperThread.start(stepperCallback);
+}   
 
-#ifdef LOOP_CHECKIN_TEST
-    Scheduler.startLoop(loop2);
-    Scheduler.startLoop(loop3);
-#endif //LOOP_CHECKIN_TEST
-
-#ifdef DUMMY_FUNCTIONS
-    Scheduler.startLoop(getSensorsAndDoControlTask);
-    Scheduler.startLoop(logToFileTask);
-    Scheduler.startLoop(moveStepperTask);
-#endif //DUMMY_FUNCTIONS
-
-#ifdef SERIAL_STEPPER_TEST
-    //stepper = new SerialSpoofStepper();
-    //dummySD = new SDSpoofer();
-    //sensor = new sixteenAMG();
-
-    oldAccel = 0;
-    velocity = 0;
-    oldMicros = micros();
-
-    Scheduler.startLoop(sensorAndControlTask);
-    Scheduler.startLoop(logTask);
-    Scheduler.startLoop(stepperTask);
-
-#endif //SERIAL_STEPPER_TEST
-
-}
-
-
-
-#ifdef SERIAL_STEPPER_TEST
-void stepperTask(){
-    if(!stepper.getMoveSteps()) yield(); //if you don't need to run, don't //jonse
-
-    for(int i=0; i<STEPS_PER_PREEMPT; i++){
-        stepper.stepOnce();
+void sensorAndControlCallback(){
+    while(1){
+        switch(rocketState){
+            case(ROCKET_PRE):
+                sensorAndControl_PRE();
+                break;
+            case(ROCKET_LAUNCH):
+                sensorAndControl_LAUNCH();
+                break;
+            case(ROCKET_FREEFALL):
+                sensorAndControl_FULL();
+                break;
+            default:
+                sensorAndControl_IDLE();
+                break;
+        }
+        delay(SENSOR_AND_CONTROL_DELAY_MS);
     }
-    
-    delay(PULSE_PERIOD_MS);
 }
 
-
-void sensorAndControlTask(){
-    float x=0, y=0, z=0;
-    sensor.readAcceleration(x,y,z);
-    Serial.print("Acceleration: ");
-    Serial.print(x);
-    Serial.print(", ");
-    Serial.print(y);
-    Serial.print(", ");
-    Serial.println(z);
-
-    
-    float pressure = 80000;
-    Serial.print("Pressure: ");
-    Serial.println(pressure);
-
-    float altitude = pressureAlt(pressure);
-    Serial.print("Altitude: ");
-    Serial.println(altitude);
-
-    float dt = micros() - oldMicros;
-    velocity = accelerint(z, oldAccel,dt);
-    Serial.print("Velocity: ");
-    Serial.println(velocity);
-
-    float flaps = getControl(100, predictAltitude(altitude, velocity), dt);
-    Serial.print("Control angle: ");
-    Serial.println(flaps);
-
-    stepper.setStepsTarget(stepper.microStepsFromFlapAngle(flaps));
-
-
-    delay(CONTROL_PERIOD_MS);
+void loggingCallback(){
+    while(1){
+       switch(rocketState){
+            case(ROCKET_PRE):
+            case(ROCKET_LAUNCH):
+            case(ROCKET_FREEFALL):
+                logging_RUN();
+                break;
+            case(ROCKET_RECOVERY):
+                logging_CLOSE();
+                break;
+            default:
+                logging_IDLE();
+                break;
+        }
+        delay(LOGGING_DELAY_MS);
+    }
 }
 
-void logTask(){
-    dummySD.writeLog();
-
-    delay(LOG_PERIOD_MS);
+void stepperCallback(){
+    while(1){
+        switch(rocketState){
+            case(ROCKET_FREEFALL):
+                stepper_RUN();
+                break;
+            case(ROCKET_RECOVERY):
+                stepper_CLOSE();
+                break;
+            default:
+                stepper_IDLE();
+                break;
+        }
+        //No delay in lowest-priority thread
+    }
 }
 
-
-
-#endif //SERIAL_STEPPER_TEST
-
-
-
-
-
-
-
-
-
-#ifdef DUMMY_FUNCTIONS
+//main thread tracks the state
 void loop(){
+    while(1){
+        determineState();
+        delay(STATE_CHECKING_DELAY_MS);
+    }
+}
 
-    yield(); // basically just means the main loop should be ignored
+//if nobody else defines determinState(), the state is always ROCKET_FREEFALL
+void determineState() {
+    rocketState = ROCKET_FREEFALL;
 }
 
 
-void getSensorsAndDoControlTask(){
-    
-    for(volatile unsigned int i=0; i<1000; i++); //waste thousands of clock cycles
-    Serial.println("Sensor Data Aquired");
 
-    delay(SENSOR_PERIOD_MS);
-}
-void logToFileTask(){
+//Default Task definitions
+void stepper_RUN() {stepper_IDLE();}
+void stepper_CLOSE() {stepper_IDLE();}
+void stepper_IDLE() {yield();}
 
-    for(volatile unsigned int i=0; i<100000; i++); //waste MORE cycles!
-    Serial.println("Writing to File Complete");
+void sensorAndControl_PRE() {sensorAndControl_IDLE();}
+void sensorAndControl_LAUNCH() {sensorAndControl_IDLE();}
+void sensorAndControl_FULL() {sensorAndControl_IDLE();}
+void sensorAndControl_IDLE() {yield();}
 
-    delay(FILE_PERIOD_MS);
-}
-void moveStepperTask(){
+void logging_RUN() {logging_IDLE();}
+void logging_CLOSE() {logging_IDLE();}
+void logging_IDLE() {yield();}
 
-    for(volatile unsigned int i=0; i<100; i++); //waste a few cycles
-    Serial.println("Stepper Moved");
-
-    delay(STEPPER_PERIOD_MS);
-}
-#endif
-
-#ifdef LOOP_CHECKIN_TEST
-void loop2(){
-    Serial.println("Loop2, checking in");
-    delay(2000);
-}
-
-void loop3(){
-    Serial.println("Loop3, checking in");
-    delay(3000);
-}
-
-//this is the main loop. Will this even work or compile? //it sure does
-void loop(){
-  Serial.println("Hiiii! I'm the main thread!");
-  delay(1000); 
-}
-#endif //LOOP_CHECKIN_TEST

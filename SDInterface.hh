@@ -8,7 +8,7 @@
 ******************************************************************************/
 #ifndef SD_INTERFACE_HH
 #define SD_INTERFACE_HH
-#include "GetData.hh"
+//#include "GetData.hh"
 
 class SDInterface {
 public:
@@ -17,7 +17,7 @@ public:
     virtual void closeFile()=0;
     virtual void openFile()=0;
 private:
-    virtual GetData source; //change to whatever subclass the data's coming from
+   // virtual GetData source; //change to whatever subclass the data's coming from
 };
 
 

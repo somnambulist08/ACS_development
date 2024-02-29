@@ -1,5 +1,5 @@
 #include "InternalSensors.hh"
-
+/*
 class sixteenIMU : public BoschSensorClass
 {
 public:
@@ -140,3 +140,4 @@ class InternalSensors : public GetData
     P = BARO.readPressure()*1000.0f;
   }
 };
+*/
