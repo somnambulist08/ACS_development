@@ -6,12 +6,14 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-#define DEVELOPMENT
-//#define STATE_TEST
+//#define DEVELOPMENT
+#define STATE_TEST
 //#define CONTROL_TEST
 //#define FLIGHT
 
-
+/*****************************************************************************
+ * DEVELOPMENT
+*****************************************************************************/
 #ifdef DEVELOPMENT
 
 #include "RocketRTOS.hh"
@@ -85,11 +87,112 @@ void logging_RUN(){
 #endif //DEVELOPMENT
 
 
+
+/*****************************************************************************
+ * STATE TEST
+*****************************************************************************/
 #ifdef STATE_TEST
+#include <mbed.h>
+#include "RocketRTOS.hh"
+//#include data collector
+#include "SDLogger.hh"
+#include "RealStepper.hh"
+
+#define LAUNCH_THRESHOLD_M_S2 10
+
+//we need a new timer because they last 30 minutes before they overflow.
+//If we sit on the pad for longer than that then we don't know if we are just barely
+//in the new 30 minutes or if we are going to overflow mid-flight. To avoid this,
+//we just reset the timer until it is finally time to run. That way, we are garunteed
+//to not overflow during launch
+mbed::Timer tim;
+
+RealStepper stepper;
+SDLogger sd;
+
+unsigned long oldTimMicros=0;
+float newAcc;
+float vel=0;
+float oldAcc=0;
+
+void setup(){
+  tim.start();
+
+  startRocketRTOS();
+}
+
+void determineState(){
+  while(newAcc < LAUNCH_THRESHOLD_M_S2){
+    rocketState = ROCKET_PRE;
+  }
+  while(newAcc > 0){
+    rocketState = ROCKET_LAUNCH;
+  }
+  while(vel>0){
+    rocketState = ROCKET_FREEFALL;
+  }
+  while(1){ //once you enter recovery state, do not leave
+    rocketState = ROCKET_RECOVERY;
+  }
+}
+
+void sensorAndControl_PRE(){
+  tim.reset(); //continue to reset tim until we determine we are in launch mode
+  //get data
+}
+void sensorAndControl_LAUNCH(){
+  //get data
+  //newAcc = ;
+
+  //integrate acc to get vel
+  float dt = (float)(tim.elapsed_tim().count() - oldTimMicros);
+  vel = (oldAcc + newAcc)/2 * dt;
+
+  //update variables
+  oldAcc = newAcc; 
+  oldTimMicros = tim.elapsed_time().count();
+}
+void sensorAndControl_FULL(){
+  //get data
+
+  //integrate accel to get vel
+  float dt = (float)(tim.elapsed_tim().count() - oldTimMicros);
+  vel = (oldAcc + newAcc)/2 * dt;
+
+  //update variables
+  oldAcc = newAcc; 
+  oldTimMicros = tim.elapsed_time().count();
+
+  //set new control steps
+
+}
+
+
+void logging_RUN(){
+  sd.writeLog();
+}
+void logging_CLOSE(){
+  sd.closeFile();
+}
+
+void stepper_RUN(){
+  stepper.stepOnce();
+}
+void stepper_CLOSE(){
+  stepper.setStepsTarget(0);
+  while(1){
+    stepper.stepOnce();
+  }
+}
+
+
 
 
 #endif //STATE_TEST
 
+/*****************************************************************************
+ * CONTROL TEST
+*****************************************************************************/
 #ifdef CONTROL_TEST
 
 #include "RocketRTOS.hh"
@@ -116,20 +219,25 @@ void setup(){
   while(!Serial);
   
   tim.start();
-  oldMicros = tim.elapsedTime().count();
+  oldMicros = tim.elapsed_time().count(); //this is what micros() does, but this uses a custom timer
   startRocketRTOS();
 }
 
-/*
-void sensorAndControlTask(){
-  
-}*/
 
-void stepperTask(){
+void sensorAndControl_FULL(){
+  //get data
+
+  //integrate
+
+  //set control value
+
+}
+
+void stepper_RUN(){
   stepper.stepOnce();
 }
 
-void loggingTask(){
+void logging_RUN(){
   out.writeLog(accel, vel, h, ang);
 }
 
@@ -137,7 +245,102 @@ void loggingTask(){
 
 #endif //CONTROL_TEST
 
+
+/*****************************************************************************
+ * FLIGHT
+*****************************************************************************/
 #ifdef FLIGHT
+#include <mbed.h>
+#include "RocketRTOS.hh"
+#include "InternalSensors.hh"
+#include "SDLogger.hh"
+#include "RealStepper.hh"
+
+//we need a new timer because they last 30 minutes before they overflow.
+//If we sit on the pad for longer than that then we don't know if we are just barely
+//in the new 30 minutes or if we are going to overflow mid-flight. To avoid this,
+//we just reset the timer until it is finally time to run. That way, we are garunteed
+//to not overflow during launch
+mbed::Timer tim;
+
+RealStepper stepper;
+SDLogger sd;
+
+unsigned long oldTimMicros=0;
+float vel=0;
+float oldAcc=0;
+float newAcc=0;
+
+void setup(){
+  tim.start();
+
+  startRocketRTOS();
+}
+
+void determineState(){
+  while(newAcc < LAUNCH_THRESHOLD_M_S2){
+    rocketState = ROCKET_PRE;
+  }
+  while(newAcc > 0){
+    rocketState = ROCKET_LAUNCH;
+  }
+  while(vel>0){
+    rocketState = ROCKET_FREEFALL;
+  }
+  while(1){ //once you enter recovery state, do not leave
+    rocketState = ROCKET_RECOVERY;
+  }
+}
+
+void sensorAndControl_PRE(){
+  tim.reset(); //continue to reset tim until we determine we are in launch mode
+  //get data
+}
+void sensorAndControl_LAUNCH(){
+  //get data
+  //newAcc = ;
+
+  //integrate acc to get vel
+  float dt = (float)(tim.elapsed_tim().count() - oldTimMicros);
+  vel = (oldAcc + newAcc)/2 * dt;
+
+  //update variables
+  oldAcc = newAcc; 
+  oldTimMicros = tim.elapsed_time().count();
+}
+void sensorAndControl_FULL(){
+  //get data
+
+  //integrate accel to get vel
+  float dt = (float)(tim.elapsed_tim().count() - oldTimMicros);
+  vel = (oldAcc + newAcc)/2 * dt;
+
+  //update variables
+  oldAcc = newAcc; 
+  oldTimMicros = tim.elapsed_time().count();
+
+  //set new control steps
+  
+}
+
+
+void logging_RUN(){
+  sd.writeLog();
+}
+void logging_CLOSE(){
+  sd.closeFile();
+}
+
+void stepper_RUN(){
+  stepper.stepOnce();
+}
+void stepper_CLOSE(){
+  stepper.setStepsTarget(0);
+  while(1){
+    stepper.stepOnce();
+  }
+}
+
 
 #endif //FLIGHT
 
