@@ -17,24 +17,25 @@ void RealStepper::setStepsTarget(int newTarget){
 }
 
 void RealStepper::stepOnce(void){
+  if(currentStep==stepsTarget) return; //if you don't need to do anything, don't
+  
   int direction = -1;
   if (moveSteps <= 0) {
     direction = 0;
   } else {
     direction = 1;
   }
+  digitalWrite(DIRECTION, direction);
+
   digitalWrite(STEP, HIGH);
   delayMicroseconds(pw_on);
   digitalWrite(STEP, LOW);
   delayMicroseconds(pwmicros - pw_on);
   if (direction) {
-    moveSteps = moveSteps + 1;
-    currentStep = currentStep + 1;
+    currentStep++;
   } else {
-    moveSteps = moveSteps + 1;
-    currentStep = currentStep - 1;
+    currentStep--;
   }
-  digitalWrite(DIRECTION, direction);
   return;
 }
 
@@ -47,7 +48,7 @@ RealStepper::RealStepper(){
 }
 
 void RealStepper::stepForTime(unsigned long maxTime, unsigned long startingTime){
-  moveSteps = stepsTarget - currentStep;
+  /*moveSteps = stepsTarget - currentStep;
   //Serial.print("moveSteps=");
   //Serial.println(moveSteps);
   if (moveSteps = 0) return;
@@ -59,6 +60,6 @@ void RealStepper::stepForTime(unsigned long maxTime, unsigned long startingTime)
       prev = current;
       stepOnce();
     }
-  }
+  }*/
   return;
 }

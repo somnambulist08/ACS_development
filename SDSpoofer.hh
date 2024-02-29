@@ -14,7 +14,7 @@
 class SDSpoofer : public SDInterface {
 public:
     SDSpoofer();
-    void writeLog();
+    void writeLog(float accel, float vel, float h, float ang);
     void closeFile();
     void openFile();
 private:
