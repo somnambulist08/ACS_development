@@ -2,8 +2,7 @@
 
 class sixteenIMU : public BoschSensorClass {
 public:
-  sixteenIMU(TwoWire &wire = Wire)
-      : BoschSensorClass(wire){};
+  sixteenIMU(TwoWire &wire = Wire): BoschSensorClass(wire){};
   virtual int readAcceleration(float &x, float &y, float &z)
   {
     int rv = BoschSensorClass::readAcceleration(x, y, z);
@@ -115,7 +114,7 @@ InternalSensors::InternalSensors(){
     }
 };
 void InternalSensors::startupTasks(){
-  int x = 4;
+
 };
 void InternalSensors::readAcceleration(float &x, float &y, float &z){
   IMU.readAcceleration(x,y,z);
@@ -135,4 +134,3 @@ void InternalSensors::readPressure(float &P){
 void InternalSensors::readTemperature(float &T){
   T = HS300x.readTemperature();
 };
-*/

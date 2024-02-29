@@ -1,5 +1,5 @@
 #include "SDLogger.hh"
-
+/*
 SDLogger::SDLogger(SimulinkFile &inputs){
     Serial.println("Initializing SD card...");
   if (!SD.begin()) {

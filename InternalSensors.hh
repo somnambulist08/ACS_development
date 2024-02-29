@@ -8,7 +8,7 @@
 * 02/15/2024 - Created file
 ******************************************************************************/
 
-/*
+
 #ifndef INTERNAL_SENSORS_HH
 #define INTERNAL_SENSORS_HH
 
@@ -25,6 +25,8 @@
 
 class InternalSensors: public GetData{
   public:
+  InternalSensors();
+  void startupTasks();
   void readAcceleration(float &x, float &y, float &z);
 	void readMagneticField(float &x, float &y, float &z);
 	void readGyroscope(float &x, float &y, float &z);
@@ -36,4 +38,3 @@ class InternalSensors: public GetData{
 };
 
 #endif  //INTERNAL_SENSORS_HH
-*/

@@ -95,7 +95,7 @@ void logging_RUN(){
 #include <mbed.h>
 #include "RocketRTOS.hh"
 //#include data collector
-#include "SDLogger.hh"
+//#include "SDLogger.hh"
 #include "RealStepper.hh"
 
 #define LAUNCH_THRESHOLD_M_S2 10
@@ -108,7 +108,7 @@ void logging_RUN(){
 mbed::Timer tim;
 
 RealStepper stepper;
-SDLogger sd;
+//SDLogger sd;
 
 unsigned long oldTimMicros=0;
 float newAcc;
@@ -145,7 +145,7 @@ void sensorAndControl_LAUNCH(){
   //newAcc = ;
 
   //integrate acc to get vel
-  float dt = (float)(tim.elapsed_tim().count() - oldTimMicros);
+  float dt = (float)(tim.elapsed_time().count() - oldTimMicros);
   vel = (oldAcc + newAcc)/2 * dt;
 
   //update variables
@@ -156,7 +156,7 @@ void sensorAndControl_FULL(){
   //get data
 
   //integrate accel to get vel
-  float dt = (float)(tim.elapsed_tim().count() - oldTimMicros);
+  float dt = (float)(tim.elapsed_time().count() - oldTimMicros);
   vel = (oldAcc + newAcc)/2 * dt;
 
   //update variables
@@ -169,10 +169,10 @@ void sensorAndControl_FULL(){
 
 
 void logging_RUN(){
-  sd.writeLog();
+  //sd.writeLog();
 }
 void logging_CLOSE(){
-  sd.closeFile();
+  //sd.closeFile();
 }
 
 void stepper_RUN(){
