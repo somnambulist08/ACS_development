@@ -6,9 +6,9 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-#define DEVELOPMENT
+//#define DEVELOPMENT
 //#define STATE_TEST
-//#define CONTROL_TEST
+#define CONTROL_TEST
 //#define FLIGHT
 
 /*****************************************************************************
@@ -198,39 +198,47 @@ void stepper_CLOSE(){
 #include "RocketRTOS.hh"
 //#include "SDLogger.hh"
 #include "SDSpoofer.hh"
-//#include "SimulinkData.hh"
+#include "SimulinkData.hh"
 #include "RealStepper.hh"
-#include <mbed.h>
+#include "Control.hh"
 
-//SDLogger sd;
+SimulinkFile simIn;
 RealStepper stepper;
 SDSpoofer out;
 
-float accel =0;
-float vel =0;
-float h =0;
-float ang =0;
-float oldAccel = 0;
-float oldMicros;
-mbed::Timer tim;
+float accX=0, accY=0, accZ=0;
+float vel=0;
+float h=0;
+float ang=0;
+float oldAccel=0;
+float tNow=0;
+float tLast=0;
 
 void setup(){
   Serial.begin(115200);
   while(!Serial);
   
-  tim.start();
-  oldMicros = tim.elapsed_time().count(); //this is what micros() does, but this uses a custom timer
   startRocketRTOS();
 }
 
 
 void sensorAndControl_FULL(){
   //get data
+  simIn.readAcceleration(accX,accY,accZ);
+  simIn.readFrame(tNow);
+  simIn.readAltitude(h);
 
   //integrate
-
+  float dt = tNow - tLast;
+  vel = (accZ - oldAccel)/2.0f * dt;
+  
   //set control value
+  ang = getControl(getDesired(tNow), predictAltitude(h,vel), dt);
+  stepper.setStepsTarget(microStepsFromFlapAngle(ang));
 
+  //set old values
+  oldAccel = accZ;
+  tLast = tNow;
 }
 
 void stepper_RUN(){
@@ -238,7 +246,7 @@ void stepper_RUN(){
 }
 
 void logging_RUN(){
-  out.writeLog(accel, vel, h, ang);
+  out.writeLog(accZ, vel, h, ang);
 }
 
 

@@ -13,7 +13,6 @@
 #define GREEN 24
 
 #include "SDInterface.hh"
-#include "SimulinkData.hh"
 #include <SD.h>
 
 class SDLogger : public SDInterface {

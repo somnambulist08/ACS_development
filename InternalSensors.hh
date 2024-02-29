@@ -24,8 +24,11 @@
 #include "GetData.hh"
 
 class InternalSensors: public GetData{
-  public:
+public:
+  //personal
   InternalSensors();
+  
+  //inherited
   void startupTasks();
   void readAcceleration(float &x, float &y, float &z);
 	void readMagneticField(float &x, float &y, float &z);
@@ -33,7 +36,9 @@ class InternalSensors: public GetData{
 	void readTemperature(float &T);
 	void readAltitude(float &H);
 	void readPressure(float &P);
-  private:
+
+private:
+  //personal
   BoschSensorClass IMU;
 };
 
