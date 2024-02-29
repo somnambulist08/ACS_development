@@ -115,7 +115,7 @@ void SDLogger::closeFile(){
 
 void SDLogger::writeLog(){}
 
-void writeLog(float accel, float vel, float h, float ang){
+void SDLogger::writeLog(float accel, float vel, float h, float ang){
   flightData.print("Acc:");
   flightData.print(accel);
   flightData.print(",Vel:");
