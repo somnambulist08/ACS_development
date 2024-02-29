@@ -2,6 +2,8 @@
 #define SIMULINK_DATA_HH
 
 #include "GetData.hh"
+#include <SD.h>
+#include <list>
 
 #define MAX_INPUT_LINE_LENGTH 16
 
