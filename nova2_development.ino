@@ -10,6 +10,7 @@
 //#define STATE_TEST
 #define CONTROL_TEST
 //#define FLIGHT
+//#define SENSORTEST
 
 /*****************************************************************************
  * DEVELOPMENT
@@ -351,4 +352,72 @@ void stepper_CLOSE(){
 
 
 #endif //FLIGHT
+
+
+
+/*****************************************************************************
+ * SENSORTEST
+*****************************************************************************/
+#ifdef SENSORTEST
+
+#include "RocketRTOS.hh"
+//#include "SerialSpoofStepper.hh"
+#include "Control.hh"
+#include "InternalSensors.hh"
+#include "SDSpoofer.hh"
+#include "SDLogger.hh"
+
+
+SDSpoofer dummySD;
+SDLogger sd;
+//SerialSpoofStepper stepper;
+InternalSensors intSensors; //patmer: declare internal sensors object
+
+unsigned long oldMicros;
+unsigned long oldAccel;
+
+float accel=0;
+float vel=0;
+float h=0;
+float ang=0;
+
+
+void setup(){
+  Serial.begin(115200);
+  while(!Serial);
+
+  dummySD.openFile();
+  sd.openFile();
+  oldMicros = micros();
+  oldAccel = 0;
+
+  startRocketRTOS();
+}
+
+//patmer Test: orientation & altitude gathering
+
+//patmer get orientation & altitude
+void getOrientationAltitude(){
+  Serial.println("Getting orientation and altitude");
+  
+  float magfield_data = intSensors.readMagneticField();
+  float gyro_data = intSensors.readGyroscope();
+  float altitude_data = intSensors.readAltitude();
+}
+
+//patmer Use scheduler & control to display results over serial with SDSpoofer
+void displayOrientationAltitude_SDSpoof(){
+  Serial.println("Displaying data to SDSpoofer");
+
+  dummySD.writeLog(accel, vel, h, ang);
+}
+
+//patmer Use scheduler to save results to a real SD card
+void displayOrientationAltitude_SD(){
+  Serial.println("Displaying data to SDSpoofer");
+
+  sd.writeLog(accel, vel, h, ang);
+}
+
+#endif //SENSORTEST
 
