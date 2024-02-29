@@ -5,11 +5,9 @@
 ****************************************************************************/
 #ifndef GET_DATA_HH
 #define GET_DATA_HH
-#include <ArduinoAPI.h>
-#include <Wire.h>
-
 class GetData {
 public:
+	GetData();
 	virtual void startupTasks() = 0;
 	virtual void readAcceleration(float &x, float &y, float &z) = 0;
 	virtual void readMagneticField(float &x, float &y, float &z) = 0;

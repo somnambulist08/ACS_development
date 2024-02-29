@@ -15,8 +15,8 @@ float predictAltitude(float height, float velocity){
 
 float getControl(float desired, float predicted, float dt){
   float err = desired - predicted;
-  float control = P * err; 
-  integratorState += I*err*dt;
+  float control = Pee * err; 
+  integratorState += Iye*err*dt;
  
   control += PI/6;
   if (control > PI/2) control = PI/2;

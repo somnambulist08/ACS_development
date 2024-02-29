@@ -1,3 +1,6 @@
+#ifndef SIMULINK_DATA_HH
+#define SIMULINK_DATA_HH
+
 #include "GetData.hh"
 class SimulinkFile : public GetData {
 public:
@@ -10,3 +13,4 @@ void startupTasks();
 	void readAltitude(float &H);
 	void readPressure(float &P);
 };
+#endif

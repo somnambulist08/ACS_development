@@ -10,6 +10,7 @@
 #define SD_SPOOFER_HH
 
 #include "SDInterface.hh"
+#include "SimulinkData.hh"
 
 class SDSpoofer : public SDInterface {
 public:
@@ -18,7 +19,7 @@ public:
     void closeFile();
     void openFile();
 private:
-    
+    SimulinkFile source;    
 };
 
 

@@ -13,6 +13,8 @@
 float getDesired(float time);
 
 
+
+
 #define predictAltitude(height, velocity) (height + velocity*velocity/2.0/9.81 )
 /*
 float predictAltitude(float height, float velocity);
@@ -21,8 +23,8 @@ float predictAltitude(float height, float velocity);
 #define PI 3.14159265358979323846
 #endif
 
-#define P -0.0006
-#define I -0.0006
+#define Pee -0.0006
+#define Iye -0.0006
  
 extern float integratorState;
 float getControl(float desired, float predicted, float dt);

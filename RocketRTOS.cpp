@@ -10,7 +10,7 @@ void threadHelloWorld(void){
 
 #ifdef SERIAL_STEPPER_TEST
 SerialSpoofStepper stepper;
-sixteenAMG sensor;
+InternalSensors sensor;
 SDSpoofer dummySD;
 unsigned long oldMicros;
 float velocity;

@@ -2,14 +2,14 @@
 #include <SD.h>
 #include <list>
 
-File log;
+File simulation_log;
 std::list<float> alt={};
 std::list<float> acc={};
-std::list<float> time={};
+std::list<float> time_steps={};
 std::list<float>::iterator alt_iter;
 std::list<float>::iterator acc_iter;
 std::list<float>::iterator time_iter;
-class SimulinkData : public getData {
+class SimulinkData : public GetData {
     bool readLine(File &f, char* line, size_t maxLen) {
         for (size_t n = 0; n < maxLen; n++) {
             int c = f.read();
@@ -27,20 +27,20 @@ class SimulinkData : public getData {
         //floats are 4 char, seperated by one char and terminated by \r\n
         //[4 + 1 + 4 + 1 + 4 + 1 + 1]=16
         char line[16], *ptr, *str;
-        if (!readLine(file, line, sizeof(line))) {
+        if (!readLine(simulation_log, line, sizeof(line))) {
             return false;  // EOF or too long
         }
-        *alt = strtof(line, &ptr, 10);
+        *alt = strtof(line, &ptr);
         if (ptr == line) return false;  // bad number if equal
         while (*ptr) {
             if (*ptr++ == ',') break;
         }
-        *acc = strtof(ptr, &str, 10);
+        *acc = strtof(ptr, &str);
         if (ptr == line) return false;  // bad number if equal
         while (*ptr) {
             if (*ptr++ == ',') break;
         }
-        *t = strtof(ptr, &str, 10);
+        *t = strtof(ptr, &str);
         return str != ptr;  // true if number found  
     }
 
@@ -49,18 +49,18 @@ class SimulinkData : public getData {
         while(!SD.begin());
         //Look for the source file in the root directory
         if(SD.exists("SimulinkLog.csv"))
-            log = SD.open("SimulinkLog.csv", FILE_READ);
+            simulation_log = SD.open("SimulinkLog.csv", FILE_READ);
         else
           while(1==1) digitalWrite(23,1);
         float h,a,t;
         while(readVals(&h,&a,&t)){
             alt.push_back(h);
             acc.push_back(a);
-            time.push_back(t);
+            time_steps.push_back(t);
         }
         alt_iter=alt.begin();
         acc_iter=acc.begin();
-        time_iter=time.begin();
+        time_iter=time_steps.begin();
   }
 	void readAcceleration(float &x, float &y, float &z){
         x = 0.0f;
@@ -81,5 +81,5 @@ class SimulinkData : public getData {
 	void readTemperature(float &T){}
 	void readPressure(float &P){}
 
-}
+};
 	

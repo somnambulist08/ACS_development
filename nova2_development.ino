@@ -1,25 +1,27 @@
-#define JON_ALTERNATIVE_INO //Comment this line out to do things normally. This is only here for when I need to do some testing outside of the main loop //jonse
+//#define JON_ALTERNATIVE_INO //Comment this line out to do things normally. This is only here for when I need to do some testing outside of the main loop //jonse
 #ifndef JON_ALTERNATIVE_INO
 
 #include <math.h>
 #include <Arduino.h>
-#include <SD.h>
 
-#include "InternalSensors.hh"
+
 #include "RealStepper.hh"
 #include "Control.hh"
+#include "SimulinkData.hh"
 
-
-#define frame_sec 0.01
-
+#define frame_sec 0.1
 #define G_MET 9.81
 #define G_IMP 32.174
+
+
+#define accelerint(a0, a1, dt) (dt * (a1 + a0) / 2.0)  //define because faster than function calls
 
 
 //Pins for LED and Buzzer
 #define RED 22
 #define GREEN 23
-#define BLUE 24  
+#define BLUE 24
+
 #define BZZT 6
 
 int currentStep = 0;
@@ -75,7 +77,7 @@ float aint_safe = 0.0;
 float velocity = 0;
 
 RealStepper stepperStepper;
-
+SimulinkFile source;
 
 void setup() {
   pinMode(RED, OUTPUT);  //Debug LED and buzzer-always using these
@@ -88,19 +90,6 @@ void setup() {
   digitalWrite(RED, LOW);
   digitalWrite(BZZT, LOW);
   
-  //conditional pins
-  #ifdef flap_pin
-  pinMode(flap_pin, OUTPUT);
-  #endif
-  #ifdef STEP
-  pinMode(STEP,OUTPUT);
-  #endif
-  #ifdef DIRECTION
-  pinMode(DIRECTION,OUTPUT);
-  #endif
-
-
-
 
   for (int i = 0; i < 3; i++) {
     digitalWrite(GREEN, HIGH);
@@ -116,15 +105,28 @@ void setup() {
   digitalWrite(BZZT, LOW);
   delay(250);
   digitalWrite(BZZT, HIGH);
+  #ifdef SimulinkData_hh
+  source.readFrame(t_now);
+  #else
   t_now = micros();
+  #endif
   Serial.println("Startup done...");
 }
 
+
 void loop() {
   t_prev = t_now;
-  t_now = micros();
+  #ifdef SimulinkData_hh
+  source.readFrame(t_now);
+  #else
+  t_now = micros()/1000000;
+  t_prev = t_prev/1000000;
+  #endif
+
   dt = (t_now - t_prev); //time step in microseconds
   //get current flight parameters from somewhere
+  source.readAcceleration(acc_x,acc_y,acc_z);
+  source.readAltitude(altitude);
   //querrySimulinkAndTime(&altitude, &acc_x, &t_now);
   if (preFlight) {
     Serial.println("\t Preflight");
@@ -132,7 +134,7 @@ void loop() {
     preFlight = !burnStart;
   } else if (burnStart && !burnEnd) {
     Serial.println("\t we be burnin");
-    float aint = accelerint(acc_x_t1, acc_x, dt/1000000);
+    float aint = accelerint(acc_x_t1, acc_x, dt);
     if (isfinite(aint)) {
       velocity += aint;
       aint_safe = aint;

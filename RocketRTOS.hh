@@ -42,7 +42,7 @@ extern SerialSpoofStepper stepper;
 
 #define CONTROL_PERIOD_MS 100
 void sensorAndControlTask();
-extern sixteenAMG sensor;
+extern InternalSensors sensor;
 extern unsigned long oldMicros;
 extern float velocity;
 extern float oldAccel;
