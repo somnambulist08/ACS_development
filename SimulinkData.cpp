@@ -1,11 +1,15 @@
 #include "SimulinkData.hh"
 #include <SD.h>
+#include <list>
 
-//float altitude[];
-//float acceleration[];
-//unsigned long t_step[];
-File log;
-class SimulinkData : public getData {
+File simulation_log;
+std::list<float> alt={};
+std::list<float> acc={};
+std::list<float> time_steps={};
+std::list<float>::iterator alt_iter;
+std::list<float>::iterator acc_iter;
+std::list<float>::iterator time_iter;
+class SimulinkData : public GetData {
     bool readLine(File &f, char* line, size_t maxLen) {
         for (size_t n = 0; n < maxLen; n++) {
             int c = f.read();
@@ -19,26 +23,25 @@ class SimulinkData : public getData {
     return false; // line too long
     }
 
-    bool readVals(float* alt, float* acc, unsigned long* t) {
-        //float and long are both 4 chars, seperated by one char and terminated by \n
-        //[4 + 1 + 4 + 1 + 4 + 1]=15
-        char line[40], *ptr, *str;
-        if (!readLine(file, line, sizeof(line))) {
+    bool readVals(float* alt, float* acc, float* t) {
+        //floats are 4 char, seperated by one char and terminated by \r\n
+        //[4 + 1 + 4 + 1 + 4 + 1 + 1]=16
+        char line[16], *ptr, *str;
+        if (!readLine(simulation_log, line, sizeof(line))) {
             return false;  // EOF or too long
         }
-        *alt = strtof(line, &ptr, 10);
+        *alt = strtof(line, &ptr);
         if (ptr == line) return false;  // bad number if equal
         while (*ptr) {
             if (*ptr++ == ',') break;
         }
-        *acc = strtof(ptr, &str, 10);
+        *acc = strtof(ptr, &str);
         if (ptr == line) return false;  // bad number if equal
         while (*ptr) {
             if (*ptr++ == ',') break;
         }
-        *t = strtoul(ptr, &str, 10);
-        return str != ptr;  // true if number found
-        
+        *t = strtof(ptr, &str);
+        return str != ptr;  // true if number found  
     }
 
     void startupTasks(){
@@ -46,23 +49,37 @@ class SimulinkData : public getData {
         while(!SD.begin());
         //Look for the source file in the root directory
         if(SD.exists("SimulinkLog.csv"))
-            log = SD.open("SimulinkLog.csv", FILE_READ);
+            simulation_log = SD.open("SimulinkLog.csv", FILE_READ);
         else
           while(1==1) digitalWrite(23,1);
+        float h,a,t;
+        while(readVals(&h,&a,&t)){
+            alt.push_back(h);
+            acc.push_back(a);
+            time_steps.push_back(t);
+        }
+        alt_iter=alt.begin();
+        acc_iter=acc.begin();
+        time_iter=time_steps.begin();
   }
-    void readFile(float& alt, float& acc, )
-
-    }
 	void readAcceleration(float &x, float &y, float &z){
-
+        x = 0.0f;
+        y = 0.0f;
+        z = *acc_iter;
+        ++acc_iter;
     }
     void readAltitude(float &H){
-
+        H= *alt_iter;
+        ++alt_iter;
+    }
+    void readFrame(float &t){
+        t = *time_iter;
+        ++time_iter;
     }
     void readMagneticField(float &x, float &y, float &z){}
 	void readGyroscope(float &x, float &y, float &z){}
 	void readTemperature(float &T){}
 	void readPressure(float &P){}
 
-}
+};
 	

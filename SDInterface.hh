@@ -8,7 +8,7 @@
 ******************************************************************************/
 #ifndef SD_INTERFACE_HH
 #define SD_INTERFACE_HH
-//#include "GetData.hh"
+#include "SimulinkData.hh"
 
 class SDInterface {
 public:
@@ -16,8 +16,7 @@ public:
     virtual void writeLog()=0;
     virtual void closeFile()=0;
     virtual void openFile()=0;
-private:
-   // virtual GetData source; //change to whatever subclass the data's coming from
+    SimulinkFile source; //change to whatever subclass the data's coming from
 };
 
 

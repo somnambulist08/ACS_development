@@ -1,7 +1,6 @@
 #include "InternalSensors.hh"
-/*
-class sixteenIMU : public BoschSensorClass
-{
+
+class sixteenIMU : public BoschSensorClass {
 public:
   sixteenIMU(TwoWire &wire = Wire)
       : BoschSensorClass(wire){};
@@ -74,17 +73,11 @@ protected:
     return rslt;
   }
 };
-sixteenIMU sixteenIMU(Wire1);
-class InternalSensors : public GetData
-{
-  float pressureAlt(float pressure)
-  {
-    return (1 - powf((pressure / 101325), 0.190284)) * 145366.45 * 0.3048;
-  }
-  void startupTasks()
-  {
-    // onboard IMU: 16g range, 2000dps gyro
-    if (!sixteenIMU.begin())
+
+InternalSensors::InternalSensors(){
+  IMU = sixteenIMU();
+  // onboard IMU: 16g range, 2000dps gyro
+    if (!IMU.begin())
     { // startup
       Serial.println("Failed to initialize IMU!");
       while (1)
@@ -120,24 +113,26 @@ class InternalSensors : public GetData
     {
       Serial.println("Barometer good.");
     }
-  }
-  void readAcceleration(float &x, float &y, float &z){
-    sixteenIMU.readAcceleration(x,y,z);
-  }
-  void readMagneticField(float &x, float &y, float &z){
-    sixteenIMU.readMagneticField(x,y,z);
-  }
-  void readGyroscope(float &x, float &y, float &z){
-    sixteenIMU.readGyroscope(x,y,z);
-  }
-  void readTemperature(float &T){
-    T = HS300x.readTemperature();
-  }
-  void readAltitude(float &H){
-    H = pressureAlt(BARO.readPressure()*1000.0f); 
-  }
-  void readPressure(float &P){
-    P = BARO.readPressure()*1000.0f;
-  }
+};
+void InternalSensors::startupTasks(){
+  int x = 4;
+};
+void InternalSensors::readAcceleration(float &x, float &y, float &z){
+  IMU.readAcceleration(x,y,z);
+};
+void InternalSensors::readAltitude(float &H){
+  H = pressureAlt(BARO.readPressure()*1000.0f);
+};
+void InternalSensors::readGyroscope(float &x, float &y, float &z){
+  IMU.readGyroscope(x,y,z);
+};
+void InternalSensors::readMagneticField(float &x, float &y, float &z){
+  IMU.readMagneticField(x,y,z);
+};
+void InternalSensors::readPressure(float &P){
+  P = BARO.readPressure()*1000.0f;
+};
+void InternalSensors::readTemperature(float &T){
+  T = HS300x.readTemperature();
 };
 */
