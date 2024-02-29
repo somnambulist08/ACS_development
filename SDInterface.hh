@@ -16,7 +16,6 @@ public:
     virtual void writeLog()=0;
     virtual void closeFile()=0;
     virtual void openFile()=0;
-    SimulinkFile source; //change to whatever subclass the data's coming from
 };
 
 

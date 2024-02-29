@@ -14,12 +14,14 @@
 
 class SDSpoofer{// : public SDInterface {
 public:
+    //personal
     SDSpoofer();
     void writeLog(float accel, float vel, float h, float ang);
-    void closeFile();
+
+    //inherited
     void openFile();
-private:
-    SimulinkFile source;    
+    void writeLog();
+    void closeFile();
 };
 
 

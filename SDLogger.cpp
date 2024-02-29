@@ -1,9 +1,9 @@
 #include "SDLogger.hh"
-/*
-SDLogger::SDLogger(SimulinkFile &inputs){
-    Serial.println("Initializing SD card...");
+
+SDLogger::SDLogger(){
+  if(Serial) Serial.println("Initializing SD card...");
   if (!SD.begin()) {
-    Serial.println("initialization failed!");
+    if(Serial) Serial.println("initialization failed!");
     while (1) {
       digitalWrite(RED, HIGH);
       delay(1000);
@@ -11,8 +11,29 @@ SDLogger::SDLogger(SimulinkFile &inputs){
       delay(1000);
     }
   } else {
-    Serial.println("SD Initialized");
+    if(Serial) Serial.println("SD Initialized");
   }
+  openFile();
+}
+
+
+SDLogger::SDLogger(String newFileName){
+  if(Serial) Serial.println("Initializing SD card...");
+  if (!SD.begin()) {
+    if(Serial) Serial.println("initialization failed!");
+    while (1) {
+      digitalWrite(RED, HIGH);
+      delay(1000);
+      digitalWrite(RED, LOW);
+      delay(1000);
+    }
+  } else {
+    if(Serial) Serial.println("SD Initialized");
+  }
+  openFile(newFileName);
+}
+
+void SDLogger::openFile(){
   //less stupid naming convention - 0000.csv to 9999.csv
   //look through SD card, find the next available filename
   bool fileavail = false;
@@ -30,18 +51,18 @@ SDLogger::SDLogger(SimulinkFile &inputs){
     i++;
   }
   flightData = SD.open(fileName, FILE_WRITE);
-  Serial.println("Writing to File: " + fileName);
+  if(Serial) Serial.println("Writing to File: " + fileName);
   // Write the headers:
   if (flightData) {
-    Serial.print("Writing to " + fileName);
+    if(Serial) Serial.print("Writing to " + fileName);
     flightData.print("Time[us], Temp[C], Pressure[hPa],");
     flightData.print(" Omega_1[rad/s], Omega_2[rad/s], Omega_3[rad/s], acc_1[g], acc_2[g], acc_3[g],");
     flightData.println(" mag_1[uT], mag_2[uT], mag_3[uT]");
     flightData.close();
-    Serial.println("...headers done.");
+    if(Serial) Serial.println("...headers done.");
     fileName = flightData.name();
   } else {
-    Serial.println("error opening " + fileName);
+    if(Serial) Serial.println("error opening " + fileName);
     //red light means stop
     while (1) {
       digitalWrite(RED, HIGH);
@@ -50,23 +71,34 @@ SDLogger::SDLogger(SimulinkFile &inputs){
       delay(500);
     }
   }
-  lastWrite = micros();
-  source = inputs;
-  openFile();
-}*/
-/*
-void SDLogger::writeLog(){
-    float acc1, acc2, acc3;
-    float gy1, gy2, gy3;
-    float mag1, mag2, mag3;
-    float temp;
-    float pressure;
-    source.readAcceleration(acc1, acc2, acc3);
-    source.readGyroscope(gy1,gy2,gy3);
-    source.readMagneticField(mag1,mag2,mag3);
-    source.readPressure(pressure);
-    source.readTemperature(temp);
-    unsigned long t_now = micros();
+}
+
+void SDLogger::openFile(String newFileName){
+  fileName = newFilename;
+  flightData = SD.open(fileName, FILE_WRITE);
+  if(Serial) Serial.println("Writing to File: " + fileName);
+  // Write the headers:
+  if (flightData) {
+    if(Serial) Serial.print("Writing to " + fileName);
+    flightData.print("Time[us], Temp[C], Pressure[hPa],");
+    flightData.print(" Omega_1[rad/s], Omega_2[rad/s], Omega_3[rad/s], acc_1[g], acc_2[g], acc_3[g],");
+    flightData.println(" mag_1[uT], mag_2[uT], mag_3[uT]");
+    flightData.close();
+    if(Serial) Serial.println("...headers done.");
+    fileName = flightData.name();
+  } else {
+    if(Serial) Serial.println("error opening " + fileName);
+    //red light means stop
+    while (1) {
+      digitalWrite(RED, HIGH);
+      delay(500);
+      digitalWrite(RED, LOW);
+      delay(500);
+    }
+  }
+}
+
+void SDLogger::writeLog(float acc1, float acc2, float acc3, float gy1, float gy2, float gy3, float mag1, float mag2, float mag3, float temp, float pressure){
     flightData.print(String(t_now) + ',' + String(temp) + ',' + String(pressure) + ',');
     flightData.print(String(gy1) + ',' + String(gy2) + ',' + String(gy3) + ',');
     flightData.print(String(acc1) + ',' + String(acc2) + ',' + String(acc3) + ',');
@@ -74,17 +106,9 @@ void SDLogger::writeLog(){
     flightData.flush();
 
 }
-*/
-/*
+
 void SDLogger::closeFile(){
     if (flightData.peek()!=0){
         flightData.close();
     }
-
 }
-
-void SDLogger::openFile(){
-    if(SD.exists(fileName))
-        flightData = SD.open(fileName, FILE_WRITE);
-}
-*/

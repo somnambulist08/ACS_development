@@ -6,7 +6,6 @@
  * 
  * 02/23/23 - created file
 ******************************************************************************/
-/*
 #ifndef SD_LOGGER_HH
 #define SD_LOGGER_HH
 #define RED 22
@@ -19,15 +18,20 @@
 
 class SDLogger : public SDInterface {
 public:
-    SDLogger(SimulinkFile &inputs);
-    void writeLog();
+    //personal
+    SDLogger();
+    SDLogger(String newFileName);
+    void openFile(String newFileName);
+    void writeLog(float acc1, float acc2, float acc3, float gy1, float gy2, float gy3, float mag1, float mag2, float mag3, float temp, float pressure);
+
+    //inherited
+    void writeLog()=0;
     void closeFile();
     void openFile();
 private:
     //FILE
     static File flightData;
     String fileName="";
-    unsigned long lastWrite = -1;
 };
 
 
@@ -38,4 +42,3 @@ private:
 
 
 #endif //SD_LOGGER_HH
-*/

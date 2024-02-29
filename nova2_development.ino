@@ -6,8 +6,8 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-//#define DEVELOPMENT
-#define STATE_TEST
+#define DEVELOPMENT
+//#define STATE_TEST
 //#define CONTROL_TEST
 //#define FLIGHT
 
