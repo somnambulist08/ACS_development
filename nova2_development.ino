@@ -41,10 +41,10 @@ void setup(){
 
   startRocketRTOS();
 }
-/*
+
 void stepperTask(){
   stepper.stepOnce();
-}*/
+}
 
 void sensorAndControlTask(){
   float x=4, y=0, z=8;
