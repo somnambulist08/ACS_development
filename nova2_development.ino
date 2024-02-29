@@ -381,6 +381,14 @@ float vel=0;
 float h=0;
 float ang=0;
 
+float magfield_data_x = 0;
+float magfield_data_y = 0;
+float magfield_data_z = 0;
+float gyro_data_x = 0;
+float gyro_data_y = 0;
+float gyro_data_z = 0;
+float altitude_data = 0;
+
 
 void setup(){
   Serial.begin(115200);
@@ -400,9 +408,9 @@ void setup(){
 void getOrientationAltitude(){
   Serial.println("Getting orientation and altitude");
   
-  float magfield_data = intSensors.readMagneticField();
-  float gyro_data = intSensors.readGyroscope();
-  float altitude_data = intSensors.readAltitude();
+  intSensors.readMagneticField(magfield_data_x, magfield_data_y, magfield_data_z);
+  intSensors.readGyroscope(gyro_data_x, gyro_data_y, gyro_data_z);
+  intSensors.readAltitude(altitude_data);
 }
 
 //patmer Use scheduler & control to display results over serial with SDSpoofer
@@ -414,9 +422,18 @@ void displayOrientationAltitude_SDSpoof(){
 
 //patmer Use scheduler to save results to a real SD card
 void displayOrientationAltitude_SD(){
-  Serial.println("Displaying data to SDSpoofer");
+  Serial.println("Displaying data to real SD");
 
   sd.writeLog(accel, vel, h, ang);
+}
+
+void sensorAndControl_FULL(){
+  getOrientationAltitude();
+}
+
+void logging_RUN(){
+  displayOrientationAltitude_SDSpoof();
+  displayOrientationAltitude_SD();
 }
 
 #endif //SENSORTEST
