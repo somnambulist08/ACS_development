@@ -2,83 +2,84 @@
 #include <SD.h>
 #include <list>
 
-File simulation_log;
-std::list<float> alt={};
-std::list<float> acc={};
-std::list<float> time_steps={};
-std::list<float>::iterator alt_iter;
-std::list<float>::iterator acc_iter;
-std::list<float>::iterator time_iter;
-    bool readLine(File &f, char* line, size_t maxLen) {
-        for (size_t n = 0; n < maxLen; n++) {
-            int c = f.read();
-            if ( c < 0 && n == 0) return false;  // EOF
-            if (c < 0 || c == '\n') {
-                line[n] = 0;
-                return true;
-            }
-        line[n] = c;
-        }
-        return false; // line too long
-    }
+SimulinkFile::SimulinkFile(){
+    startupTasks();
+}
 
-    bool readVals(float* alt, float* acc, float* t) {
-        //floats are 4 char, seperated by one char and terminated by \r\n
-        //[4 + 1 + 4 + 1 + 4 + 1 + 1]=16
-        char line[16], *ptr, *str;
-        if (!readLine(simulation_log, line, sizeof(line))) {
-            return false;  // EOF or too long
-        }
-        *alt = strtof(line, &ptr);
-        if (ptr == line) return false;  // bad number if equal
-        while (*ptr) {
-            if (*ptr++ == ',') break;
-        }
-        *acc = strtof(ptr, &str);
-        if (ptr == line) return false;  // bad number if equal
-        while (*ptr) {
-            if (*ptr++ == ',') break;
-        }
-        *t = strtof(ptr, &str);
-        return str != ptr;  // true if number found  
-    }
 
-    void startupTasks(){
-        //Start the SD card
-        while(!SD.begin());
-        //Look for the source file in the root directory
-        if(SD.exists("SimulinkLog.csv"))
-            simulation_log = SD.open("SimulinkLog.csv", FILE_READ);
-        else
-          while(1==1) digitalWrite(23,1);
-        float h,a,t;
-        while(readVals(&h,&a,&t)){
-            alt.push_back(h);
-            acc.push_back(a);
-            time_steps.push_back(t);
-        }
-        alt_iter=alt.begin();
-        acc_iter=acc.begin();
-        time_iter=time_steps.begin();
-  }
-	void readAcceleration(float &x, float &y, float &z){
-        x = 0.0f;
-        y = 0.0f;
-        z = *acc_iter;
-        ++acc_iter;
-    }
-    void readAltitude(float &H){
-        H= *alt_iter;
-        ++alt_iter;
-    }
-    void readFrame(float &t){
-        t = *time_iter;
-        ++time_iter;
-    }
-    void readMagneticField(float &x, float &y, float &z){}
-	void readGyroscope(float &x, float &y, float &z){}
-	void readTemperature(float &T){}
-	void readPressure(float &P){}
 
-};
+
+//from fancy internet man :)
+bool SimulinkFile::readLine(File &f, char* line, size_t maxLen) {
+    for (size_t n = 0; n < maxLen; n++) {
+        int c = f.read();
+        if ( c < 0 && n == 0) return false;  // EOF
+        if (c < 0 || c == '\n') {
+            line[n] = 0;
+            return true;
+        }
+    line[n] = c;
+    }
+    return false; // line too long
+}
+
+bool SimulinkFile::readVals(float* alt, float* acc, float* t) {
+    //floats are 4 char, seperated by one char and terminated by \r\n
+    //[4 + 1 + 4 + 1 + 4 + 1 + 1]=16
+    char line[MAX_INPUT_LINE_LENGTH], *ptr, *str;
+    if (!readLine(simulation_log, line, MAX_INPUT_LINE_LENGTH)) {
+        return false;  // EOF or too long
+    }
+    *alt = strtof(line, &ptr);
+    if (ptr == line) return false;  // bad number if equal
+    while (*ptr) {
+        if (*ptr++ == ',') break;
+    }
+    *acc = strtof(ptr, &str);
+    if (ptr == line) return false;  // bad number if equal
+    while (*ptr) {
+        if (*ptr++ == ',') break;
+    }
+    *t = strtof(ptr, &str);
+    return str != ptr;  // true if number found  
+}
+
+void SimulinkFile::startupTasks(){
+    //Start the SD card
+    while(!SD.begin());
+    //Look for the source file in the root directory
+    if(SD.exists("SimulinkLog.csv"))
+        simulation_log = SD.open("SimulinkLog.csv", FILE_READ);
+    else
+        while(1==1) digitalWrite(23,1);
+    float h,a,t;
+    while(readVals(&h,&a,&t)){
+        alt.push_back(h);
+        acc.push_back(a);
+        time_steps.push_back(t);
+    }
+    alt_iter=alt.begin();
+    acc_iter=acc.begin();
+    time_iter=time_steps.begin();
+}
+void SimulinkFile::readAcceleration(float &x, float &y, float &z){
+    x = 0.0f;
+    y = 0.0f;
+    z = *acc_iter;
+    ++acc_iter;
+}
+void SimulinkFile::readAltitude(float &H){
+    H= *alt_iter;
+    ++alt_iter;
+}
+void SimulinkFile::readFrame(float &t){
+    t = *time_iter;
+    ++time_iter;
+}
+void SimulinkFile::readMagneticField(float &x, float &y, float &z){}
+void SimulinkFile::readGyroscope(float &x, float &y, float &z){}
+void SimulinkFile::readTemperature(float &T){}
+void SimulinkFile::readPressure(float &P){}
+
+
 	
