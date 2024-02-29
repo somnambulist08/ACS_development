@@ -1,10 +1,14 @@
 #include "SimulinkData.hh"
 #include <SD.h>
+#include <list>
 
-//float altitude[];
-//float acceleration[];
-//unsigned long t_step[];
 File log;
+std::list<float> alt={};
+std::list<float> acc={};
+std::list<float> time={};
+std::list<float>::iterator alt_iter;
+std::list<float>::iterator acc_iter;
+std::list<float>::iterator time_iter;
 class SimulinkData : public getData {
     bool readLine(File &f, char* line, size_t maxLen) {
         for (size_t n = 0; n < maxLen; n++) {
@@ -19,10 +23,10 @@ class SimulinkData : public getData {
     return false; // line too long
     }
 
-    bool readVals(float* alt, float* acc, unsigned long* t) {
-        //float and long are both 4 chars, seperated by one char and terminated by \n
-        //[4 + 1 + 4 + 1 + 4 + 1]=15
-        char line[40], *ptr, *str;
+    bool readVals(float* alt, float* acc, float* t) {
+        //floats are 4 char, seperated by one char and terminated by \r\n
+        //[4 + 1 + 4 + 1 + 4 + 1 + 1]=16
+        char line[16], *ptr, *str;
         if (!readLine(file, line, sizeof(line))) {
             return false;  // EOF or too long
         }
@@ -36,9 +40,8 @@ class SimulinkData : public getData {
         while (*ptr) {
             if (*ptr++ == ',') break;
         }
-        *t = strtoul(ptr, &str, 10);
-        return str != ptr;  // true if number found
-        
+        *t = strtof(ptr, &str, 10);
+        return str != ptr;  // true if number found  
     }
 
     void startupTasks(){
@@ -49,15 +52,29 @@ class SimulinkData : public getData {
             log = SD.open("SimulinkLog.csv", FILE_READ);
         else
           while(1==1) digitalWrite(23,1);
+        float h,a,t;
+        while(readVals(&h,&a,&t)){
+            alt.push_back(h);
+            acc.push_back(a);
+            time.push_back(t);
+        }
+        alt_iter=alt.begin();
+        acc_iter=acc.begin();
+        time_iter=time.begin();
   }
-    void readFile(float& alt, float& acc, )
-
-    }
 	void readAcceleration(float &x, float &y, float &z){
-
+        x = 0.0f;
+        y = 0.0f;
+        z = *acc_iter;
+        ++acc_iter;
     }
     void readAltitude(float &H){
-
+        H= *alt_iter;
+        ++alt_iter;
+    }
+    void readFrame(float &t){
+        t = *time_iter;
+        ++time_iter;
     }
     void readMagneticField(float &x, float &y, float &z){}
 	void readGyroscope(float &x, float &y, float &z){}
