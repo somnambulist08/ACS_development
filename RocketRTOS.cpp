@@ -96,7 +96,7 @@ void stepperCallback(){
 void loop(){
     while(1){
         determineState();
-        yield();
+        delay(STATE_CHECKING_DELAY_MS);
     }
 }
 
@@ -110,13 +110,14 @@ void determineState() {
 //Default Task definitions
 void stepper_RUN() {stepper_IDLE();}
 void stepper_CLOSE() {stepper_IDLE();}
-void stepper_IDLE() {while(1) yield();}
+void stepper_IDLE() {yield();}
 
 void sensorAndControl_PRE() {sensorAndControl_IDLE();}
 void sensorAndControl_LAUNCH() {sensorAndControl_IDLE();}
 void sensorAndControl_FULL() {sensorAndControl_IDLE();}
-void sensorAndControl_IDLE() {while(1) yield();}
+void sensorAndControl_IDLE() {yield();}
 
 void logging_RUN() {logging_IDLE();}
 void logging_CLOSE() {logging_IDLE();}
-void logging_IDLE() {while(1) yield();}
+void logging_IDLE() {yield();}
+

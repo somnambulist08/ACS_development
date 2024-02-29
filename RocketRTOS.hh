@@ -36,6 +36,7 @@ extern rtos::Thread stepperThread;
 
 #define SENSOR_AND_CONTROL_DELAY_MS 100
 #define LOGGING_DELAY_MS 1000
+#define STATE_CHECKING_DELAY_MS 100
 
 //Stepper Tasks
 void stepper_RUN(); //should implement full stepper functionality

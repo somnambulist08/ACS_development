@@ -6,9 +6,9 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-//#define DEVELOPMENT
+#define DEVELOPMENT
 //#define STATE_TEST
-#define CONTROL_TEST
+//#define CONTROL_TEST
 //#define FLIGHT
 
 
@@ -20,14 +20,17 @@
 //#include "InternalSensors.hh"
 #include "SDSpoofer.hh"
 
-#define sensorPeriod
 
 SDSpoofer dummySD;
 SerialSpoofStepper stepper;
 
 unsigned long oldMicros;
-float velocity;
 unsigned long oldAccel;
+
+float accel=0;
+float vel=0;
+float h=0;
+float ang=0;
 
 
 void setup(){
@@ -36,50 +39,47 @@ void setup(){
 
   dummySD.openFile();
   oldMicros = micros();
-  velocity = 0;
   oldAccel = 0;
 
   startRocketRTOS();
 }
 
-void stepperTask(){
+void stepper_RUN(){
+  Serial.println("Stepper Run");
   stepper.stepOnce();
 }
 
-void sensorAndControlTask(){
+void stepper_IDLE(){
+  Serial.println("Stepper Idle");
+}
+
+void determineState(){
+  Serial.println("Determining State");
+  rocketState = ROCKET_FREEFALL;
+}
+
+void sensorAndControl_FULL(){
   float x=4, y=0, z=8;
   //sensor.readAcceleration(x,y,z);
-  Serial.print("Acceleration: ");
-  Serial.print(x);
-  Serial.print(", ");
-  Serial.print(y);
-  Serial.print(", ");
-  Serial.println(z);
-
 
   float pressure = 80000;
-  Serial.print("Pressure: ");
-  Serial.println(pressure);
 
-  float altitude = (1 - powf((pressure / 101325), 0.190284)) * 145366.45 * 0.3048;
-  Serial.print("Altitude: ");
-  Serial.println(altitude);
+  h = (1 - powf((pressure / 101325), 0.190284)) * 145366.45 * 0.3048;
+
 
   float dt = micros() - oldMicros;
-  velocity = (dt * (z + oldAccel) / 2.0);
-  Serial.print("Velocity: ");
-  Serial.println(velocity);
+  vel = (dt * (z + oldAccel) / 2.0);
 
-  float flaps = getControl(100, predictAltitude(altitude, velocity), dt);
-  Serial.print("Control angle: ");
-  Serial.println(flaps);
+
+  ang = getControl(100, predictAltitude(h, vel), dt);
+
 
   //stepper.setStepsTarget(stepper.microStepsFromFlapAngle(flaps));
   stepper.setStepsTarget(1000000);
 }
 
-void loggingTask(){
-  dummySD.writeLog();
+void logging_RUN(){
+  dummySD.writeLog(accel, vel, h, ang);
 }
 
 #endif //DEVELOPMENT
