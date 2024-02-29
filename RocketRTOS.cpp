@@ -94,8 +94,10 @@ void stepperCallback(){
 
 //main thread tracks the state
 void loop(){
-    determineState();
-    yield();
+    while(1){
+        determineState();
+        yield();
+    }
 }
 
 //if nobody else defines determinState(), the state is always ROCKET_FREEFALL
