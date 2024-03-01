@@ -1,33 +1,27 @@
 #include "InternalSensors.hh"
 
-class sixteenIMU : public BoschSensorClass {
-public:
-  sixteenIMU(TwoWire &wire = Wire): BoschSensorClass(wire){};
-  virtual int readAcceleration(float &x, float &y, float &z)
-  {
+sixteenIMU::sixteenIMU(TwoWire &wire = Wire):BoschSensorClass(wire){};
+int sixteenIMU::readAcceleration(float &x, float &y, float &z){
     int rv = BoschSensorClass::readAcceleration(x, y, z);
     x = -4.0f * x;
     y = 4.0f * y;
     z = -4.0f * z;
     return rv;
-  }
-  virtual int readMagneticField(float &x, float &y, float &z)
+};
+int sixteenIMU::readMagneticField(float &x, float &y, float &z)
   {
     int rv = BoschSensorClass::readMagneticField(x, y, z);
     x = -x;
     z = -z;
     return rv;
-  }
-  virtual int readGyroscope(float &x, float &y, float &z)
+  };
+  int sixteenIMU::readGyroscope(float &x, float &y, float &z)
   {
     int rv = BoschSensorClass::readGyroscope(x, y, z);
     y = -y;
     return rv;
-  }
-
-protected:
-  virtual int8_t configure_sensor(struct bmi2_dev *dev)
-  {
+    };
+  int8_t sixteenIMU::configure_sensor(struct bmi2_dev *dev) {
     int8_t rslt;
     uint8_t sens_list[2] = {BMI2_ACCEL, BMI2_GYRO};
 
@@ -68,15 +62,13 @@ protected:
     rslt = bmi2_sensor_enable(sens_list, 2, dev);
     if (rslt != BMI2_OK)
       return rslt;
-
     return rslt;
-  }
 };
 
 InternalSensors::InternalSensors(){
-  IMU = sixteenIMU();
+  fixedIMU = sixteenIMU();
   // onboard IMU: 16g range, 2000dps gyro
-    if (!IMU.begin())
+    if (!fixedIMU.begin())
     { // startup
       Serial.println("Failed to initialize IMU!");
       while (1)
@@ -113,20 +105,18 @@ InternalSensors::InternalSensors(){
       Serial.println("Barometer good.");
     }
 };
-void InternalSensors::startupTasks(){
-
-};
+void InternalSensors::startupTasks(){};
 void InternalSensors::readAcceleration(float &x, float &y, float &z){
-  IMU.readAcceleration(x,y,z);
+  fixedIMU.readAcceleration(x,y,z);
 };
 void InternalSensors::readAltitude(float &H){
   H = pressureAlt(BARO.readPressure()*1000.0f);
 };
 void InternalSensors::readGyroscope(float &x, float &y, float &z){
-  IMU.readGyroscope(x,y,z);
+  fixedIMU.readGyroscope(x,y,z);
 };
 void InternalSensors::readMagneticField(float &x, float &y, float &z){
-  IMU.readMagneticField(x,y,z);
+  fixedIMU.readMagneticField(x,y,z);
 };
 void InternalSensors::readPressure(float &P){
   P = BARO.readPressure()*1000.0f;
