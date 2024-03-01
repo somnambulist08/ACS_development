@@ -389,13 +389,17 @@ float accelerometer_data_x = 0;
 float accelerometer_data_y = 0;
 float accelerometer_data_z = 0;
 
+float pressure_data = -1.0f;
+float temperature_data = -1.0f;
+
 
 
 void setup(){
+  intSensors.startupTasks();
   Serial.begin(115200);
   while(!Serial);
 
-  //dummySD.openFile();
+  dummySD.openFile();
   //sd.openFile();
 
   startRocketRTOS();
@@ -405,27 +409,57 @@ void setup(){
 void getOrientationAltitude(){ //patmer get orientation & altitude
   Serial.println("Getting orientation and altitude");
   
+
+
+  //you missed one :) //jonse
+  intSensors.readAcceleration(accelerometer_data_x, accelerometer_data_y, accelerometer_data_z);
+  intSensors.readPressure(pressure_data);
+  intSensors.readTemperature(temperature_data);
   intSensors.readMagneticField(magfield_data_x, magfield_data_y, magfield_data_z);
   intSensors.readGyroscope(gyro_data_x, gyro_data_y, gyro_data_z);
   intSensors.readAltitude(altitude_data);
 
-  //you missed one :) //jonse
-  intSensors.readAcceleration(accelerometer_data_x, accelerometer_data_y, accelerometer_data_z);
-  
+
   //fill the variables that get logged //jonse
   h = altitude_data;
   accel = accelerometer_data_z;
 
+  Serial.println("Temperature:");
+  Serial.println(temperature_data);
+  Serial.println("Pressure:");
+  Serial.println(pressure_data);
+  Serial.print("acc_x: ");
+  Serial.print(accelerometer_data_x);
+  Serial.print(" acc_y: ");
+  Serial.print(accelerometer_data_y);
+  Serial.print(" acc_z: ");
+  Serial.println(accelerometer_data_z);
+
+  Serial.print("gyro_x: ");
+  Serial.print(gyro_data_x);
+  Serial.print(" gyro_y: ");
+  Serial.print(gyro_data_y);
+  Serial.print(" gyro_z: ");
+  Serial.println(gyro_data_z);
+  
+  Serial.print("mag_x: ");
+  Serial.print(magfield_data_x);
+  Serial.print(" mag_y: ");
+  Serial.print(magfield_data_y);
+  Serial.print(" mag_z: ");
+  Serial.println(magfield_data_z);
 
 }
 
 void displayOrientationAltitude_SDSpoof(){ //patmer Display results over serial with SDSpoofer
   Serial.println("Displaying data to SDSpoofer");
 
+
+
   dummySD.writeLog(accel, vel, h, ang);
 }
 
-void displayOrientationAltitude_SD(){ //patmer Ssave results to a real SD card
+void displayOrientationAltitude_SD(){ //patmer Save results to a real SD card
   //Serial.println("Displaying data to real SD");
 
   //sd.writeLog(accel, vel, h, ang);
@@ -440,7 +474,7 @@ void sensorAndControl_FULL(){
 }
 
 void logging_RUN(){
-  displayOrientationAltitude_SDSpoof();
+  //displayOrientationAltitude_SDSpoof();
   displayOrientationAltitude_SD();
 }
 /* Scheduler functions END*/
