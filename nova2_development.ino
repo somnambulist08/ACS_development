@@ -7,10 +7,10 @@
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
 //#define DEVELOPMENT
-//#define STATE_TEST
+#define STATE_TEST
 //#define CONTROL_TEST
 //#define FLIGHT
-#define SENSORTEST
+//#define SENSORTEST
 
 /*****************************************************************************
  * DEVELOPMENT
@@ -96,8 +96,11 @@ void logging_RUN(){
 #include <mbed.h>
 #include "RocketRTOS.hh"
 //#include data collector
-//#include "SDLogger.hh"
+#include "SDLogger.hh"
 #include "RealStepper.hh"
+//#include "SDSpoofer.hh"
+#include "SimulinkData.hh"
+#include "Control.hh"
 
 #define LAUNCH_THRESHOLD_M_S2 10
 
@@ -107,73 +110,117 @@ void logging_RUN(){
 //we just reset the timer until it is finally time to run. That way, we are garunteed
 //to not overflow during launch
 mbed::Timer tim;
+mbed::Timer simulinkTimer; //because this also needs its own opinion of time
 
+SimulinkFile simIn;
 RealStepper stepper;
-//SDLogger sd;
+SDLogger sd;
+//SDSpoofer sd;
 
-unsigned long oldTimMicros=0;
+float tOld=0;
 float newAcc;
 float vel=0;
 float oldAcc=0;
+float h=0;
+float ang=0;
 
 void setup(){
-  tim.start();
+  Serial.begin(115200);//remove me when you're done with spoofers
+  while(!Serial);
+  delay(500);
 
+  Serial.println("Entering Startup Tasks");
+  simIn.startupTasks();
+  simIn.printData();
+  delay(1000);
+
+  sd.openFile();
+  delay(1000);
+
+  Serial.println("GO!");
+  delay(1000);
+
+  tim.start();
+  simulinkTimer.start();
   startRocketRTOS();
 }
 
 void determineState(){
   while(newAcc < LAUNCH_THRESHOLD_M_S2){
     rocketState = ROCKET_PRE;
+    Serial.print("State: ");
+    Serial.println(rocketState);
+    delay(STATE_CHECKING_DELAY_MS);
   }
   while(newAcc > 0){
     rocketState = ROCKET_LAUNCH;
+    Serial.print("State: ");
+    Serial.println(rocketState);
+    delay(STATE_CHECKING_DELAY_MS);
   }
   while(vel>0){
     rocketState = ROCKET_FREEFALL;
+    Serial.print("State: ");
+    Serial.println(rocketState);
+    delay(STATE_CHECKING_DELAY_MS);
   }
   while(1){ //once you enter recovery state, do not leave
     rocketState = ROCKET_RECOVERY;
+    Serial.print("State: ");
+    Serial.println(rocketState);
+    delay(STATE_CHECKING_DELAY_MS);
   }
 }
 
 void sensorAndControl_PRE(){
   tim.reset(); //continue to reset tim until we determine we are in launch mode
   //get data
+  float t = ((float)(simulinkTimer.elapsed_time().count()))/1000000.0f;
+  oldAcc = newAcc;
+  newAcc = simIn.getInterpolatedAcceleration(t);
+  h = simIn.getInterpolatedAltitude(t);
 }
 void sensorAndControl_LAUNCH(){
   //get data
-  //newAcc = ;
+  float t = ((float)(simulinkTimer.elapsed_time().count()))/1000000.0f;
+  newAcc = simIn.getInterpolatedAcceleration(t);
+  h = simIn.getInterpolatedAltitude(t);
 
   //integrate acc to get vel
-  float dt = (float)(tim.elapsed_time().count() - oldTimMicros);
-  vel = (oldAcc + newAcc)/2 * dt;
+  float dt = ((float)(tim.elapsed_time().count()))/1000000.0f - tOld;
+  vel += (oldAcc + newAcc)/2.0f * dt;
 
   //update variables
   oldAcc = newAcc; 
-  oldTimMicros = tim.elapsed_time().count();
+  tOld = ((float)(tim.elapsed_time().count()))/1000000.0f;
 }
 void sensorAndControl_FULL(){
   //get data
+  float t = ((float)(simulinkTimer.elapsed_time().count()))/1000000.0f;
+  newAcc = simIn.getInterpolatedAcceleration(t);
+  h = simIn.getInterpolatedAltitude(t);
 
-  //integrate accel to get vel
-  float dt = (float)(tim.elapsed_time().count() - oldTimMicros);
-  vel = (oldAcc + newAcc)/2 * dt;
+  //integrate acc to get vel
+  float tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
+  float dt = (tNow - tOld);
+  vel += (oldAcc + newAcc)/2.0f * dt;
 
   //update variables
   oldAcc = newAcc; 
-  oldTimMicros = tim.elapsed_time().count();
+  tOld = tNow;
 
-  //set new control steps
+  //set control value
+  ang = getControl(getDesired(tNow), predictAltitude(h,vel), dt);
+  stepper.setStepsTarget(microStepsFromFlapAngle(ang));
 
 }
 
 
 void logging_RUN(){
-  //sd.writeLog();
+  sd.writeLog(newAcc, vel, h, ang);
 }
 void logging_CLOSE(){
-  //sd.closeFile();
+  sd.closeFile();
 }
 
 void stepper_RUN(){
@@ -181,7 +228,7 @@ void stepper_RUN(){
 }
 void stepper_CLOSE(){
   stepper.setStepsTarget(0);
-  while(1){
+  for(int s=0; s<100; s++){
     stepper.stepOnce();
   }
 }
@@ -202,13 +249,18 @@ void stepper_CLOSE(){
 #include "SimulinkData.hh"
 #include "RealStepper.hh"
 #include "Control.hh"
+//#include "SerialSpoofStepper.hh"
+#include <mbed.h>
+
+mbed::Timer tim;
 
 SimulinkFile simIn;
 RealStepper stepper;
+//SerialSpoofStepper stepper;
 SDSpoofer out;
 
 float accX=0, accY=0, accZ=0;
-float vel=0;
+float vel=275.6;
 float h=0;
 float ang=0;
 float oldAccel=0;
@@ -219,22 +271,49 @@ void setup(){
   Serial.begin(115200);
   while(!Serial);
   
+  delay(1000);
+  Serial.println("Attempting Startup Tasks Now");
+  simIn.startupTasks();
+  simIn.printData();
+  Serial.println("Finished, Prepare to Enter the Scheduler!");
+  delay(1000);
+
+  tim.start();
   startRocketRTOS();
 }
 
 
 void sensorAndControl_FULL(){
   //get data
-  simIn.readAcceleration(accX,accY,accZ);
-  simIn.readFrame(tNow);
-  simIn.readAltitude(h);
+  tNow = ( (float)(tim.elapsed_time().count()) ) / 1000000.0f;
+  Serial.print("tNow: ");
+  Serial.println(tNow);
+  accZ = simIn.getInterpolatedAcceleration(tNow);
+  Serial.print("accZ: ");
+  Serial.println(accZ);
+  h = simIn.getInterpolatedAltitude(tNow);
+  Serial.print("h: ");
+  Serial.println(h);
 
   //integrate
   float dt = tNow - tLast;
-  vel = (accZ - oldAccel)/2.0f * dt;
+  vel += (accZ + oldAccel)/2.0f * dt;
+  Serial.print("dt: ");
+  Serial.println(dt);
+  Serial.print("AccInt: ");
+  Serial.println((float)((accZ + oldAccel)/2.0f * dt));
+  Serial.print("vel: ");
+  Serial.println(vel);
   
   //set control value
   ang = getControl(getDesired(tNow), predictAltitude(h,vel), dt);
+  Serial.print("ang: ");
+  Serial.println(ang);
+  Serial.print("H Desired: ");
+  Serial.println(getDesired(tNow));
+  Serial.print("H Predicted: ");
+  Serial.println(predictAltitude(h,vel));
+
   stepper.setStepsTarget(microStepsFromFlapAngle(ang));
 
   //set old values

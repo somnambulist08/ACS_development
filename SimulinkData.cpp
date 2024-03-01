@@ -2,79 +2,92 @@
 
 
 SimulinkFile::SimulinkFile(){
-    startupTasks();
+    
 }
 
-
-
-
-//from fancy internet man :)
-bool SimulinkFile::readLine(File &f, char* line, size_t maxLen) {
-    for (size_t n = 0; n < maxLen; n++) {
-        int c = f.read();
-        if ( c < 0 && n == 0) return false;  // EOF
-        if (c < 0 || c == '\n') {
-            line[n] = 0;
-            return true;
-        }
-    line[n] = c;
+void SimulinkFile::loadData(const char* file) {
+    Serial.println("Entering loadData()");
+    fileName = file;
+    dataFile = SD.open(fileName);
+    if (dataFile) {
+    while (dataFile.available() && dataCount < MAX_DATA_POINTS) {
+        String line = dataFile.readStringUntil('\n');
+        parseLine(line);
     }
-    return false; // line too long
+    dataFile.close();
+    } else {
+    Serial.println("Error opening data file!");
+    }
 }
 
-bool SimulinkFile::readVals(float* alt, float* acc, float* t) {
-    //floats are 4 char, seperated by one char and terminated by \r\n
-    //[4 + 1 + 4 + 1 + 4 + 1 + 1]=16
-    char line[MAX_INPUT_LINE_LENGTH], *ptr, *str;
-    if (!readLine(simulation_log, line, MAX_INPUT_LINE_LENGTH)) {
-        return false;  // EOF or too long
+void SimulinkFile::parseLine(String line) {
+    int firstCommaIndex = line.indexOf(',');
+    int lastCommaIndex = line.lastIndexOf(',');
+
+    if (firstCommaIndex == -1 || lastCommaIndex == -1 || firstCommaIndex == lastCommaIndex) {
+    Serial.println("Invalid line format");
+    return;
     }
-    *alt = strtof(line, &ptr);
-    if (ptr == line) return false;  // bad number if equal
-    while (*ptr) {
-        if (*ptr++ == ',') break;
+
+    String altitudeStr = line.substring(0, firstCommaIndex);
+    String accelerationStr = line.substring(firstCommaIndex + 1, lastCommaIndex);
+    String timeStr = line.substring(lastCommaIndex + 1);
+
+    time[dataCount] = timeStr.toFloat();
+    acceleration[dataCount] = accelerationStr.toFloat();
+    altitude[dataCount] = altitudeStr.toFloat();
+    dataCount++;
+}
+
+float SimulinkFile::interpolate(float x[], float y[], float xKey, int size) {
+  Serial.print("Entering interpolate with key=");
+  Serial.println(xKey);
+  if (xKey <= x[0]) return y[0];
+  if (xKey >= x[size - 1]) return y[size - 1];
+
+  for (int i = 0; i < size - 1; i++) {
+    if (xKey >= x[i] && xKey <= x[i + 1]) {
+      float slope = (y[i + 1] - y[i]) / (x[i + 1] - x[i]);
+      return y[i] + slope * (xKey - x[i]);
     }
-    *acc = strtof(ptr, &str);
-    if (ptr == line) return false;  // bad number if equal
-    while (*ptr) {
-        if (*ptr++ == ',') break;
-    }
-    *t = strtof(ptr, &str);
-    return str != ptr;  // true if number found  
+  }
+  return 0; // Default case, should not reach here if xKey is within bounds
+}
+
+float SimulinkFile::getInterpolatedAltitude(float timeKey) {
+  return interpolate(time, altitude, timeKey, dataCount);
+}
+
+float SimulinkFile::getInterpolatedAcceleration(float timeKey) {
+  return interpolate(time, acceleration, timeKey, dataCount);
+}
+
+void SimulinkFile::printData() {
+  for (int i = 0; i < dataCount; i++) {
+    Serial.print("Time: ");
+    Serial.print(time[i]);
+    Serial.print("s, Acceleration: ");
+    Serial.print(acceleration[i]);
+    Serial.print("m/s^2, Altitude: ");
+    Serial.print(altitude[i]);
+    Serial.println("m");
+  }
 }
 
 void SimulinkFile::startupTasks(){
-    //Start the SD card
-    while(!SD.begin());
-    //Look for the source file in the root directory
-    if(SD.exists("SimulinkLog.csv"))
-        simulation_log = SD.open("SimulinkLog.csv", FILE_READ);
-    else
-        while(1==1) digitalWrite(23,1);
-    float h,a,t;
-    while(readVals(&h,&a,&t)){
-        alt.push_back(h);
-        acc.push_back(a);
-        time_steps.push_back(t);
-    }
-    alt_iter=alt.begin();
-    acc_iter=acc.begin();
-    time_iter=time_steps.begin();
+  if (!SD.begin()) {
+    Serial.println("SD card initialization failed!");
+    return;
+  }
+  loadData("STATET~1.CSV"); //CONTRO~1 or STATET~1
 }
 void SimulinkFile::readAcceleration(float &x, float &y, float &z){
-    x = 0.0f;
-    y = 0.0f;
-    z = *acc_iter;
-    ++acc_iter;
+
 }
 void SimulinkFile::readAltitude(float &H){
-    H= *alt_iter;
-    ++alt_iter;
+
 }
-void SimulinkFile::readFrame(float &t){
-    t = *time_iter;
-    ++time_iter;
-}
+
 void SimulinkFile::readMagneticField(float &x, float &y, float &z){}
 void SimulinkFile::readGyroscope(float &x, float &y, float &z){}
 void SimulinkFile::readTemperature(float &T){}
