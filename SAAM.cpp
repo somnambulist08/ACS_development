@@ -50,29 +50,45 @@ EulerAngles toEulerAngles(Quaternion q) {
   angles.roll = std::atan2(siny_cosp, cosy_cosp);
   return angles;
 }
-void zerocal() {
-  while (abs(acc_z) != 1) {
-    if (sixteenIMU.accelerationAvailable()) {
-      sixteenIMU.readAcceleration(acc_x, acc_y, acc_z);    
+Quaternion hamProduct(Quaternion a, Quaternion b){
+    Quaternion q;
+    q.w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
+    q.x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
+    q.y = a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x;
+    q.z = a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w;
+    return q;
+}
+Quaternion conjugate(Quaternion a){
+    Quaternion q;
+    q.w = a.w;
+    q.x = -a.x;
+    q.y = -a.y;
+    q.z = -a.z;
+    return q;
+}
+Quaternion rotDiff(Quaternion q1, Quaternion q2){
+    Quaternion q2_conj = conjugate(q2);
+    return hamProduct(q1,q2_conj);
+}
+int zerocal(float &ax, float &ay, float &az, float &mx, float &my, float &mz) {
+    if (abs(az) == 1 && abs(ay) < 0.001 && abs(ax) <0.001){
+        float accs[3] = { ax, ay, az };
+        float mags[3] = { mx, my, mz };
+        q_origin = SAAM(accs, mags);
+        e_origin = toEulerAngles(q_origin);
+        delay(50);
+        digitalWrite(RED, LOW);
+        delay(50);
+        digitalWrite(BLUE, LOW);
+        delay(50);
+        return 1;
     }
-    if (sixteenIMU.magneticFieldAvailable()) {
-      sixteenIMU.readMagneticField(mag_x, mag_y, mag_z);
-    }
-    if (abs(acc_z) > 1) {
+    else if (abs(az) > 1) {
       digitalWrite(BLUE, HIGH);
       digitalWrite(RED, LOW);
     } else {
       digitalWrite(RED, HIGH);
       digitalWrite(BLUE, LOW);
     }
-  }
-  float accs[3] = { acc_x, acc_y, acc_z };
-  float mags[3] = { mag_x, mag_y, mag_z };
-  q_origin = SAAM(accs, mags);
-  e_origin = toEulerAngles(q_origin);
-  delay(50);
-  digitalWrite(RED, LOW);
-  delay(50);
-  digitalWrite(BLUE, LOW);
-  delay(50);
+    return 0;
 }
