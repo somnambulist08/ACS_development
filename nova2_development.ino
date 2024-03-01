@@ -101,6 +101,8 @@ void logging_RUN(){
 //#include "SDSpoofer.hh"
 #include "SimulinkData.hh"
 #include "Control.hh"
+#include "SAAM.hh"
+#include "InternalSensors.hh"
 
 #define LAUNCH_THRESHOLD_M_S2 10
 
@@ -116,6 +118,7 @@ SimulinkFile simIn;
 RealStepper stepper;
 SDLogger sd;
 //SDSpoofer sd;
+InternalSensors sensors;
 
 float tOld=0;
 float newAcc;
@@ -123,6 +126,9 @@ float vel=0;
 float oldAcc=0;
 float h=0;
 float ang=0;
+
+float a[3] = {0,0,0};
+float m[3] = {0,0,0};
 
 void setup(){
   Serial.begin(115200);//remove me when you're done with spoofers
@@ -137,8 +143,13 @@ void setup(){
   sd.openFile();
   delay(1000);
 
+  Serial.println("Starting Calibration");
+  zerocal();
+  Serial.println("Calibration Complete...");
+  delay(500);
+
   Serial.println("GO!");
-  delay(1000);
+  delay(500);
 
   tim.start();
   simulinkTimer.start();
@@ -185,6 +196,13 @@ void sensorAndControl_LAUNCH(){
   float t = ((float)(simulinkTimer.elapsed_time().count()))/1000000.0f;
   newAcc = simIn.getInterpolatedAcceleration(t);
   h = simIn.getInterpolatedAltitude(t);
+
+  //Apply sensor fusion
+  sensors.readAcceleration(a[0], a[1], a[2]);
+  sensors.readMagneticField(m[0], m[1], m[3]);
+  Quaternion q_rot = rotDiff(SAAM(a,m), q_origin);
+  Quaternion a_q = 
+  a_originFrame = quadprod(, q_rot);
 
   //integrate acc to get vel
   float dt = ((float)(tim.elapsed_time().count()))/1000000.0f - tOld;
