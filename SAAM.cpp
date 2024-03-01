@@ -76,11 +76,8 @@ int zerocal(float &ax, float &ay, float &az, float &mx, float &my, float &mz) {
         float mags[3] = { mx, my, mz };
         q_origin = SAAM(accs, mags);
         e_origin = toEulerAngles(q_origin);
-        delay(50);
         digitalWrite(RED, LOW);
-        delay(50);
         digitalWrite(BLUE, LOW);
-        delay(50);
         return 1;
     }
     else if (abs(az) > 1) {
