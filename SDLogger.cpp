@@ -127,3 +127,29 @@ void SDLogger::writeLog(float accel, float vel, float h, float ang){
 
   flightData.flush();
 }
+
+void SDLogger::writeLog(float a_raw[], float m[], float a[]){
+  flightData.print("a_raw[0]:");
+  flightData.print(a_raw[0]);
+  flightData.print("a_raw[1]:");
+  flightData.print(a_raw[1]);
+  flightData.print("a_raw[2]:");
+  flightData.print(a_raw[2]);
+
+  flightData.print("m[0]:");
+  flightData.print(m[0]);
+  flightData.print("m[1]:");
+  flightData.print(m[1]);
+  flightData.print("m[2]:");
+  flightData.print(m[2]);
+
+  flightData.print("a[0]:");
+  flightData.print(a[0]);
+  flightData.print("a[1]:");
+  flightData.print(a[1]);
+  flightData.print("a[2]:");
+  flightData.print(a[2]);
+
+  flightData.println();
+  flightData.flush();
+}

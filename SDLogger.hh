@@ -23,6 +23,7 @@ public:
     void openFile(String newFileName);
     void writeLog(float acc1, float acc2, float acc3, float gy1, float gy2, float gy3, float mag1, float mag2, float mag3, float temp, float pressure, float t_now);
     void writeLog(float accel, float vel, float h, float ang);
+    void writeLog(float a_raw[], float m[], float a[]);
 
     //inherited
     void writeLog();
