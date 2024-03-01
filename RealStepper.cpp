@@ -17,16 +17,15 @@ void RealStepper::setStepsTarget(int newTarget){
 }
 
 void RealStepper::stepOnce(void){
-  if(currentStep==stepsTarget) return; //if you don't need to do anything, don't
-  
   int direction = -1;
-  if (moveSteps <= 0) {
+  if ((currentStep-stepsTarget)== 0) {
+    return;
+  } else if((currentStep-stepsTarget) > 0 ){
     direction = 0;
   } else {
     direction = 1;
   }
   digitalWrite(DIRECTION, direction);
-
   digitalWrite(STEP, HIGH);
   delayMicroseconds(pw_on);
   digitalWrite(STEP, LOW);
@@ -36,7 +35,6 @@ void RealStepper::stepOnce(void){
   } else {
     currentStep--;
   }
-  return;
 }
 
 RealStepper::RealStepper(){

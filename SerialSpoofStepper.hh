@@ -32,7 +32,6 @@ public:
 
   int getMoveSteps();
 private:
-  int moveSteps;
   int currentStep;
   int direction;
   int stepsTarget;
