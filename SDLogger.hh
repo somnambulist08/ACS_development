@@ -30,7 +30,7 @@ public:
     void openFile();
 private:
     //FILE
-    static File flightData;
+    File flightData;
     String fileName="";
 };
 
