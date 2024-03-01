@@ -368,12 +368,10 @@ void stepper_CLOSE(){
 #include "SDLogger.hh"
 
 SDSpoofer dummySD;
-SDLogger sd;
+//SDLogger sd; //seeing if this is causing a runtime error//jonse
 //SerialSpoofStepper stepper;
 InternalSensors intSensors; //patmer: declare internal sensors object
 
-unsigned long oldMicros;
-unsigned long oldAccel;
 
 float accel=0;
 float vel=0;
@@ -387,6 +385,9 @@ float gyro_data_x = 0; // variable that holds the measured gyroscope x-data
 float gyro_data_y = 0; // variable that holds the measured gyroscope x-data
 float gyro_data_z = 0; // variable that holds the measured gyroscope x-data
 float altitude_data = 0; // variable that holds the measured altitude
+float accelerometer_data_x = 0;
+float accelerometer_data_y = 0;
+float accelerometer_data_z = 0;
 
 
 
@@ -394,10 +395,8 @@ void setup(){
   Serial.begin(115200);
   while(!Serial);
 
-  dummySD.openFile();
-  sd.openFile();
-  oldMicros = micros();
-  oldAccel = 0;
+  //dummySD.openFile();
+  //sd.openFile();
 
   startRocketRTOS();
 }
@@ -409,6 +408,15 @@ void getOrientationAltitude(){ //patmer get orientation & altitude
   intSensors.readMagneticField(magfield_data_x, magfield_data_y, magfield_data_z);
   intSensors.readGyroscope(gyro_data_x, gyro_data_y, gyro_data_z);
   intSensors.readAltitude(altitude_data);
+
+  //you missed one :) //jonse
+  intSensors.readAcceleration(accelerometer_data_x, accelerometer_data_y, accelerometer_data_z);
+  
+  //fill the variables that get logged //jonse
+  h = altitude_data;
+  accel = accelerometer_data_z;
+
+
 }
 
 void displayOrientationAltitude_SDSpoof(){ //patmer Display results over serial with SDSpoofer
@@ -418,9 +426,9 @@ void displayOrientationAltitude_SDSpoof(){ //patmer Display results over serial 
 }
 
 void displayOrientationAltitude_SD(){ //patmer Ssave results to a real SD card
-  Serial.println("Displaying data to real SD");
+  //Serial.println("Displaying data to real SD");
 
-  sd.writeLog(accel, vel, h, ang);
+  //sd.writeLog(accel, vel, h, ang);
 }
 /* patmer Orientation & altitude gathering functions END*/
 
