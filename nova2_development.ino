@@ -127,8 +127,9 @@ float oldAcc=0;
 float h=0;
 float ang=0;
 
-float a[3] = {0,0,0};
+float a_raw[3] = {0,0,0};
 float m[3] = {0,0,0};
+float a[3] = {0,0,0};
 
 void setup(){
   Serial.begin(115200);//remove me when you're done with spoofers
@@ -198,11 +199,15 @@ void sensorAndControl_LAUNCH(){
   h = simIn.getInterpolatedAltitude(t);
 
   //Apply sensor fusion
-  sensors.readAcceleration(a[0], a[1], a[2]);
+  sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
   sensors.readMagneticField(m[0], m[1], m[3]);
-  Quaternion q_rot = rotDiff(SAAM(a,m), q_origin);
-  Quaternion a_q = 
-  a_originFrame = quadprod(, q_rot);
+  Quaternion q_rot = rotDiff(SAAM(a_raw,m), q_origin);
+  Quaternion a_q = {.w=0, .x=a_raw[0], .y=a_raw[1], .z=a_raw[2]};
+  Quaternion a_q_originFrame = hamProduct(hamProduct(q_rot, a_q),  conjugate(q_rot));
+  a[0] = a_q_originFrame.x;
+  a[1] = a_q_originFrame.y;
+  a[2] = a_q_originFrame.z;
+
 
   //integrate acc to get vel
   float dt = ((float)(tim.elapsed_time().count()))/1000000.0f - tOld;
@@ -217,6 +222,16 @@ void sensorAndControl_FULL(){
   float t = ((float)(simulinkTimer.elapsed_time().count()))/1000000.0f;
   newAcc = simIn.getInterpolatedAcceleration(t);
   h = simIn.getInterpolatedAltitude(t);
+
+  //Apply sensor fusion
+  sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  sensors.readMagneticField(m[0], m[1], m[3]);
+  Quaternion q_rot = rotDiff(SAAM(a_raw,m), q_origin);
+  Quaternion a_q = {.w=0, .x=a_raw[0], .y=a_raw[1], .z=a_raw[2]};
+  Quaternion a_q_originFrame = hamProduct(hamProduct(q_rot, a_q),  conjugate(q_rot));
+  a[0] = a_q_originFrame.x;
+  a[1] = a_q_originFrame.y;
+  a[2] = a_q_originFrame.z;
 
   //integrate acc to get vel
   float tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
@@ -235,7 +250,7 @@ void sensorAndControl_FULL(){
 
 
 void logging_RUN(){
-  sd.writeLog(newAcc, vel, h, ang);
+  sd.writeLog(a_raw, m, a);
 }
 void logging_CLOSE(){
   sd.closeFile();
