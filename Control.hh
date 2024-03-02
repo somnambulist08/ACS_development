@@ -19,7 +19,7 @@ float predictAltitude(float height, float velocity);
 
 #define CONTROL_P       (-0.001f)
 #define CONTROL_I       (-0.0005f)
-#define CONTROL_BIAS    (0.392699081698724f)//(M_PI/8.0f)
+#define CONTROL_BIAS    (0.314159265358979f)//(M_PI/10.0f)
  
 extern float integratorState;
 float getControl(float desired, float predicted, float dt);
