@@ -1,11 +1,7 @@
 #include "SAAM.hh"
 
-struct Quaternion {
-  float w, x, y, z;
-};
-struct EulerAngles {
-  float yaw, pitch, roll;
-};
+
+Quaternion q_origin;
 
 // sensor fusion following
 // https://inria.hal.science/hal-01922922/document
@@ -51,41 +47,41 @@ EulerAngles toEulerAngles(Quaternion q) {
   return angles;
 }
 Quaternion hamProduct(Quaternion a, Quaternion b){
-    Quaternion q;
-    q.w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
-    q.x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
-    q.y = a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x;
-    q.z = a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w;
-    return q;
+  Quaternion q;
+  q.w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
+  q.x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
+  q.y = a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x;
+  q.z = a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w;
+  return q;
 }
 Quaternion conjugate(Quaternion a){
-    Quaternion q;
-    q.w = a.w;
-    q.x = -a.x;
-    q.y = -a.y;
-    q.z = -a.z;
-    return q;
+  Quaternion q;
+  q.w = a.w;
+  q.x = -a.x;
+  q.y = -a.y;
+  q.z = -a.z;
+  return q;
 }
 Quaternion rotDiff(Quaternion q1, Quaternion q2){
-    Quaternion q2_conj = conjugate(q2);
-    return hamProduct(q1,q2_conj);
+  Quaternion q2_conj = conjugate(q2);
+  return hamProduct(q1,q2_conj);
 }
 int zerocal(float &ax, float &ay, float &az, float &mx, float &my, float &mz) {
-    if (abs(az) == 1 && abs(ay) < 0.001 && abs(ax) <0.001){
-        float accs[3] = { ax, ay, az };
-        float mags[3] = { mx, my, mz };
-        q_origin = SAAM(accs, mags);
-        e_origin = toEulerAngles(q_origin);
-        digitalWrite(RED, LOW);
-        digitalWrite(BLUE, LOW);
-        return 1;
-    }
-    else if (abs(az) > 1) {
-      digitalWrite(BLUE, HIGH);
-      digitalWrite(RED, LOW);
-    } else {
-      digitalWrite(RED, HIGH);
-      digitalWrite(BLUE, LOW);
-    }
-    return 0;
+  if (abs(az) == 1 && abs(ay) < 0.001 && abs(ax) <0.001){
+    float accs[3] = { ax, ay, az };
+    float mags[3] = { mx, my, mz };
+    q_origin = SAAM(accs, mags);
+    e_origin = toEulerAngles(q_origin);
+    digitalWrite(RED, LOW);
+    digitalWrite(BLUE, LOW);
+    return 1;
+  }
+  else if (abs(az) > 1) {
+    digitalWrite(BLUE, HIGH);
+    digitalWrite(RED, LOW);
+  } else {
+    digitalWrite(RED, HIGH);
+    digitalWrite(BLUE, LOW);
+  }
+  return 0;
 }
