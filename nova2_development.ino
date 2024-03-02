@@ -7,9 +7,9 @@
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
 //#define DEVELOPMENT
-#define STATE_TEST
+//#define STATE_TEST
 //#define CONTROL_TEST
-//#define FLIGHT
+#define FLIGHT
 //#define SENSORTEST
 
 /*****************************************************************************
@@ -95,18 +95,19 @@ void logging_RUN(){
 #ifdef STATE_TEST
 #include <mbed.h>
 #include "RocketRTOS.hh"
-//#include data collector
 #include "SDLogger.hh"
-///dddfs#include "RealStepper.hh"
-//#include "SDSpoofer.hh"
-#include "SimulinkData.hh"
+#include "RealStepper.hh"
 #include "Control.hh"
 #include "SAAM.hh"
 #include "InternalSensors.hh"
-#include "SerialSpoofStepper.hh"
 #include "BZZT.hh"
+#include "SimulinkData.hh"
+#include "SerialSpoofStepper.hh"
 
-#define LAUNCH_THRESHOLD_M_S2 10
+#define LAUNCH_THRESHOLD_A_M_S2 10
+#define LAUNCH_THRESHOLD_H_M 20
+
+#define G_TO_M_S2 9.8f
 
 void prvReadSensors();
 void prvIntegrateAccel();
@@ -119,13 +120,12 @@ void prvDoControl();
 //we just reset the timer until it is finally time to run. That way, we are garunteed
 //to not overflow during launch
 mbed::Timer tim;
-mbed::Timer simulinkTimer; //because this also needs its own opinion of time
+mbed::Timer simTimer;
 
 SimulinkFile simIn;
-//RealStepper stepper;
-SerialSpoofStepper stepper;
+RealStepper stepper;
+//SerialSpoofStepper stepper;
 SDLogger sd;
-//SDSpoofer sd;
 InternalSensors sensors;
 
 float tNow=0;
@@ -134,69 +134,59 @@ float newAcc;
 float vel=0;
 float oldAcc=0;
 float h=0;
+float oldH=0;
 float ang=0;
+float h_groundLevel=0;
 
 float a_raw[3] = {0,0,0};
 float m[3] = {0,0,0};
 float a[3] = {0,0,0};
 
 void setup(){
-  Serial.begin(115200);//remove me when you're done with spoofers
-  while(!Serial);
+  //Serial.begin(115200);
+  //while(!Serial);
   longBzzt(1); //1 long means we are in setup
-  delay(500);
-  
+  delay(1000);
 
-  Serial.println("Entering Startup Tasks");
   simIn.startupTasks();
-  simIn.printData();
-  delay(1000);
 
+  sensors.startupTasks();
   sd.openFile();
-  longBzzt(1); //1 more long means we have the SD ready
+  longBzzt(2); //1 more long means we have the SD ready
   delay(1000);
 
-  Serial.println("Starting Calibration");
   /*do{
     sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
     sensors.readMagneticField(m[0], m[1], m[2]);
-  }while(!zerocal(a_raw[0], a_raw[1], a_raw[2], m[0], m[1], m[2]));*/
-  
-  Serial.println("Calibration Complete...");
+  }while(!zerocal(a_raw[0], a_raw[1], a_raw[2], m[0], m[1], m[2]));
   bzzt(3); // 3 short means calibration successfull
-  delay(500);
+  delay(500);*/
+  sensors.readAltitude(h_groundLevel);
 
-  Serial.println("GO!");
-  delay(500);
-
+  simTimer.start();
   tim.start();
-  simulinkTimer.start();
   startRocketRTOS();
 }
 
 void determineState(){
-  while(newAcc < LAUNCH_THRESHOLD_M_S2){
+  while(newAcc < LAUNCH_THRESHOLD_A_M_S2 && h < LAUNCH_THRESHOLD_H_M ){
+    //Serial.println("PRE");
     rocketState = ROCKET_PRE;
-    Serial.print("State: ");
-    Serial.println(rocketState);
     delay(STATE_CHECKING_DELAY_MS);
   }
   while(newAcc > 0){
+    //Serial.println("LAUNCH");
     rocketState = ROCKET_LAUNCH;
-    Serial.print("State: ");
-    Serial.println(rocketState);
     delay(STATE_CHECKING_DELAY_MS);
   }
   while(vel>0){
+    //Serial.println("FREEFALL");
     rocketState = ROCKET_FREEFALL;
-    Serial.print("State: ");
-    Serial.println(rocketState);
     delay(STATE_CHECKING_DELAY_MS);
   }
   while(1){ //once you enter recovery state, do not leave
+    //Serial.println("RECOVERY");
     rocketState = ROCKET_RECOVERY;
-    Serial.print("State: ");
-    Serial.println(rocketState);
     delay(STATE_CHECKING_DELAY_MS);
   }
 }
@@ -242,7 +232,8 @@ void sensorAndControl_FULL(){
 
 
 void logging_RUN(){
-  sd.writeLog(a_raw, m, a);
+  //Serial.println("Entering logging_RUN");
+  sd.writeLog(a_raw[0], a_raw[1], a_raw[2], a[0], a[1], a[2], m[0], m[1], m[2], ang, h, tNow);
 }
 void logging_CLOSE(){
   sd.closeFile();
@@ -259,54 +250,67 @@ void stepper_CLOSE(){
 }
 
 void buzz_PRE(){
-  bzzt(1);
+  bzzt(1); 
 }
 void buzz_POST(){
   bzzt(2);
 }
-void buzz_IDLE(){
-  Serial.println("buzz_IDLE");
-}
-
-
 
 
 void prvReadSensors(){
-  float t = ((float)(simulinkTimer.elapsed_time().count()))/1000000.0f;
-  newAcc = simIn.getInterpolatedAcceleration(t);
-  Serial.print("newAcc=");
-  Serial.println(newAcc);
+  //Serial.println("Entering prvReadSensors");
+  sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  sensors.readMagneticField(m[0], m[1], m[3]);
+  float tempH=0;
+  sensors.readAltitude(tempH);
+  //convert H to AGL
+  //Serial.print("H from Sensor:");
+  //Serial.println(tempH - h_groundLevel);
+  //convert A to m/s2
+  //Serial.print("A from Sensors:");
+  //Serial.println(a_raw[2] * G_TO_M_S2); //TODO: if sensor fusion works, then change this!
+
+  float t = ((float)(simTimer.elapsed_time().count()))/1000000.0f;
   h = simIn.getInterpolatedAltitude(t);
-  Serial.print("h=");
-  Serial.println(h);
+  newAcc = simIn.getInterpolatedAcceleration(t);
+  //Serial.print("h=");
+  //Serial.println(h);
+  //Serial.print("newAcc=");
+  //Serial.println(newAcc);
+
 }
 void prvIntegrateAccel(){
+  //Serial.println("Entering prvIntegrateAccel");
   tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
   float dt = (tNow - tOld);
-  vel += (oldAcc + newAcc)/2.0f * dt;
-  Serial.print("vel=");
-  Serial.println(vel);
+
+  //TODO: Choose one!
+  //vel += (oldAcc + newAcc)/2.0f * dt;
+  vel = (h - oldH)/dt;
+  //Serial.print("vel=");
+  //Serial.println(vel);
 }
 void prvSensorFusion(){
-  /*sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
-  sensors.readMagneticField(m[0], m[1], m[3]);
+  /*
   Quaternion q_rot = rotDiff(SAAM(a_raw,m), q_origin);
   Quaternion a_q = {.w=0, .x=a_raw[0], .y=a_raw[1], .z=a_raw[2]};
   Quaternion a_q_originFrame = hamProduct(hamProduct(q_rot, a_q),  conjugate(q_rot));
   a[0] = a_q_originFrame.x;
   a[1] = a_q_originFrame.y;
-  a[2] = a_q_originFrame.z;*/
+  a[2] = a_q_originFrame.z;
+  newAcc = a[2];*/
 }
 void prvDoControl(){
   ang = getControl(getDesired(tNow), predictAltitude(h,vel), tNow-tOld);
-  Serial.print("ang=");
-  Serial.println(ang);
   stepper.setStepsTarget(microStepsFromFlapAngle(ang));
 }
 void updateVars(){
+  //Serial.println("Entering updateVars");
   oldAcc = newAcc; 
   tOld = tNow;
+  oldH = h;
 }
+
 
 
 
@@ -415,9 +419,23 @@ void logging_RUN(){
 #ifdef FLIGHT
 #include <mbed.h>
 #include "RocketRTOS.hh"
-#include "InternalSensors.hh"
 #include "SDLogger.hh"
 #include "RealStepper.hh"
+#include "Control.hh"
+#include "SAAM.hh"
+#include "InternalSensors.hh"
+#include "BZZT.hh"
+#include "SimulinkData.hh"
+
+#define LAUNCH_THRESHOLD_A_M_S2 10
+#define LAUNCH_THRESHOLD_H_M 20
+
+#define G_TO_M_S2 9.8f
+
+void prvReadSensors();
+void prvIntegrateAccel();
+void prvSensorFusion();
+void prvDoControl();
 
 //we need a new timer because they last 30 minutes before they overflow.
 //If we sit on the pad for longer than that then we don't know if we are just barely
@@ -426,69 +444,114 @@ void logging_RUN(){
 //to not overflow during launch
 mbed::Timer tim;
 
+SimulinkFile simIn;
 RealStepper stepper;
 SDLogger sd;
+InternalSensors sensors;
 
-unsigned long oldTimMicros=0;
+float tNow=0;
+float tOld=0;
+float newAcc;
 float vel=0;
 float oldAcc=0;
-float newAcc=0;
+float h=0;
+float oldH=0;
+float ang=0;
+float h_groundLevel=0;
+
+float a_raw[3] = {0,0,0};
+float m[3] = {0,0,0};
+float a[3] = {0,0,0};
 
 void setup(){
-  tim.start();
+  //Serial.begin(115200);
+  //while(!Serial);
+  longBzzt(1); //1 long means we are in setup
+  delay(1000);
 
+  sensors.startupTasks();
+  sd.openFile();
+  longBzzt(2); //1 more long means we have the SD ready
+  delay(1000);
+
+  /*do{
+    sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+    sensors.readMagneticField(m[0], m[1], m[2]);
+  }while(!zerocal(a_raw[0], a_raw[1], a_raw[2], m[0], m[1], m[2]));
+  bzzt(3); // 3 short means calibration successfull
+  delay(500);*/
+  sensors.readAltitude(h_groundLevel);
+
+  tim.start();
   startRocketRTOS();
 }
 
 void determineState(){
-  while(newAcc < LAUNCH_THRESHOLD_M_S2){
+  while(newAcc < LAUNCH_THRESHOLD_A_M_S2 && h < LAUNCH_THRESHOLD_H_M ){
+    //Serial.println("PRE");
     rocketState = ROCKET_PRE;
+    delay(STATE_CHECKING_DELAY_MS);
   }
   while(newAcc > 0){
+    //Serial.println("LAUNCH");
     rocketState = ROCKET_LAUNCH;
+    delay(STATE_CHECKING_DELAY_MS);
   }
   while(vel>0){
+    //Serial.println("FREEFALL");
     rocketState = ROCKET_FREEFALL;
+    delay(STATE_CHECKING_DELAY_MS);
   }
   while(1){ //once you enter recovery state, do not leave
+    //Serial.println("RECOVERY");
     rocketState = ROCKET_RECOVERY;
+    delay(STATE_CHECKING_DELAY_MS);
   }
 }
 
 void sensorAndControl_PRE(){
   tim.reset(); //continue to reset tim until we determine we are in launch mode
   //get data
+  prvReadSensors();
+
+  updateVars();
 }
 void sensorAndControl_LAUNCH(){
   //get data
-  //newAcc = ;
+  prvReadSensors();
+
+  //Apply sensor fusion
+  prvSensorFusion();
+
 
   //integrate acc to get vel
-  float dt = (float)(tim.elapsed_tim().count() - oldTimMicros);
-  vel = (oldAcc + newAcc)/2 * dt;
+  prvIntegrateAccel();
 
   //update variables
-  oldAcc = newAcc; 
-  oldTimMicros = tim.elapsed_time().count();
+  updateVars();
 }
 void sensorAndControl_FULL(){
   //get data
+  prvReadSensors();
 
-  //integrate accel to get vel
-  float dt = (float)(tim.elapsed_tim().count() - oldTimMicros);
-  vel = (oldAcc + newAcc)/2 * dt;
+  //Apply sensor fusion
+  prvSensorFusion();
+
+  //integrate acc to get vel
+  prvIntegrateAccel();
 
   //update variables
-  oldAcc = newAcc; 
-  oldTimMicros = tim.elapsed_time().count();
+  updateVars();
 
-  //set new control steps
-  
+  //set control value
+  prvDoControl();
+
 }
 
 
 void logging_RUN(){
-  sd.writeLog();
+  //Serial.println("Entering logging_RUN");
+  sd.writeLog(a_raw[0], a_raw[1], a_raw[2], a[0], a[1], a[2], m[0], m[1], m[2], ang, h, tNow);
 }
 void logging_CLOSE(){
   sd.closeFile();
@@ -499,9 +562,63 @@ void stepper_RUN(){
 }
 void stepper_CLOSE(){
   stepper.setStepsTarget(0);
-  while(1){
+  for(int s=0; s<100; s++){
     stepper.stepOnce();
   }
+}
+
+void buzz_PRE(){
+  bzzt(1); 
+}
+void buzz_POST(){
+  bzzt(2);
+}
+
+
+void prvReadSensors(){
+  //Serial.println("Entering prvReadSensors");
+  sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  sensors.readMagneticField(m[0], m[1], m[3]);
+  float tempH=0;
+  sensors.readAltitude(tempH);
+  //convert H to AGL
+  //Serial.print("H from Sensor:");
+  //Serial.println(tempH - h_groundLevel);
+  //convert A to m/s2
+  //Serial.print("A from Sensors:");
+  //Serial.println(a_raw[2] * G_TO_M_S2); //TODO: if sensor fusion works, then change this!
+
+}
+void prvIntegrateAccel(){
+  //Serial.println("Entering prvIntegrateAccel");
+  tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
+  float dt = (tNow - tOld);
+
+  //TODO: Choose one!
+  //vel += (oldAcc + newAcc)/2.0f * dt;
+  vel = (h - oldH)/dt;
+  //Serial.print("vel=");
+  //Serial.println(vel);
+}
+void prvSensorFusion(){
+  /*
+  Quaternion q_rot = rotDiff(SAAM(a_raw,m), q_origin);
+  Quaternion a_q = {.w=0, .x=a_raw[0], .y=a_raw[1], .z=a_raw[2]};
+  Quaternion a_q_originFrame = hamProduct(hamProduct(q_rot, a_q),  conjugate(q_rot));
+  a[0] = a_q_originFrame.x;
+  a[1] = a_q_originFrame.y;
+  a[2] = a_q_originFrame.z;
+  newAcc = a[2];*/
+}
+void prvDoControl(){
+  ang = getControl(getDesired(tNow), predictAltitude(h,vel), tNow-tOld);
+  stepper.setStepsTarget(microStepsFromFlapAngle(ang));
+}
+void updateVars(){
+  //Serial.println("Entering updateVars");
+  oldAcc = newAcc; 
+  tOld = tNow;
+  oldH = h;
 }
 
 
