@@ -4,6 +4,7 @@
 rtos::Thread sensorAndControlThread(osPriorityRealtime, THREADS_STACK_DEPTH);
 rtos::Thread loggingThread(osPriorityHigh, THREADS_STACK_DEPTH);
 //Threads at lower priority than main
+rtos::Thread buzzerThread(osPriorityBelowNormal, THREADS_STACK_DEPTH);
 rtos::Thread stepperThread(osPriorityLow, THREADS_STACK_DEPTH);
 
 RocketState_t rocketState = ROCKET_BOOT;
@@ -11,6 +12,7 @@ RocketState_t rocketState = ROCKET_BOOT;
 void sensorAndControlCallback();
 void loggingCallback();
 void stepperCallback();
+void buzzerCallback();
 
 //This file provides a definition for deterimining state, but if any other file wants to define it they may
 void determineState() __attribute__((weak));
@@ -29,11 +31,16 @@ void logging_RUN() __attribute__((weak));
 void logging_CLOSE() __attribute__((weak));
 void logging_IDLE() __attribute__((weak));
 
+void buzz_PRE() __attribute__((weak));
+void buzz_POST() __attribute__((weak));
+void buzz_IDLE() __attribute__((weak));
+
 void startRocketRTOS(){
     rocketState = ROCKET_PRE;
     sensorAndControlThread.start(sensorAndControlCallback);
     loggingThread.start(loggingCallback);
     stepperThread.start(stepperCallback);
+    buzzerThread.start(buzzerCallback);
 }   
 
 void sensorAndControlCallback(){
@@ -92,6 +99,23 @@ void stepperCallback(){
     }
 }
 
+void buzzerCallback(){
+       while(1){
+        switch(rocketState){
+            case(ROCKET_PRE):
+                buzz_PRE();
+                break;
+            case(ROCKET_RECOVERY):
+                buzz_POST();
+                break;
+            default:
+                buzz_IDLE();
+                break;
+        }
+        delay(BUZZ_DELAY_MS);
+    }
+}
+
 //main thread tracks the state
 void loop(){
     while(1){
@@ -121,3 +145,6 @@ void logging_RUN() {logging_IDLE();}
 void logging_CLOSE() {logging_IDLE();}
 void logging_IDLE() {yield();}
 
+void buzz_PRE() {buzz_IDLE();}
+void buzz_POST() {buzz_IDLE();}
+void buzz_IDLE() {yield();}

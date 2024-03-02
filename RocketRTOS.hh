@@ -37,6 +37,7 @@ extern rtos::Thread stepperThread;
 #define SENSOR_AND_CONTROL_DELAY_MS 100
 #define LOGGING_DELAY_MS 1000
 #define STATE_CHECKING_DELAY_MS 100
+#define BUZZ_DELAY_MS 1000
 
 //Stepper Tasks
 void stepper_RUN(); //should implement full stepper functionality
@@ -53,5 +54,10 @@ void sensorAndControl_IDLE(); //called when sensors and control not needed
 void logging_RUN(); //should log data
 void logging_CLOSE(); //should save the file
 void logging_IDLE(); //called when logging not needed
+
+//Buzzer Tasks
+void buzz_PRE(); //Pre launch buzzes
+void buzz_POST(); //Post recovery buzzes
+void buzz_IDLE(); //called when buzzing not needed
 
 #endif //ROCKET_RTOS_HH
