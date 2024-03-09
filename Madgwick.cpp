@@ -1,9 +1,9 @@
 // implemented following the QuickSilver project and Kevin Plaizier knowledge ;)
-#include "madgwick.hh"
+#include "Madgwick.hh"
 
 // acc should be in units of g's and gyro in rad/s
 // acc should be filtered at this point
-madgwick::update_estimate(float acc[], float gyro[], float dt) {
+Madgwick::update_estimate(float acc[], float gyro[], float dt) { // TODO potentially add a vay to disable acc entirely during some parts of flight
     float roll_delta = gyro[ROLL] * dt;
     float pitch_delta = gyro[PITCH] * dt;
     float yaw_delta = gyro[YAW] * dt;
@@ -35,7 +35,7 @@ madgwick::update_estimate(float acc[], float gyro[], float dt) {
 
 // this is just the magnitude of the vector projection of acceleration onto the gravity_vector
 // acc should be filtered when we run this equation
-madgwick::vertical_acceleration_from_acc(float acc[]) {
+Madgwick::vertical_acceleration_from_acc(float acc[]) {
     // v*w/||w||^2 * w gives us the projection of v onto w
     float dot_product = gravity_vector[X] * acc[X] + gravity_vector[Y] * acc[Y] + gravity_vector[Z] * acc[Z];
 
@@ -57,3 +57,10 @@ madgwick::vertical_acceleration_from_acc(float acc[]) {
 
     return projection_magnitude;
 };
+
+Madgwick::initialize(float b) {
+    beta = b;
+    gravity_vector[X] = 0.0;
+    gravity_vector[Y] = 0.0;
+    gravity_vector[Z] = 1.0;
+}
