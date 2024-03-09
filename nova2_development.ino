@@ -426,6 +426,7 @@ void logging_RUN(){
 #include "InternalSensors.hh"
 #include "BZZT.hh"
 #include "SimulinkData.hh"
+#include "Filter.hh"
 
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
@@ -463,11 +464,18 @@ float a_raw[3] = {0,0,0};
 float m[3] = {0,0,0};
 float a[3] = {0,0,0};
 
+pt1Filter acc_filter[3];
+
 void setup(){
   //Serial.begin(115200);
   //while(!Serial);
   longBzzt(1); //1 long means we are in setup
   delay(1000);
+
+  // initialize the acc_filters
+  for (int axis = 0; axis < 3; axis++) {
+    acc_filter[axis].init(5.0, 0.01); // TODO dt fed in here should be the rate at which we read new acc data
+  }
 
   sensors.startupTasks();
   sd.openFile();
@@ -578,7 +586,11 @@ void buzz_POST(){
 void prvReadSensors(){
   //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
-  sensors.readMagneticField(m[0], m[1], m[3]);
+  //filter the acc data
+  for (int axis = 0; axis < 3; axis++) {
+    a_raw[axis] = acc_filter[axis].apply(a_raw[axis]);
+  }
+  //sensors.readMagneticField(m[0], m[1], m[3]); // magnometer not needed
   float tempH=0;
   sensors.readAltitude(tempH);
   //convert H to AGL
