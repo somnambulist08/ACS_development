@@ -1,4 +1,5 @@
 // implemented following the QuickSilver project and Kevin Plaizier knowledge ;)
+// QuickSilver https://github.com/BossHobby/QUICKSILVER/blob/develop/src/flight/imu.c
 #include "Madgwick.hh"
 
 // acc should be in units of g's and gyro in rad/s
