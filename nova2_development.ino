@@ -284,9 +284,12 @@ void prvIntegrateAccel(){
   tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
   float dt = (tNow - tOld);
 
-  //TODO: Choose one!
-  //vel += (oldAcc + newAcc)/2.0f * dt;
-  vel = (h - oldH)/dt;
+  float fusion_gain = 0.2; // how much we trust accelerometer data
+
+  float acc_integration = newAcc * dt; // will drift, but accurate over short times
+  float barometer_derivative = (h - oldH) / dt;
+  vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
+
   //Serial.print("vel=");
   //Serial.println(vel);
 }
@@ -376,6 +379,7 @@ void sensorAndControl_FULL(){
 
   //integrate
   float dt = tNow - tLast;
+  // todo fuse barometer with this
   vel += (accZ + oldAccel)/2.0f * dt;
   Serial.print("dt: ");
   Serial.println(dt);
@@ -545,7 +549,7 @@ void sensorAndControl_FULL(){
   //Apply sensor fusion
   prvSensorFusion();
 
-  //integrate acc to get vel
+  //fuse sensors to get vel
   prvIntegrateAccel();
 
   //update variables
@@ -604,11 +608,15 @@ void prvReadSensors(){
 void prvIntegrateAccel(){
   //Serial.println("Entering prvIntegrateAccel");
   tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
+  // TODO get dt based on the time between last sample reads, not time since running this, it'll be more accurate this way
   float dt = (tNow - tOld);
 
-  //TODO: Choose one!
-  //vel += (oldAcc + newAcc)/2.0f * dt;
-  vel = (h - oldH)/dt;
+  float fusion_gain = 0.2; // how much we trust accelerometer data
+
+  float acc_integration = newAcc * dt; // will drift, but accurate over short times
+  float barometer_derivative = (h - oldH) / dt;
+  vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
+
   //Serial.print("vel=");
   //Serial.println(vel);
 }
