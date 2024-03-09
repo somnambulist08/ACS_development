@@ -508,11 +508,14 @@ float h_groundLevel=0;
 
 float a_raw[3] = {0,0,0};
 float g_raw[3] = {0.0f, 0.0f, 0.0f};
+float g_raw[3] = {0.0f, 0.0f, 0.0f};
 float m[3] = {0,0,0};
 float a[3] = {0,0,0};
 float dt = 0.01;
+float dt = 0.01;
 
 pt1Filter acc_filter[3];
+Madgwick attitude_estimate;
 Madgwick attitude_estimate;
 
 void setup(){
@@ -525,6 +528,8 @@ void setup(){
   for (int axis = 0; axis < 3; axis++) {
     acc_filter[axis].init(5.0, 0.01); // TODO dt fed in here should be the rate at which we read new acc data
   }
+
+  attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
   attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
@@ -642,6 +647,7 @@ void prvReadSensors(){
     a_raw[axis] = acc_filter[axis].apply(a_raw[axis]);
   }
   // TODO read the gyro values
+  // TODO read the gyro values
   //sensors.readMagneticField(m[0], m[1], m[3]); // magnometer not needed
   float tempH=0;
   sensors.readAltitude(tempH);
@@ -659,17 +665,7 @@ void prvIntegrateAccel(){
   //Serial.println("Entering prvIntegrateAccel");
   tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
   // TODO get dt based on the time between last sample reads, not time since running this, it'll be more accurate this way
-<<<<<<< HEAD
   dt = (tNow - tOld);
-
-  float fusion_gain = 0.2; // how much we trust accelerometer data
-
-  float acc_integration = newAcc * dt; // will drift, but accurate over short times
-  float barometer_derivative = (h - oldH) / dt;
-  vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
-
-=======
-  float dt = (tNow - tOld);
 
   float fusion_gain = 0.2; // how much we trust accelerometer data
 
@@ -682,6 +678,9 @@ void prvIntegrateAccel(){
   //Serial.println(vel);
 }
 void prvSensorFusion(){
+  attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
+  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
   attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
   float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
   newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
