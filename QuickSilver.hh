@@ -13,6 +13,6 @@ public:
     float vertical_acceleration_from_acc(float acc[]);
     void initialize(float b);
 private:
-    float gravity_vector[3]
+    float gravity_vector[3];
     float beta; // filter gain used to fuse acc into the estimate should be a fairly small value
 };
