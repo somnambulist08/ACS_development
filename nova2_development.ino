@@ -429,6 +429,8 @@ void logging_RUN(){
 //#include "SAAM.hh"
 #include "InternalSensors.hh"
 #include "BZZT.hh"
+#include "Madgwick.hh"
+#include "Filter.hh"
 
 #include "Filter.hh"
 
