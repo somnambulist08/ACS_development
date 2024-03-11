@@ -429,6 +429,8 @@ void logging_RUN(){
 //#include "SAAM.hh"
 #include "InternalSensors.hh"
 #include "BZZT.hh"
+#include "Madgwick.hh"
+#include "Filter.hh"
 
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
