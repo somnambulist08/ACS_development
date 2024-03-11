@@ -305,9 +305,9 @@ void prvReadSensors(){
 
   //filter the simulink data
   Serial.print("Raw newAcc: ");
-  Serial.println(newAcc);
+  Serial.print(newAcc);
   newAcc = simIn_filter.apply(newAcc);
-  Serial.print("Filtered newAcc: ");
+  Serial.print(" | Filtered newAcc: ");
   Serial.println(newAcc);
 }
 void prvIntegrateAccel(){
