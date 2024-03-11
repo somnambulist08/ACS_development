@@ -34,9 +34,23 @@ extern rtos::Thread sensorAndControlThread;
 extern rtos::Thread loggingThread;
 extern rtos::Thread stepperThread;
 
-#define SENSOR_AND_CONTROL_DELAY_MS 100
-#define LOGGING_DELAY_MS 100
-#define STATE_CHECKING_DELAY_MS 100
+
+//All delays are in addition to the execution time, meaning the period is
+//delay + execution time. The execution time was measured in STATE_TESTING
+//and therefore has some over-head built in, and the real execution time 
+//is slightly lower
+
+//Execution time in STATE_TESTING: ~20 ms
+#define SENSOR_AND_CONTROL_DELAY_MS 80 //100 ms -> 10 Hz
+
+//Execution time in STATE_TESTING: ~55 ms
+#define LOGGING_DELAY_MS 145  //200 ms -> 5 Hz
+
+//Execution time in STATE_TESTING: 0 ms
+#define STATE_CHECKING_DELAY_MS 100 //100 ms -> 10 Hz
+
+//Execution time of buzz length, blocks stepper but not other tasks
+//Set this delay to determine the gap between status buzz codes
 #define BUZZ_DELAY_MS 2000
 
 //Stepper Tasks
