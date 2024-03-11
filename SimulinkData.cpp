@@ -40,8 +40,8 @@ void SimulinkFile::parseLine(String line) {
 }
 
 float SimulinkFile::interpolate(float x[], float y[], float xKey, int size) {
-  Serial.print("Entering interpolate with key=");
-  Serial.println(xKey);
+  //Serial.print("Entering interpolate with key=");
+  //Serial.println(xKey);
   if (xKey <= x[0]) return y[0];
   if (xKey >= x[size - 1]) return y[size - 1];
 
