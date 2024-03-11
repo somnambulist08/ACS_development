@@ -187,6 +187,8 @@ void setup(){
   startRocketRTOS();
 }
 
+//this implementation of debounces prevents run-through but does not prevent
+//a random noisy signal from triggering the next phase
 void determineState(){
   int i;
   for(i=0; (newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ) || (i<MIN_LOOPS_IN_STATE); i++){
