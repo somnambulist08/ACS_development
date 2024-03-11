@@ -1,6 +1,6 @@
 #include "filter.hh"
 
-pt1Filter::init(float cutoff, float dt) {
+void pt1Filter::init(float cutoff, float dt) {
     float omega = 2.0f * 3.14159265359f * cutoff * dt;
     k = omega / (omega + 1.0f);
     state = 0.0f;

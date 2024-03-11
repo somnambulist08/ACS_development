@@ -6,42 +6,44 @@ SimulinkFile::SimulinkFile(){
 }
 
 void SimulinkFile::loadData(const char* file) {
-    Serial.println("Entering loadData()");
-    fileName = file;
-    dataFile = SD.open(fileName);
-    if (dataFile) {
-    while (dataFile.available() && dataCount < MAX_DATA_POINTS) {
-        String line = dataFile.readStringUntil('\n');
-        parseLine(line);
-    }
-    dataFile.close();
-    } else {
-    Serial.println("Error opening data file!");
-    }
+  Serial.print("Entering loadData(\"");
+  Serial.print(file);
+  Serial.println("\")");
+  fileName = file;
+  dataFile = SD.open(fileName);
+  if (dataFile) {
+  while (dataFile.available() && dataCount < MAX_DATA_POINTS) {
+    String line = dataFile.readStringUntil('\n');
+    parseLine(line);
+  }
+  dataFile.close();
+  } else {
+  Serial.println("Error opening data file!");
+  }
 }
 
 void SimulinkFile::parseLine(String line) {
-    int firstCommaIndex = line.indexOf(',');
-    int lastCommaIndex = line.lastIndexOf(',');
+  int firstCommaIndex = line.indexOf(',');
+  int lastCommaIndex = line.lastIndexOf(',');
 
-    if (firstCommaIndex == -1 || lastCommaIndex == -1 || firstCommaIndex == lastCommaIndex) {
-    Serial.println("Invalid line format");
-    return;
-    }
+  if (firstCommaIndex == -1 || lastCommaIndex == -1 || firstCommaIndex == lastCommaIndex) {
+  Serial.println("Invalid line format");
+  return;
+  }
 
-    String altitudeStr = line.substring(0, firstCommaIndex);
-    String accelerationStr = line.substring(firstCommaIndex + 1, lastCommaIndex);
-    String timeStr = line.substring(lastCommaIndex + 1);
+  String altitudeStr = line.substring(0, firstCommaIndex);
+  String accelerationStr = line.substring(firstCommaIndex + 1, lastCommaIndex);
+  String timeStr = line.substring(lastCommaIndex + 1);
 
-    time[dataCount] = timeStr.toFloat();
-    acceleration[dataCount] = accelerationStr.toFloat();
-    altitude[dataCount] = altitudeStr.toFloat();
-    dataCount++;
+  time[dataCount] = timeStr.toFloat();
+  acceleration[dataCount] = accelerationStr.toFloat();
+  altitude[dataCount] = altitudeStr.toFloat();
+  dataCount++;
 }
 
 float SimulinkFile::interpolate(float x[], float y[], float xKey, int size) {
-  Serial.print("Entering interpolate with key=");
-  Serial.println(xKey);
+  //Serial.print("Entering interpolate with key=");
+  //Serial.println(xKey);
   if (xKey <= x[0]) return y[0];
   if (xKey >= x[size - 1]) return y[size - 1];
 
@@ -79,8 +81,16 @@ void SimulinkFile::startupTasks(){
     Serial.println("SD card initialization failed!");
     return;
   }
-  loadData("STATET~1.CSV"); //CONTRO~1 or STATET~1
+  loadData("TEST1.CSV");
 }
+void SimulinkFile::startupTasks(const char* file){  
+  if (!SD.begin()) {
+    Serial.println("SD card initialization failed!");
+    return;
+  }
+  loadData(file);
+}
+
 void SimulinkFile::readAcceleration(float &x, float &y, float &z){
 
 }

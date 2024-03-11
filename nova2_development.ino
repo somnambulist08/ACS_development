@@ -7,9 +7,9 @@
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
 //#define DEVELOPMENT
-//#define STATE_TEST
+#define STATE_TEST
 //#define CONTROL_TEST
-#define FLIGHT
+//#define FLIGHT
 //#define SENSORTEST
 
 /*****************************************************************************
@@ -98,14 +98,17 @@ void logging_RUN(){
 #include "SDLogger.hh"
 #include "RealStepper.hh"
 #include "Control.hh"
-#include "SAAM.hh"
+//#include "SAAM.hh"
 #include "InternalSensors.hh"
 #include "BZZT.hh"
 #include "SimulinkData.hh"
 #include "SerialSpoofStepper.hh"
+#include "QuickSilver.hh"
+#include "Filter.hh"
 
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
+#define MIN_LOOPS_IN_STATE 3
 
 #define G_TO_M_S2 9.8f
 
@@ -139,16 +142,32 @@ float ang=0;
 float h_groundLevel=0;
 
 float a_raw[3] = {0,0,0};
+float g_raw[3] = {0.0f, 0.0f, 0.0f};
 float m[3] = {0,0,0};
 float a[3] = {0,0,0};
+float dt = 1000.0 / SENSOR_AND_CONTROL_DELAY_MS; //cannot be 0 or else problems :) 0.1 is the current nominal value
+
+pt1Filter acc_filter[3];
+pt1Filter simIn_filter;
+QuickSilver attitude_estimate;
 
 void setup(){
-  //Serial.begin(115200);
-  //while(!Serial);
+  Serial.begin(115200);
+  while(!Serial);
+  Serial.print("current dt: ");
+  Serial.println(dt);
   longBzzt(1); //1 long means we are in setup
   delay(1000);
 
-  simIn.startupTasks();
+  simIn.startupTasks("TEST5.CSV");
+
+    // initialize the acc_filters
+  for (int axis = 0; axis < 3; axis++) {
+    acc_filter[axis].init(5.0, dt); // TODO dt fed in here should be the rate at which we read new acc data
+  }
+  simIn_filter.init(5.0, dt);
+
+  attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
   sensors.startupTasks();
   sd.openFile();
@@ -168,18 +187,21 @@ void setup(){
   startRocketRTOS();
 }
 
+//this implementation of debounces prevents run-through but does not prevent
+//a random noisy signal from triggering the next phase
 void determineState(){
-  while(newAcc < LAUNCH_THRESHOLD_A_M_S2 && h < LAUNCH_THRESHOLD_H_M ){
+  int i;
+  for(i=0; (newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ) || (i<MIN_LOOPS_IN_STATE); i++){
     //Serial.println("PRE");
     rocketState = ROCKET_PRE;
     delay(STATE_CHECKING_DELAY_MS);
   }
-  while(newAcc > 0){
+  for(i=0; (newAcc > 0) || (i<MIN_LOOPS_IN_STATE); i++){
     //Serial.println("LAUNCH");
     rocketState = ROCKET_LAUNCH;
     delay(STATE_CHECKING_DELAY_MS);
   }
-  while(vel>0){
+  for(i=0; (vel>0) || (i<MIN_LOOPS_IN_STATE); i++){
     //Serial.println("FREEFALL");
     rocketState = ROCKET_FREEFALL;
     delay(STATE_CHECKING_DELAY_MS);
@@ -260,7 +282,7 @@ void buzz_POST(){
 void prvReadSensors(){
   //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
-  sensors.readMagneticField(m[0], m[1], m[3]);
+  sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[3]);
   float tempH=0;
   sensors.readAltitude(tempH);
   //convert H to AGL
@@ -270,6 +292,13 @@ void prvReadSensors(){
   //Serial.print("A from Sensors:");
   //Serial.println(a_raw[2] * G_TO_M_S2); //TODO: if sensor fusion works, then change this!
 
+    //filter the acc data
+  for (int axis = 0; axis < 3; axis++) {
+    //a_raw[axis] = acc_filter[axis].apply(a_raw[axis]);
+    a[axis] = acc_filter[axis].apply(a_raw[axis]);
+  }
+
+  // TODO read the gyro values
   float t = ((float)(simTimer.elapsed_time().count()))/1000000.0f;
   h = simIn.getInterpolatedAltitude(t);
   newAcc = simIn.getInterpolatedAcceleration(t);
@@ -278,11 +307,17 @@ void prvReadSensors(){
   //Serial.print("newAcc=");
   //Serial.println(newAcc);
 
+  //filter the simulink data
+  Serial.print("Raw newAcc: ");
+  Serial.print(newAcc);
+  newAcc = simIn_filter.apply(newAcc);
+  Serial.print(" | Filtered newAcc: ");
+  Serial.println(newAcc);
 }
 void prvIntegrateAccel(){
   //Serial.println("Entering prvIntegrateAccel");
   tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
-  float dt = (tNow - tOld);
+  dt = (tNow - tOld);
 
   float fusion_gain = 0.2; // how much we trust accelerometer data
 
@@ -294,14 +329,13 @@ void prvIntegrateAccel(){
   //Serial.println(vel);
 }
 void prvSensorFusion(){
-  /*
-  Quaternion q_rot = rotDiff(SAAM(a_raw,m), q_origin);
-  Quaternion a_q = {.w=0, .x=a_raw[0], .y=a_raw[1], .z=a_raw[2]};
-  Quaternion a_q_originFrame = hamProduct(hamProduct(q_rot, a_q),  conjugate(q_rot));
-  a[0] = a_q_originFrame.x;
-  a[1] = a_q_originFrame.y;
-  a[2] = a_q_originFrame.z;
-  newAcc = a[2];*/
+  //attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  //float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
+  //newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
+  attitude_estimate.update_estimate(a, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  float a_m_s[3] = {a[0] * G_TO_M_S2, a[1] * G_TO_M_S2, a[2] * G_TO_M_S2};
+  //newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
+
 }
 void prvDoControl(){
   ang = getControl(getDesired(tNow), predictAltitude(h,vel), tNow-tOld);
@@ -773,7 +807,6 @@ void logging_RUN(){
 /* Scheduler functions END*/
 
 #endif //SENSORTEST
-asdfjalkjsdfhlakdjv. akjdfvh.adfl
 
 
 

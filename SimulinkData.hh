@@ -28,6 +28,9 @@ public:
 	void readAltitude(float &H);
 	void readPressure(float &P);
 
+	//personal
+	void startupTasks(const char* file);
+
 	//Mr GPT
 	SimulinkFile(const char* file);
     void loadData(const char* file);
