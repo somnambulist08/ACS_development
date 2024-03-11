@@ -7,11 +7,11 @@
 #define Y 1
 #define Z 2
 
-class Madgwick {
+class QuickSilver {
 public:
-    update_estimate(float acc[], float gyro[], float dt);
+    void update_estimate(float acc[], float gyro[], float dt);
     float vertical_acceleration_from_acc(float acc[]);
-    initialize(float b);
+    void initialize(float b);
 private:
     float gravity_vector[3]
     float beta; // filter gain used to fuse acc into the estimate should be a fairly small value
