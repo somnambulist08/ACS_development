@@ -148,8 +148,7 @@ void setup(){
   longBzzt(1); //1 long means we are in setup
   delay(1000);
 
-  simIn.startupTasks("TEST1.CSV");
-  simIn.printData();
+  simIn.startupTasks("TEST11.CSV");
 
   sensors.startupTasks();
   sd.openFile();
