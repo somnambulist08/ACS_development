@@ -6,7 +6,9 @@ SimulinkFile::SimulinkFile(){
 }
 
 void SimulinkFile::loadData(const char* file) {
-    Serial.println("Entering loadData()");
+    Serial.print("Entering loadData(\"");
+    Serial.print(file)
+    Serial.println("\")");
     fileName = file;
     dataFile = SD.open(fileName);
     if (dataFile) {
