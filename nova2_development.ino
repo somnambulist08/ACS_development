@@ -325,15 +325,7 @@ void prvIntegrateAccel(){
   float barometer_derivative = (h - oldH) / dt;
   vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
 
-<<<<<<< HEAD
-=======
-  float fusion_gain = 0.2; // how much we trust accelerometer data
 
-  float acc_integration = newAcc * dt; // will drift, but accurate over short times
-  float barometer_derivative = (h - oldH) / dt;
-  vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
-
->>>>>>> 985398a (fuse barometer and acc to get velocity estimates)
   //Serial.print("vel=");
   //Serial.println(vel);
 }
