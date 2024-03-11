@@ -23,7 +23,7 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO
     if (acc_mag_squared > 1.1 || acc_mag_squared < 0.9) { // todo test to see if this window is too small
         for (int axis = 0; axis < 3; axis++) {
             // slowly fuse the estimate towards the acc reading
-            gravity_vector[axis] += beta * (acc[axis] - gravity_vector);
+            gravity_vector[axis] += beta * (acc[axis] - gravity_vector[axis]);
         }
     }
 
