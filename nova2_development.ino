@@ -284,9 +284,12 @@ void prvIntegrateAccel(){
   tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
   float dt = (tNow - tOld);
 
-  //TODO: Choose one!
-  //vel += (oldAcc + newAcc)/2.0f * dt;
-  vel = (h - oldH)/dt;
+  float fusion_gain = 0.2; // how much we trust accelerometer data
+
+  float acc_integration = newAcc * dt; // will drift, but accurate over short times
+  float barometer_derivative = (h - oldH) / dt;
+  vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
+
   //Serial.print("vel=");
   //Serial.println(vel);
 }
@@ -376,6 +379,7 @@ void sensorAndControl_FULL(){
 
   //integrate
   float dt = tNow - tLast;
+  // todo fuse barometer with this
   vel += (accZ + oldAccel)/2.0f * dt;
   Serial.print("dt: ");
   Serial.println(dt);
@@ -426,7 +430,6 @@ void logging_RUN(){
 #include "InternalSensors.hh"
 #include "BZZT.hh"
 
-
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
 
@@ -459,14 +462,26 @@ float ang=0;
 float h_groundLevel=0;
 
 float a_raw[3] = {0,0,0};
+float g_raw[3] = {0.0f, 0.0f, 0.0f};
 float m[3] = {0,0,0};
 float a[3] = {0,0,0};
+float dt = 0.01;
+
+pt1Filter acc_filter[3];
+Madgwick attitude_estimate;
 
 void setup(){
   //Serial.begin(115200);
   //while(!Serial);
   longBzzt(1); //1 long means we are in setup
   delay(1000);
+
+  // initialize the acc_filters
+  for (int axis = 0; axis < 3; axis++) {
+    acc_filter[axis].init(5.0, 0.01); // TODO dt fed in here should be the rate at which we read new acc data
+  }
+
+  attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
   sensors.startupTasks();
   sd.openFile();
@@ -536,7 +551,7 @@ void sensorAndControl_FULL(){
   //Apply sensor fusion
   prvSensorFusion();
 
-  //integrate acc to get vel
+  //fuse sensors to get vel
   prvIntegrateAccel();
 
   //update variables
@@ -577,7 +592,12 @@ void buzz_POST(){
 void prvReadSensors(){
   //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
-  sensors.readMagneticField(m[0], m[1], m[3]);
+  //filter the acc data
+  for (int axis = 0; axis < 3; axis++) {
+    a_raw[axis] = acc_filter[axis].apply(a_raw[axis]);
+  }
+  // TODO read the gyro values
+  //sensors.readMagneticField(m[0], m[1], m[3]); // magnometer not needed
   float tempH=0;
   sensors.readAltitude(tempH);
   //convert H to AGL
@@ -593,23 +613,22 @@ void prvReadSensors(){
 void prvIntegrateAccel(){
   //Serial.println("Entering prvIntegrateAccel");
   tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
-  float dt = (tNow - tOld);
+  // TODO get dt based on the time between last sample reads, not time since running this, it'll be more accurate this way
+  dt = (tNow - tOld);
 
-  //TODO: Choose one!
-  //vel += (oldAcc + newAcc)/2.0f * dt;
-  vel = (h - oldH)/dt;
+  float fusion_gain = 0.2; // how much we trust accelerometer data
+
+  float acc_integration = newAcc * dt; // will drift, but accurate over short times
+  float barometer_derivative = (h - oldH) / dt;
+  vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
+
   //Serial.print("vel=");
   //Serial.println(vel);
 }
 void prvSensorFusion(){
-  /*
-  Quaternion q_rot = rotDiff(SAAM(a_raw,m), q_origin);
-  Quaternion a_q = {.w=0, .x=a_raw[0], .y=a_raw[1], .z=a_raw[2]};
-  Quaternion a_q_originFrame = hamProduct(hamProduct(q_rot, a_q),  conjugate(q_rot));
-  a[0] = a_q_originFrame.x;
-  a[1] = a_q_originFrame.y;
-  a[2] = a_q_originFrame.z;
-  newAcc = a[2];*/
+  attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
+  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
 }
 void prvDoControl(){
   ang = getControl(getDesired(tNow), predictAltitude(h,vel), tNow-tOld);
