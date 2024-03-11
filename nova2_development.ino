@@ -7,9 +7,9 @@
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
 //#define DEVELOPMENT
-//#define STATE_TEST
+#define STATE_TEST
 //#define CONTROL_TEST
-#define FLIGHT
+//#define FLIGHT
 //#define SENSORTEST
 
 /*****************************************************************************
@@ -98,7 +98,7 @@ void logging_RUN(){
 #include "SDLogger.hh"
 #include "RealStepper.hh"
 #include "Control.hh"
-#include "SAAM.hh"
+//#include "SAAM.hh"
 #include "InternalSensors.hh"
 #include "BZZT.hh"
 #include "SimulinkData.hh"
@@ -169,7 +169,7 @@ void setup(){
 }
 
 void determineState(){
-  while(newAcc < LAUNCH_THRESHOLD_A_M_S2 && h < LAUNCH_THRESHOLD_H_M ){
+  while(newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ){
     //Serial.println("PRE");
     rocketState = ROCKET_PRE;
     delay(STATE_CHECKING_DELAY_MS);
