@@ -101,17 +101,17 @@ void SDLogger::openFile(String newFileName){
 
 void SDLogger::writeLog(float acc1, float acc2, float acc3, float saam1, float saam2, float saam3, float mag1, float mag2, float mag3, float ang, float alt, float t_now){
   if(Serial) Serial.println("Logging");
-  flightData.print(acc1);
-  flightData.print(acc2);
-  flightData.print(acc3);
-  flightData.print(saam1);
-  flightData.print(saam2);
-  flightData.print(saam3);
-  flightData.print(mag1);
-  flightData.print(mag2);
-  flightData.print(mag3);
-  flightData.print(ang);
-  flightData.print(alt);
+  flightData.print(acc1);flightData.print(',');
+  flightData.print(acc2);flightData.print(',');
+  flightData.print(acc3);flightData.print(',');
+  flightData.print(saam1);flightData.print(',');
+  flightData.print(saam2);flightData.print(',');
+  flightData.print(saam3);flightData.print(',');
+  flightData.print(mag1);flightData.print(',');
+  flightData.print(mag2);flightData.print(',');
+  flightData.print(mag3);flightData.print(',');
+  flightData.print(ang);flightData.print(',');
+  flightData.print(alt);flightData.print(',');
   flightData.println(t_now);
 
   flightData.flush();
