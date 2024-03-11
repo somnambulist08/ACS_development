@@ -130,7 +130,7 @@ InternalSensors sensors;
 
 float tNow=0;
 float tOld=0;
-float newAcc;
+float newAcc=0;
 float vel=0;
 float oldAcc=0;
 float h=0;
@@ -426,11 +426,9 @@ void logging_RUN(){
 #include "SDLogger.hh"
 #include "RealStepper.hh"
 #include "Control.hh"
-#include "SAAM.hh"
+//#include "SAAM.hh"
 #include "InternalSensors.hh"
 #include "BZZT.hh"
-#include "SimulinkData.hh"
-#include "Filter.hh"
 
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
@@ -449,14 +447,13 @@ void prvDoControl();
 //to not overflow during launch
 mbed::Timer tim;
 
-SimulinkFile simIn;
 RealStepper stepper;
 SDLogger sd;
 InternalSensors sensors;
 
 float tNow=0;
 float tOld=0;
-float newAcc;
+float newAcc=0;
 float vel=0;
 float oldAcc=0;
 float h=0;
@@ -504,7 +501,7 @@ void setup(){
 }
 
 void determineState(){
-  while(newAcc < LAUNCH_THRESHOLD_A_M_S2 && h < LAUNCH_THRESHOLD_H_M ){
+  while(newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ){
     //Serial.println("PRE");
     rocketState = ROCKET_PRE;
     delay(STATE_CHECKING_DELAY_MS);
@@ -604,11 +601,13 @@ void prvReadSensors(){
   float tempH=0;
   sensors.readAltitude(tempH);
   //convert H to AGL
-  //Serial.print("H from Sensor:");
-  //Serial.println(tempH - h_groundLevel);
+  h = tempH -h_groundLevel;
+  //Serial.print("H:");
+  //Serial.println(h);
   //convert A to m/s2
-  //Serial.print("A from Sensors:");
-  //Serial.println(a_raw[2] * G_TO_M_S2); //TODO: if sensor fusion works, then change this!
+  newAcc = a_raw[2] * G_TO_M_S2;
+  //Serial.print("A:");
+  //Serial.println(a_raw[2]);
 
 }
 void prvIntegrateAccel(){
@@ -772,4 +771,7 @@ void logging_RUN(){
 /* Scheduler functions END*/
 
 #endif //SENSORTEST
+asdfjalkjsdfhlakdjv. akjdfvh.adfl
+
+
 
