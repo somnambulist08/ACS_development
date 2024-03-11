@@ -753,7 +753,6 @@ void logging_RUN(){
 /* Scheduler functions END*/
 
 #endif //SENSORTEST
-asdfjalkjsdfhlakdjv. akjdfvh.adfl
 
 
 
