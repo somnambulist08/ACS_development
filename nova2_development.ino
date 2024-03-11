@@ -147,6 +147,7 @@ float a[3] = {0,0,0};
 float dt = 1000.0 / SENSOR_AND_CONTROL_DELAY_MS; //cannot be 0 or else problems :) 0.1 is the current nominal value
 
 pt1Filter acc_filter[3];
+pt1Filter simIn_filter;
 QuickSilver attitude_estimate;
 
 void setup(){
@@ -161,8 +162,9 @@ void setup(){
 
     // initialize the acc_filters
   for (int axis = 0; axis < 3; axis++) {
-    acc_filter[axis].init(5.0, 0.01); // TODO dt fed in here should be the rate at which we read new acc data
+    acc_filter[axis].init(5.0, dt); // TODO dt fed in here should be the rate at which we read new acc data
   }
+  simIn_filter.init(5.0, dt);
 
   attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
@@ -286,6 +288,12 @@ void prvReadSensors(){
   //Serial.print("A from Sensors:");
   //Serial.println(a_raw[2] * G_TO_M_S2); //TODO: if sensor fusion works, then change this!
 
+    //filter the acc data
+  for (int axis = 0; axis < 3; axis++) {
+    //a_raw[axis] = acc_filter[axis].apply(a_raw[axis]);
+    a[axis] = acc_filter[axis].apply(a_raw[axis]);
+  }
+
   // TODO read the gyro values
   float t = ((float)(simTimer.elapsed_time().count()))/1000000.0f;
   h = simIn.getInterpolatedAltitude(t);
@@ -295,6 +303,12 @@ void prvReadSensors(){
   //Serial.print("newAcc=");
   //Serial.println(newAcc);
 
+  //filter the simulink data
+  Serial.print("Raw newAcc: ");
+  Serial.println(newAcc);
+  newAcc = simIn_filter.apply(newAcc);
+  Serial.print("Filtered newAcc: ");
+  Serial.println(newAcc);
 }
 void prvIntegrateAccel(){
   //Serial.println("Entering prvIntegrateAccel");
@@ -311,9 +325,13 @@ void prvIntegrateAccel(){
   //Serial.println(vel);
 }
 void prvSensorFusion(){
-  attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
-  float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
-  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
+  //attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  //float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
+  //newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
+  attitude_estimate.update_estimate(a, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  float a_m_s[3] = {a[0] * G_TO_M_S2, a[1] * G_TO_M_S2, a[2] * G_TO_M_S2};
+  //newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
+
 }
 void prvDoControl(){
   ang = getControl(getDesired(tNow), predictAltitude(h,vel), tNow-tOld);
