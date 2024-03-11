@@ -79,8 +79,16 @@ void SimulinkFile::startupTasks(){
     Serial.println("SD card initialization failed!");
     return;
   }
-  loadData("STATET~1.CSV"); //CONTRO~1 or STATET~1
+  loadData("TEST1.CSV");
 }
+void SimulinkFile::startupTasks(const char* file){  
+  if (!SD.begin()) {
+    Serial.println("SD card initialization failed!");
+    return;
+  }
+  loadData(file);
+}
+
 void SimulinkFile::readAcceleration(float &x, float &y, float &z){
 
 }

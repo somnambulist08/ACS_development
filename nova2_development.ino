@@ -143,12 +143,13 @@ float m[3] = {0,0,0};
 float a[3] = {0,0,0};
 
 void setup(){
-  //Serial.begin(115200);
-  //while(!Serial);
+  Serial.begin(115200);
+  while(!Serial);
   longBzzt(1); //1 long means we are in setup
   delay(1000);
 
-  simIn.startupTasks();
+  simIn.startupTasks("TEST1.CSV");
+  simIn.printData();
 
   sensors.startupTasks();
   sd.openFile();
