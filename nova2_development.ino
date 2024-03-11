@@ -108,6 +108,7 @@ void logging_RUN(){
 
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
+#define MIN_LOOPS_IN_STATE 3
 
 #define G_TO_M_S2 9.8f
 
@@ -187,17 +188,18 @@ void setup(){
 }
 
 void determineState(){
-  while(newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ){
+  int i;
+  for(i=0; (newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ) || (i<MIN_LOOPS_IN_STATE); i++){
     //Serial.println("PRE");
     rocketState = ROCKET_PRE;
     delay(STATE_CHECKING_DELAY_MS);
   }
-  while(newAcc > 0){
+  for(i=0; (newAcc > 0) || (i<MIN_LOOPS_IN_STATE); i++){
     //Serial.println("LAUNCH");
     rocketState = ROCKET_LAUNCH;
     delay(STATE_CHECKING_DELAY_MS);
   }
-  while(vel>0){
+  for(i=0; (vel>0) || (i<MIN_LOOPS_IN_STATE); i++){
     //Serial.println("FREEFALL");
     rocketState = ROCKET_FREEFALL;
     delay(STATE_CHECKING_DELAY_MS);
