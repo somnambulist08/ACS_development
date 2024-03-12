@@ -11,7 +11,7 @@
 
 #include "SDInterface.hh"
 
-class SDSpoofer{// : public SDInterface {
+class SDSpoofer : public SDInterface {
 public:
     //personal
     SDSpoofer();
