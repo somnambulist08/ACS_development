@@ -12,31 +12,12 @@
 
 #include "StepperInterface.hh"
 
-#define MOTOR_STEPS 200  //steps per rev
-#define RPM 750  //speed?
-#define MICROSTEPS 8
-
-//extern const unsigned long frame_micros;
-extern const float pps;
-extern const unsigned long pwmicros;
-extern const unsigned long pw_on;
-
-
-
-int microStepsFromFlapAngle(float angle);
-
 
 class SpoofStepper : public StepperInterface {
 public:
   SpoofStepper();
-  void stepForTime(unsigned long maxTime, unsigned long startingTime);
-  void stepOnce(void);
-  void setStepsTarget(int newTarget);
-private:
-  int moveSteps;
-  int currentStep;
-  int direction;
-  int stepsTarget;
+  //virtual void stepForTime(unsigned long maxTime, unsigned long startingTime) override;
+  virtual void stepOnce(void) override;
 };
 
 
