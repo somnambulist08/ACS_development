@@ -8,7 +8,6 @@
 ******************************************************************************/
 #ifndef SD_INTERFACE_HH
 #define SD_INTERFACE_HH
-#include "SimulinkData.hh"
 
 class SDInterface {
 public:

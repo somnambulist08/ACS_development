@@ -10,7 +10,6 @@
 #define SD_SPOOFER_HH
 
 #include "SDInterface.hh"
-#include "SimulinkData.hh"
 
 class SDSpoofer{// : public SDInterface {
 public:
@@ -19,9 +18,9 @@ public:
     void writeLog(float accel, float vel, float h, float ang);
 
     //inherited
-    void openFile();
-    void writeLog();
-    void closeFile();
+    virtual void openFile() override;
+    virtual void writeLog() override;
+    virtual void closeFile() override;
 };
 
 

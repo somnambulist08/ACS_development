@@ -26,9 +26,9 @@ public:
     void writeLog(float a_raw[], float m[], float a[]);
 
     //inherited
-    void writeLog();
-    void closeFile();
-    void openFile();
+    virtual void writeLog() override;
+    virtual void closeFile() override;
+    virtual void openFile() override;
 private:
     //FILE
     File flightData;
