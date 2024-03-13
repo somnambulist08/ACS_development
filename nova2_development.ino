@@ -6,8 +6,8 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-//#define DEVELOPMENT
-#define STATE_TEST
+#define DEVELOPMENT
+//#define STATE_TEST
 //#define CONTROL_TEST
 //#define FLIGHT
 //#define SENSORTEST
@@ -18,71 +18,144 @@
 #ifdef DEVELOPMENT
 
 #include "RocketRTOS.hh"
-#include "SerialSpoofStepper.hh"
+#include "SimulinkStepper.hh"
 #include "Control.hh"
-//#include "InternalSensors.hh"
-#include "SDSpoofer.hh"
+#include "SDLogger.hh"
+#include "BZZT.hh"
 
+#define LAUNCH_THRESHOLD_A_M_S2 10
+#define LAUNCH_THRESHOLD_H_M 20
+#define MIN_LOOPS_IN_STATE 3
 
-SDSpoofer dummySD;
-SerialSpoofStepper stepper;
+void prvReadSensors();
+void prvIntegrateAccel();
+void prvSensorFusion();
+void prvDoControl();
+void prvUpdateVars();
 
-unsigned long oldMicros;
-unsigned long oldAccel;
+SDLogger sd;
+SimulinkStepper stepper;
 
-float accel=0;
+float tNow=0;
+float tOld=0;
+float newAcc=0;
 float vel=0;
+float oldAcc=0;
 float h=0;
+float oldH=0;
 float ang=0;
+float h_groundLevel=0;
 
 
 void setup(){
+  longBzzt(1);
   Serial.begin(115200);
   while(!Serial);
-
-  dummySD.openFile();
-  oldMicros = micros();
-  oldAccel = 0;
-
+  sd.openFile();
+  longBzzt(2);
   startRocketRTOS();
 }
 
-void stepper_RUN(){
-  Serial.println("Stepper Run");
-  stepper.stepOnce();
-}
-
-void stepper_IDLE(){
-  Serial.println("Stepper Idle");
-}
-
+//this implementation of debounces prevents run-through but does not prevent
+//a random noisy signal from triggering the next phase
 void determineState(){
-  Serial.println("Determining State");
-  rocketState = ROCKET_FREEFALL;
+  int i;
+  for(i=0; (newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ) || (i<MIN_LOOPS_IN_STATE); i++){
+    //Serial.println("PRE");
+    rocketState = ROCKET_PRE;
+    delay(STATE_CHECKING_DELAY_MS);
+  }
+  for(i=0; (newAcc > 0) || (i<MIN_LOOPS_IN_STATE); i++){
+    //Serial.println("LAUNCH");
+    rocketState = ROCKET_LAUNCH;
+    delay(STATE_CHECKING_DELAY_MS);
+  }
+  for(i=0; (vel>0) || (i<MIN_LOOPS_IN_STATE); i++){
+    //Serial.println("FREEFALL");
+    rocketState = ROCKET_FREEFALL;
+    delay(STATE_CHECKING_DELAY_MS);
+  }
+  while(1){ //once you enter recovery state, do not leave
+    //Serial.println("RECOVERY");
+    rocketState = ROCKET_RECOVERY;
+    delay(STATE_CHECKING_DELAY_MS);
+  }
 }
 
+void sensorAndControl_PRE(){
+  prvReadSensors();
+  prvUpdateVars();
+}
+void sensorAndControl_LAUNCH(){
+  prvReadSensors();
+  prvSensorFusion();
+  prvIntegrateAccel();
+  prvUpdateVars();
+}
 void sensorAndControl_FULL(){
-  float x=4, y=0, z=8;
-  //sensor.readAcceleration(x,y,z);
-
-  float pressure = 80000;
-
-  h = (1 - powf((pressure / 101325), 0.190284)) * 145366.45 * 0.3048;
-
-
-  float dt = micros() - oldMicros;
-  vel = (dt * (z + oldAccel) / 2.0);
-
-
-  ang = getControl(100, predictAltitude(h, vel), dt);
-
-
-  //stepper.setStepsTarget(stepper.microStepsFromFlapAngle(flaps));
-  stepper.setStepsTarget(1000000);
+  prvReadSensors();
+  prvSensorFusion();
+  prvIntegrateAccel();
+  prvUpdateVars();
+  prvDoControl();
 }
+
 
 void logging_RUN(){
-  dummySD.writeLog(accel, vel, h, ang);
+  sd.writeLog(newAcc, 0, 0, 0, 0, 0, 0, 0, 0, ang, h, tNow);
+}
+void logging_CLOSE(){
+  sd.closeFile();
+}
+
+void stepper_RUN(){
+  stepper.stepOnce();
+}
+void stepper_CLOSE(){
+  stepper.setStepsTarget(0);
+  for(int s=0; s<100; s++){
+    stepper.stepOnce();
+  }
+}
+void stepper_IDLE(){
+  Serial.println('\0');
+}
+
+void buzz_PRE(){
+  bzzt(1); 
+}
+void buzz_POST(){
+  bzzt(2);
+}
+
+
+void prvReadSensors(){
+  Serial.readBytes((uint8_t *)(&h), sizeof(float));
+  Serial.readBytes((uint8_t *)(&newAcc), sizeof(float));
+  Serial.readBytes((uint8_t *)(&tNow), sizeof(float));
+}
+void prvIntegrateAccel(){
+  //Serial.println("Entering prvIntegrateAccel");
+  float dt = (tNow - tOld);
+
+  float fusion_gain = 0.2; // how much we trust accelerometer data
+
+  float acc_integration = newAcc * dt; // will drift, but accurate over short times
+  float barometer_derivative = (h - oldH) / dt;
+  vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
+
+}
+void prvSensorFusion(){
+
+}
+void prvDoControl(){
+  ang = getControl(getDesired(tNow), predictAltitude(h,vel), tNow-tOld);
+  stepper.setStepsTarget(microStepsFromFlapAngle(ang));
+}
+void prvUpdateVars(){
+  oldAcc = newAcc; 
+  tOld = tNow;
+  oldH = h;
 }
 
 #endif //DEVELOPMENT
