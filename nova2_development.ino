@@ -355,7 +355,7 @@ void buzz_POST(){
 void prvReadSensors(){
   //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
-  sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[3]);
+  sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
   float tempH=0;
   sensors.readAltitude(tempH);
   //convert H to AGL
