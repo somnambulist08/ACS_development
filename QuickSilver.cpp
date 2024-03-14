@@ -9,17 +9,17 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO
     float pitch_delta = gyro[PITCH] * dt;
     float yaw_delta = gyro[YAW] * dt;
 
-    gravity_vector[Z] -= roll_delta * gravity_vector[X];
-    gravity_vector[X] += roll_delta * gravity_vector[Z];
+    gravity_vector[VEC_Z] -= roll_delta * gravity_vector[VEC_X];
+    gravity_vector[VEC_X] += roll_delta * gravity_vector[VEC_Z];
 
-    gravity_vector[Y] += pitch_delta * gravity_vector[Z];
-    gravity_vector[Z] -= pitch_delta * gravity_vector[Y];
+    gravity_vector[VEC_Y] += pitch_delta * gravity_vector[VEC_Z];
+    gravity_vector[VEC_Z] -= pitch_delta * gravity_vector[VEC_Y];
 
-    gravity_vector[X] -= yaw_delta * gravity_vector[Y];
-    gravity_vector[Y] += yaw_delta * gravity_vector[X];
+    gravity_vector[VEC_X] -= yaw_delta * gravity_vector[VEC_Y];
+    gravity_vector[VEC_Y] += yaw_delta * gravity_vector[VEC_X];
 
     // not doing sqrt to save a little cpu
-    float acc_mag_squared = acc[X] * acc[X] + acc[Y] * acc[Y] + acc[Z] * acc[Z];
+    float acc_mag_squared = acc[VEC_X] * acc[VEC_X] + acc[VEC_Y] * acc[VEC_Y] + acc[VEC_Z] * acc[VEC_Z];
     if (acc_mag_squared > 1.1 || acc_mag_squared < 0.9) { // todo test to see if this window is too small
         for (int axis = 0; axis < 3; axis++) {
             // slowly fuse the estimate towards the acc reading
@@ -28,7 +28,7 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO
     }
 
     // normalize the gravity_vector
-    float gravity_mag = sqrt(gravity_vector[X] * gravity_vector[X] + gravity_vector[Y] * gravity_vector[Y] + gravity_vector[Z] * gravity_vector[Z]);
+    float gravity_mag = sqrt(gravity_vector[VEC_X] * gravity_vector[VEC_X] + gravity_vector[VEC_Y] * gravity_vector[VEC_Y] + gravity_vector[VEC_Z] * gravity_vector[VEC_Z]);
     for (int axis = 0; axis < 3; axis++) {
         gravity_vector[axis] /= gravity_mag;
     }
@@ -38,18 +38,18 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO
 // acc should be filtered when we run this equation
 float QuickSilver::vertical_acceleration_from_acc(float acc[]) {
     // v*w/||w||^2 * w gives us the projection of v onto w
-    float dot_product = gravity_vector[X] * acc[X] + gravity_vector[Y] * acc[Y] + gravity_vector[Z] * acc[Z];
+    float dot_product = gravity_vector[VEC_X] * acc[VEC_X] + gravity_vector[VEC_Y] * acc[VEC_Y] + gravity_vector[VEC_Z] * acc[VEC_Z];
 
     // below line not needed, should always return 1 as its a normalized vector :) nice.
-    // float gravity_mag_squared = gravity_vector[X] * gravity_vector[X] + gravity_vector[Y] * gravity_vector[Y] + gravity_vector[Z] * gravity_vector[Z];
+    // float gravity_mag_squared = gravity_vector[VEC_X] * gravity_vector[VEC_X] + gravity_vector[VEC_Y] * gravity_vector[VEC_Y] + gravity_vector[VEC_Z] * gravity_vector[VEC_Z];
     float gravity_mag_squared = 1.0f;
 
     float projection[3] = {
-        (dot_product / gravity_mag_squared) * gravity_vector[X],
-        (dot_product / gravity_mag_squared) * gravity_vector[Y],
-        (dot_product / gravity_mag_squared) * gravity_vector[Z]
+        (dot_product / gravity_mag_squared) * gravity_vector[VEC_X],
+        (dot_product / gravity_mag_squared) * gravity_vector[VEC_Y],
+        (dot_product / gravity_mag_squared) * gravity_vector[VEC_Z]
         };
-    float projection_magnitude = sqrt(projection[X] * projection[X] + projection[Y] * projection[Y] + projection[Z] * projection[Z]);
+    float projection_magnitude = sqrt(projection[VEC_X] * projection[VEC_X] + projection[VEC_Y] * projection[VEC_Y] + projection[VEC_Z] * projection[VEC_Z]);
 
     // give the magnitude a negative value if its pointing opposite the direction of gravity, aka further than 90 degrees
     if (dot_product < 0.0) {
@@ -61,7 +61,11 @@ float QuickSilver::vertical_acceleration_from_acc(float acc[]) {
 
 void QuickSilver::initialize(float b) {
     beta = b;
-    gravity_vector[X] = 0.0;
-    gravity_vector[Y] = 0.0;
-    gravity_vector[Z] = 1.0;
+    gravity_vector[VEC_X] = 0.0;
+    gravity_vector[VEC_Y] = 0.0;
+    gravity_vector[VEC_Z] = 1.0;
+}
+
+float* QuickSilver::getGravityVector(){
+    return gravity_vector;
 }
