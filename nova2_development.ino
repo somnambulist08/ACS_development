@@ -6,8 +6,8 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-//#define DEVELOPMENT
-#define STATE_TEST
+#define DEVELOPMENT
+//#define STATE_TEST
 //#define CONTROL_TEST
 //#define FLIGHT
 //#define SENSORTEST
@@ -17,146 +17,112 @@
 *****************************************************************************/
 #ifdef DEVELOPMENT
 
-#include "RocketRTOS.hh"
-#include "SimulinkStepper.hh"
-#include "Control.hh"
-#include "SDLogger.hh"
-#include "BZZT.hh"
+#include "QuickSilver.hh"
+#include "InternalSensors.hh"
+#include "Filter.hh"
+#include "mbed.h"
+#include "rtos.h"
 
-#define LAUNCH_THRESHOLD_A_M_S2 10
-#define LAUNCH_THRESHOLD_H_M 20
-#define MIN_LOOPS_IN_STATE 3
+#define BETA 0.1f
+#define DELAY_MS 100
 
-void prvReadSensors();
-void prvIntegrateAccel();
-void prvSensorFusion();
-void prvDoControl();
-void prvUpdateVars();
+//Gyro calibration bias. These change with temperature
+#define GYRO_BIAS_X 0.00
+#define GYRO_BIAS_Y 0.00
+#define GYRO_BIAS_Z 0.00
 
-SDLogger sd;
-SimulinkStepper stepper;
+QuickSilver attitude;
+InternalSensors sensors;
+pt1Filter filter;
+//mbed::Ticker tick;
+rtos::Thread gyroThread(osPriorityAboveNormal, 1024);
 
-float tNow=0;
-float tOld=0;
-float newAcc=0;
-float vel=0;
-float oldAcc=0;
-float h=0;
-float oldH=0;
-float ang=0;
-float h_groundLevel=0;
+void prvFilterGyro();
+#define GRYO_FILTER_PERIOD_MS 10 //100 Hz
 
+float tOld = 0.0f;
+float tNow = 0.0f;
+
+float acc[3] = {0.0f, 0.0f, 0.0f};
+float gyro[3] = {0.0f, 0.0f, 0.0f};
 
 void setup(){
-  longBzzt(1);
   Serial.begin(115200);
   while(!Serial);
-  sd.openFile();
-  longBzzt(2);
-  startRocketRTOS();
+
+  filter.init(5.0f, 0.1f);
+  sensors.startupTasks();
+  attitude.initialize(BETA);
+  tNow = ((float)(micros()))/1000000.0f;
+  //tick.attach(&prvFilterGyro, GRYO_FILTER_PERIOD);
+  gyroThread.start(prvFilterGyro);
 }
 
-//this implementation of debounces prevents run-through but does not prevent
-//a random noisy signal from triggering the next phase
-void determineState(){
-  int i;
-  for(i=0; (newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ) || (i<MIN_LOOPS_IN_STATE); i++){
-    //Serial.println("PRE");
-    rocketState = ROCKET_PRE;
-    delay(STATE_CHECKING_DELAY_MS);
-  }
-  for(i=0; (newAcc > 0) || (i<MIN_LOOPS_IN_STATE); i++){
-    //Serial.println("LAUNCH");
-    rocketState = ROCKET_LAUNCH;
-    delay(STATE_CHECKING_DELAY_MS);
-  }
-  for(i=0; (vel>0) || (i<MIN_LOOPS_IN_STATE); i++){
-    //Serial.println("FREEFALL");
-    rocketState = ROCKET_FREEFALL;
-    delay(STATE_CHECKING_DELAY_MS);
-  }
-  while(1){ //once you enter recovery state, do not leave
-    //Serial.println("RECOVERY");
-    rocketState = ROCKET_RECOVERY;
-    delay(STATE_CHECKING_DELAY_MS);
-  }
-}
+void loop(){
+  delay(DELAY_MS);
+  sensors.readAcceleration(acc[0], acc[1], acc[2]);
+  /*sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
+  gyro[0] -= GYRO_BIAS_X;
+  gyro[1] -= GYRO_BIAS_Y;
+  gyro[2] -= GYRO_BIAS_Z;
+  gyro[0] = filter.apply(gyro[0]);
+  gyro[1] = filter.apply(gyro[1]);
+  gyro[2] = filter.apply(gyro[2]);*/
+  Serial.print("Acc: ");
+  Serial.print(acc[0]);
+  Serial.print(", ");
+  Serial.print(acc[1]);
+  Serial.print(", ");
+  Serial.print(acc[2]);
+  Serial.println();
+  Serial.print("Gyro: ");
+  Serial.print(gyro[0]);
+  Serial.print(", ");
+  Serial.print(gyro[1]);
+  Serial.print(", ");
+  Serial.print(gyro[2]);
+  Serial.println();
 
-void sensorAndControl_PRE(){
-  prvReadSensors();
-  prvUpdateVars();
-}
-void sensorAndControl_LAUNCH(){
-  prvReadSensors();
-  prvSensorFusion();
-  prvIntegrateAccel();
-  prvUpdateVars();
-}
-void sensorAndControl_FULL(){
-  prvReadSensors();
-  prvSensorFusion();
-  prvIntegrateAccel();
-  prvUpdateVars();
-  prvDoControl();
-}
-
-
-void logging_RUN(){
-  sd.writeLog(newAcc, 0, 0, 0, 0, 0, 0, 0, 0, ang, h, tNow);
-}
-void logging_CLOSE(){
-  sd.closeFile();
-}
-
-void stepper_RUN(){
-  stepper.stepOnce();
-}
-void stepper_CLOSE(){
-  stepper.setStepsTarget(0);
-  for(int s=0; s<100; s++){
-    stepper.stepOnce();
-  }
-}
-void stepper_IDLE(){
-  Serial.println('\0');
-}
-
-void buzz_PRE(){
-  bzzt(1); 
-}
-void buzz_POST(){
-  bzzt(2);
-}
-
-
-void prvReadSensors(){
-  Serial.readBytes((uint8_t *)(&h), sizeof(float));
-  Serial.readBytes((uint8_t *)(&newAcc), sizeof(float));
-  Serial.readBytes((uint8_t *)(&tNow), sizeof(float));
-}
-void prvIntegrateAccel(){
-  //Serial.println("Entering prvIntegrateAccel");
-  float dt = (tNow - tOld);
-
-  float fusion_gain = 0.2; // how much we trust accelerometer data
-
-  float acc_integration = newAcc * dt; // will drift, but accurate over short times
-  float barometer_derivative = (h - oldH) / dt;
-  vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
-
-}
-void prvSensorFusion(){
-
-}
-void prvDoControl(){
-  ang = getControl(getDesired(tNow), predictAltitude(h,vel), tNow-tOld);
-  stepper.setStepsTarget(microStepsFromFlapAngle(ang));
-}
-void prvUpdateVars(){
-  oldAcc = newAcc; 
   tOld = tNow;
-  oldH = h;
+  tNow = ((float)(micros()))/1000000.0f;
+  float dt = tNow - tOld;
+  attitude.update_estimate(acc,gyro,dt);
+  float *grav = attitude.getGravityVector();
+  Serial.print("Grav: ");
+  Serial.print(grav[0]);
+  Serial.print(", ");
+  Serial.print(grav[1]);
+  Serial.print(", ");
+  Serial.print(grav[2]);
+  Serial.println();
+
+  float vert = attitude.vertical_acceleration_from_acc(acc);
+  Serial.print("Vert: ");
+  Serial.println(vert);
+
+  Serial.print("tNow: ");
+  Serial.println(tNow);
 }
+
+
+//causes hard fault???
+//probably because reading the sensors is I2C and blocking and otherwise not ISR safe
+
+void prvFilterGyro(){
+  sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
+  gyro[0] -= GYRO_BIAS_X;
+  gyro[1] -= GYRO_BIAS_Y;
+  gyro[2] -= GYRO_BIAS_Z;
+  gyro[0] = filter.apply(gyro[0]);
+  gyro[1] = filter.apply(gyro[1]);
+  gyro[2] = filter.apply(gyro[2]);
+
+  delay(GRYO_FILTER_PERIOD_MS);
+}
+
+
+
+
 
 #endif //DEVELOPMENT
 

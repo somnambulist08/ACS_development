@@ -43,7 +43,7 @@ int sixteenIMU::readMagneticField(float &x, float &y, float &z)
     sens_cfg[1].type = BMI2_GYRO;
     sens_cfg[1].cfg.gyr.filter_perf = BMI2_PERF_OPT_MODE;
     sens_cfg[1].cfg.gyr.bwp = BMI2_GYR_OSR2_MODE;
-    sens_cfg[1].cfg.gyr.odr = BMI2_GYR_ODR_25HZ;
+    sens_cfg[1].cfg.gyr.odr = BMI2_GYR_ODR_100HZ;
     sens_cfg[1].cfg.gyr.range = BMI2_GYR_RANGE_2000;
     sens_cfg[1].cfg.gyr.ois_range = BMI2_GYR_OIS_2000;
 
