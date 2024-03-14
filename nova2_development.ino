@@ -6,8 +6,8 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-#define DEVELOPMENT
-//#define STATE_TEST
+//#define DEVELOPMENT
+#define STATE_TEST
 //#define CONTROL_TEST
 //#define FLIGHT
 //#define SENSORTEST
@@ -241,7 +241,8 @@ void setup(){
   simIn_filter.init(5.0, dt);
 
   attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
-
+  //bta is how much closer we approach the accelerometer per loop. Longer time on pad? prolly lower beta. This is slower motion and therefore calibrates while on the pad and resists the initial acceleration from the rocket. 0.05 is 5% and it will take at 10 Hz about 10 or 15 seconds to converge the gyro to the accelerometer. beta brings gyro to acc. lower value might have bad things with noise, higher value is too sensitive
+  
   sensors.startupTasks();
   sd.openFile();
   longBzzt(2); //1 more long means we have the SD ready
@@ -392,7 +393,7 @@ void prvIntegrateAccel(){
   tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
   dt = (tNow - tOld);
 
-  float fusion_gain = 0.2; // how much we trust accelerometer data
+  float fusion_gain = 0.5; // how much we trust accelerometer data
 
   float acc_integration = newAcc * dt; // will drift, but accurate over short times
   float barometer_derivative = (h - oldH) / dt;
