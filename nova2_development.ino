@@ -6,10 +6,10 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-#define DEVELOPMENT
+//#define DEVELOPMENT
 //#define STATE_TEST
 //#define CONTROL_TEST
-//#define FLIGHT
+#define FLIGHT
 //#define SENSORTEST
 
 /*****************************************************************************
@@ -83,7 +83,7 @@ void setup(){
 
 void loop(){
 
-  sensors.readAcceleration(acc[0], acc[1], acc[2]);
+  /*sensors.readAcceleration(acc[0], acc[1], acc[2]);
   sumCount++;
   for(int j=0; j<3; j++){
     sum[j] += acc[j];
@@ -96,13 +96,13 @@ void loop(){
   Serial.print(", ");
   Serial.println(avg[2], 4);
 
-  sd.writeLog(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  
+  delay(DELAY_MS);*/
 
-  delay(DELAY_MS);
 
  
 
-  /*
+  
   delay(DELAY_MS);
   sensors.readAcceleration(acc[0], acc[1], acc[2]);
   sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
@@ -151,7 +151,8 @@ void loop(){
   // Serial.println(dt, 6);
   // Serial.print("Hz: ");
   // Serial.println(1.0/dt);
-  */
+  
+  sd.writeLog(acc[0], acc[1], acc[2], gyro[0], gyro[1], gyro[2], 0, 0, 0, 0, 0, tNow);
   
 }
 
@@ -757,7 +758,7 @@ void sensorAndControl_FULL(){
 
 void logging_RUN(){
   //Serial.println("Entering logging_RUN");
-  sd.writeLog(a_raw[0], a_raw[1], a_raw[2], g_raw[0], g_raw[1], g_raw[2], newAcc, h_groundLevel, vel, ang, h, tNow);
+  sd.writeLog(a_raw[0], a_raw[1], a_raw[2], g_raw[0], g_raw[1], g_raw[2], newAcc, h_groundLevel, vel, ang, h, tNow,float(rocketState));
 }
 void logging_CLOSE(){
   sd.closeFile();
