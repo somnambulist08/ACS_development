@@ -31,6 +31,11 @@
 #define GYRO_BIAS_Y 0.122
 #define GYRO_BIAS_Z -0.226
 
+#define ACC_BIAS_X -0.0012
+#define ACC_BIAS_Y 0.0015
+#define ACC_BIAS_Z 0.0040
+
+
 #define FILTER_CUTOFF_FREQUENCY 5.0f
 #define FILTER_DT_S 0.01f
 #define GRYO_FILTER_PERIOD_MS 10 //100 Hz
@@ -73,11 +78,11 @@ void setup(){
 }
 
 void loop(){
-/*
-  sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
+
+  sensors.readAcceleration(acc[0], acc[1], acc[2]);
   sumCount++;
   for(int j=0; j<3; j++){
-    sum[j] += gyro[j];
+    sum[j] += acc[j];
     avg[j] = sum[j]/((float)sumCount);
   }
   Serial.print("Avg: ");
@@ -87,10 +92,10 @@ void loop(){
   Serial.print(", ");
   Serial.println(avg[2], 4);
   delay(DELAY_MS);
-*/
+
  
 
-  
+  /*
   delay(DELAY_MS);
   sensors.readAcceleration(acc[0], acc[1], acc[2]);
   sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
@@ -139,7 +144,7 @@ void loop(){
   // Serial.println(dt, 6);
   // Serial.print("Hz: ");
   // Serial.println(1.0/dt);
-  
+  */
   
 }
 
@@ -578,6 +583,9 @@ void logging_RUN(){
 #define GYRO_BIAS_X 0.138
 #define GYRO_BIAS_Y 0.122
 #define GYRO_BIAS_Z -0.226
+// #define ACC_BIAS_X -0.0012
+// #define ACC_BIAS_Y 0.0015
+// #define ACC_BIAS_Z 0.0040
 
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
@@ -745,6 +753,9 @@ void prvReadSensors(){
   dt = (tNow - tOld);
   //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  // a_raw[0] -= ACC_BIAS_X;
+  // a_raw[0] -= ACC_BIAS_Y;
+  // a_raw[0] -= ACC_BIAS_Z;
   sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
   g_raw[0] -= GYRO_BIAS_X;
   g_raw[1] -= GYRO_BIAS_Y;
