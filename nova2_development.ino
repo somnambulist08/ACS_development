@@ -6,10 +6,10 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-#define DEVELOPMENT
+//#define DEVELOPMENT
 //#define STATE_TEST
 //#define CONTROL_TEST
-//#define FLIGHT
+#define FLIGHT
 //#define SENSORTEST
 
 /*****************************************************************************
@@ -609,7 +609,6 @@ float h_groundLevel=0;
 
 float a_raw[3] = {0,0,0};
 float g_raw[3] = {0.0f, 0.0f, 0.0f};
-float a[3] = {0,0,0};
 float dt = 0.01;
 
 //pt1Filter acc_filter[3];
@@ -711,7 +710,7 @@ void sensorAndControl_FULL(){
 
 void logging_RUN(){
   //Serial.println("Entering logging_RUN");
-  sd.writeLog(a_raw[0], a_raw[1], a_raw[2], a[0], a[1], a[2], m[0], m[1], m[2], ang, h, tNow);
+  sd.writeLog(a_raw[0], a_raw[1], a_raw[2], g_raw[0], g_raw[1], g_raw[2], newAcc, h_groundLevel, vel, ang, h, tNow);
 }
 void logging_CLOSE(){
   sd.closeFile();
@@ -738,9 +737,11 @@ void buzz_POST(){
 void prvReadSensors(){
   //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
+
   //filter the acc data
   for (int axis = 0; axis < 3; axis++) {
-    a_raw[axis] = acc_filter[axis].apply(a_raw[axis]);
+    //a_raw[axis] = acc_filter[axis].apply(a_raw[axis]);
   }
   // TODO read the gyro values
   // TODO read the gyro values
@@ -769,14 +770,8 @@ void prvIntegrateAccel(){
   float barometer_derivative = (h - oldH) / dt;
   vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
 
->>>>>>> 985398a (fuse barometer and acc to get velocity estimates)
-  //Serial.print("vel=");
-  //Serial.println(vel);
 }
 void prvSensorFusion(){
-  attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
-  float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
-  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
   attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
   float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
   newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is

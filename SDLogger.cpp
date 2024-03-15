@@ -43,9 +43,9 @@ void SDLogger::openFile(){
   // Write the headers:
   if (flightData) {
     if(Serial) Serial.print("Writing to " + fileName);
-    flightData.print("RawA_x(ms2),RawA_y(ms2),RawA_z,(ms2)");
-    flightData.print("SAAM_A_x(ms2),SAAM_A_y(ms2),SAAM_A_z(ms2)");
-    flightData.print("Mag_x(mT),Mag_y(mT),Mag_z(mT)");
+    flightData.print("RawA_x(m/2),RawA_y(m/s2),RawA_z(m/s2),");
+    flightData.print("gyro(rad/s),SAAM_A_y(rad/s),SAAM_A_z(rad/s),");
+    flightData.print("VerticalAccel(m/s2),GroundLevel(m),vel(m/s),");
     flightData.println("Angle(rad),Altitude(m),Time(s)");
     flightData.flush();
     if(Serial) Serial.println("...headers done.");
