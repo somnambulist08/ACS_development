@@ -3,9 +3,9 @@ sixteenIMU::sixteenIMU(){};
 sixteenIMU::sixteenIMU(TwoWire &wire = Wire):BoschSensorClass(wire){};
 int sixteenIMU::readAcceleration(float &x, float &y, float &z){
     int rv = BoschSensorClass::readAcceleration(x, y, z);
-    x = -4.0f * x;
-    y = 4.0f * y;
-    z = -4.0f * z;
+    x = 4.0f * x;
+    y = -4.0f * y;
+    z = 4.0f * z;
     return rv;
 };
 int sixteenIMU::readMagneticField(float &x, float &y, float &z)
@@ -18,7 +18,7 @@ int sixteenIMU::readMagneticField(float &x, float &y, float &z)
   int sixteenIMU::readGyroscope(float &x, float &y, float &z)
   {
     int rv = BoschSensorClass::readGyroscope(x, y, z);
-    y = -y;
+    y = y;
     return rv;
     };
   int8_t sixteenIMU::configure_sensor(struct bmi2_dev *dev) {
@@ -42,8 +42,8 @@ int sixteenIMU::readMagneticField(float &x, float &y, float &z)
 
     sens_cfg[1].type = BMI2_GYRO;
     sens_cfg[1].cfg.gyr.filter_perf = BMI2_PERF_OPT_MODE;
-    sens_cfg[1].cfg.gyr.bwp = BMI2_GYR_OSR2_MODE;
-    sens_cfg[1].cfg.gyr.odr = BMI2_GYR_ODR_100HZ;
+    sens_cfg[1].cfg.gyr.bwp = BMI2_GYR_OSR4_MODE;
+    sens_cfg[1].cfg.gyr.odr = BMI2_GYR_ODR_25HZ;
     sens_cfg[1].cfg.gyr.range = BMI2_GYR_RANGE_2000;
     sens_cfg[1].cfg.gyr.ois_range = BMI2_GYR_OIS_2000;
 

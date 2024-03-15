@@ -1,4 +1,3 @@
-#include <math.h>
 #define ROLL 0
 #define PITCH 1
 #define YAW 2

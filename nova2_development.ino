@@ -23,22 +23,27 @@
 #include "mbed.h"
 #include "rtos.h"
 
-#define BETA 0.1f
+#define BETA 0.05f
 #define DELAY_MS 100
 
 //Gyro calibration bias. These change with temperature
-#define GYRO_BIAS_X 0.00
-#define GYRO_BIAS_Y 0.00
-#define GYRO_BIAS_Z 0.00
+#define GYRO_BIAS_X 0.138
+#define GYRO_BIAS_Y 0.122
+#define GYRO_BIAS_Z -0.226
+
+#define FILTER_CUTOFF_FREQUENCY 5.0f
+#define FILTER_DT_S 0.01f
+#define GRYO_FILTER_PERIOD_MS 10 //100 Hz
 
 QuickSilver attitude;
 InternalSensors sensors;
-pt1Filter filter;
-//mbed::Ticker tick;
-rtos::Thread gyroThread(osPriorityAboveNormal, 1024);
+pt1Filter gyroFilters[3];
 
-void prvFilterGyro();
-#define GRYO_FILTER_PERIOD_MS 10 //100 Hz
+//mbed::Ticker tick;
+//rtos::Thread gyroThread(osPriorityAboveNormal, 1024);
+//void prvFilterGyro();
+
+//void prvAvgGyro();
 
 float tOld = 0.0f;
 float tNow = 0.0f;
@@ -46,28 +51,55 @@ float tNow = 0.0f;
 float acc[3] = {0.0f, 0.0f, 0.0f};
 float gyro[3] = {0.0f, 0.0f, 0.0f};
 
+float sum[3] = {0,0,0};
+float avg[3] = {0,0,0};
+unsigned int sumCount = 0;
+
 void setup(){
   Serial.begin(115200);
   while(!Serial);
 
-  filter.init(5.0f, 0.1f);
+  gyroFilters[0].init(FILTER_CUTOFF_FREQUENCY, FILTER_DT_S);
+  gyroFilters[1].init(FILTER_CUTOFF_FREQUENCY, FILTER_DT_S);
+  gyroFilters[2].init(FILTER_CUTOFF_FREQUENCY, FILTER_DT_S);
   sensors.startupTasks();
+
+  //prvAvgGyro();
+
   attitude.initialize(BETA);
   tNow = ((float)(micros()))/1000000.0f;
   //tick.attach(&prvFilterGyro, GRYO_FILTER_PERIOD);
-  gyroThread.start(prvFilterGyro);
+  //gyroThread.start(&prvFilterGyro);
 }
 
 void loop(){
+/*
+  sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
+  sumCount++;
+  for(int j=0; j<3; j++){
+    sum[j] += gyro[j];
+    avg[j] = sum[j]/((float)sumCount);
+  }
+  Serial.print("Avg: ");
+  Serial.print(avg[0], 4);
+  Serial.print(", ");
+  Serial.print(avg[1], 4);
+  Serial.print(", ");
+  Serial.println(avg[2], 4);
+  delay(DELAY_MS);
+*/
+ 
+
+  
   delay(DELAY_MS);
   sensors.readAcceleration(acc[0], acc[1], acc[2]);
-  /*sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
+  sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
   gyro[0] -= GYRO_BIAS_X;
   gyro[1] -= GYRO_BIAS_Y;
   gyro[2] -= GYRO_BIAS_Z;
-  gyro[0] = filter.apply(gyro[0]);
-  gyro[1] = filter.apply(gyro[1]);
-  gyro[2] = filter.apply(gyro[2]);*/
+  gyro[0] = gyroFilters[0].apply(gyro[0]);
+  gyro[1] = gyroFilters[1].apply(gyro[1]);
+  gyro[2] = gyroFilters[2].apply(gyro[2]);
   Serial.print("Acc: ");
   Serial.print(acc[0]);
   Serial.print(", ");
@@ -82,10 +114,11 @@ void loop(){
   Serial.print(", ");
   Serial.print(gyro[2]);
   Serial.println();
-
+  
   tOld = tNow;
   tNow = ((float)(micros()))/1000000.0f;
   float dt = tNow - tOld;
+  
   attitude.update_estimate(acc,gyro,dt);
   float *grav = attitude.getGravityVector();
   Serial.print("Grav: ");
@@ -95,34 +128,70 @@ void loop(){
   Serial.print(", ");
   Serial.print(grav[2]);
   Serial.println();
+  Serial.println();
 
   float vert = attitude.vertical_acceleration_from_acc(acc);
-  Serial.print("Vert: ");
-  Serial.println(vert);
-
-  Serial.print("tNow: ");
-  Serial.println(tNow);
+  // Serial.print("Vert: ");
+  // Serial.println(vert);
+  
+  
+  // Serial.print("dt: ");
+  // Serial.println(dt, 6);
+  // Serial.print("Hz: ");
+  // Serial.println(1.0/dt);
+  
+  
 }
 
 
 //causes hard fault???
 //probably because reading the sensors is I2C and blocking and otherwise not ISR safe
-
+/*
 void prvFilterGyro(){
   sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
   gyro[0] -= GYRO_BIAS_X;
   gyro[1] -= GYRO_BIAS_Y;
   gyro[2] -= GYRO_BIAS_Z;
-  gyro[0] = filter.apply(gyro[0]);
-  gyro[1] = filter.apply(gyro[1]);
-  gyro[2] = filter.apply(gyro[2]);
+  gyro[0] = gyroFilters[0].apply(gyro[0]);
+  gyro[1] = gyroFilters[1].apply(gyro[1]);
+  gyro[2] = gyroFilters[2].apply(gyro[2]);
+  Serial.print("Gyro: ");
+  Serial.print(gyro[0]);
+  Serial.print(", ");
+  Serial.print(gyro[1]);
+  Serial.print(", ");
+  Serial.print(gyro[2]);
+  Serial.println();
+
+  Serial.println(micros());
 
   delay(GRYO_FILTER_PERIOD_MS);
 }
+*/
 
 
-
-
+/*
+void prvAvgGyro(){
+  int sum[3] = {0,0,0};
+  int avg[3] = {0,0,0};
+  unsigned int sumCount = 0;
+  while(1){
+    sensors.readGyroscope(gyro[0], gyro[1], gyro[2]);
+    sumCount++;
+    for(int j=0; j<3; j++){
+      sum[j] += gyro[j];
+      avg[j] = sum[j]/sumCount;
+    }
+    Serial.print("Avg: ");
+    Serial.print(avg[0]);
+    Serial.print(", ");
+    Serial.print(avg[1]);
+    Serial.print(", ");
+    Serial.println(avg[2]);
+    delay(DELAY_MS);
+  }
+}
+*/
 
 #endif //DEVELOPMENT
 
@@ -501,14 +570,14 @@ void logging_RUN(){
 #include "SDLogger.hh"
 #include "RealStepper.hh"
 #include "Control.hh"
-//#include "SAAM.hh"
 #include "InternalSensors.hh"
 #include "BZZT.hh"
-#include "Madgwick.hh"
+#include "QuickSilver.hh"
 #include "Filter.hh"
 
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
+#define MIN_LOOPS_IN_STATE 3
 
 #define G_TO_M_S2 9.8f
 
@@ -540,15 +609,11 @@ float h_groundLevel=0;
 
 float a_raw[3] = {0,0,0};
 float g_raw[3] = {0.0f, 0.0f, 0.0f};
-float g_raw[3] = {0.0f, 0.0f, 0.0f};
-float m[3] = {0,0,0};
 float a[3] = {0,0,0};
 float dt = 0.01;
-float dt = 0.01;
 
-pt1Filter acc_filter[3];
-Madgwick attitude_estimate;
-Madgwick attitude_estimate;
+//pt1Filter acc_filter[3];
+QuickSilver attitude_estimate;
 
 void setup(){
   //Serial.begin(115200);
@@ -558,10 +623,8 @@ void setup(){
 
   // initialize the acc_filters
   for (int axis = 0; axis < 3; axis++) {
-    acc_filter[axis].init(5.0, 0.01); // TODO dt fed in here should be the rate at which we read new acc data
+    //acc_filter[axis].init(5.0, 0.01); // TODO dt fed in here should be the rate at which we read new acc data
   }
-
-  attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
   attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
@@ -583,17 +646,18 @@ void setup(){
 }
 
 void determineState(){
-  while(newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ){
+  int i;
+  for(i=0; (newAcc < LAUNCH_THRESHOLD_A_M_S2 || h < LAUNCH_THRESHOLD_H_M ) || (i<MIN_LOOPS_IN_STATE); i++){
     //Serial.println("PRE");
     rocketState = ROCKET_PRE;
     delay(STATE_CHECKING_DELAY_MS);
   }
-  while(newAcc > 0){
+  for(i=0; (newAcc > 0) || (i<MIN_LOOPS_IN_STATE); i++){
     //Serial.println("LAUNCH");
     rocketState = ROCKET_LAUNCH;
     delay(STATE_CHECKING_DELAY_MS);
   }
-  while(vel>0){
+  for(i=0; (vel>0) || (i<MIN_LOOPS_IN_STATE); i++){
     //Serial.println("FREEFALL");
     rocketState = ROCKET_FREEFALL;
     delay(STATE_CHECKING_DELAY_MS);
