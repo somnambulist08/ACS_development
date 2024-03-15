@@ -44,10 +44,10 @@ void SDLogger::openFile(){
   if (flightData) {
     if(Serial) Serial.print("Writing to " + fileName);
     flightData.print("RawA_x(m/2),RawA_y(m/s2),RawA_z(m/s2),");
-    flightData.print("gyro(rad/s),SAAM_A_y(rad/s),SAAM_A_z(rad/s),");
+    flightData.print("gyro_x(rad/s),gyro_y(rad/s),gyro_z(rad/s),");
     flightData.print("VerticalAccel(m/s2),GroundLevel(m),vel(m/s),");
     flightData.print("Angle(rad),Altitude(m),Time(s),");
-    flightData.println("State")
+    flightData.println("State");
     flightData.flush();
     if(Serial) Serial.println("...headers done.");
     fileName = flightData.name();
@@ -82,9 +82,11 @@ void SDLogger::openFile(String newFileName){
   // Write the headers:
   if (flightData) {
     if(Serial) Serial.print("Writing to " + fileName);
-    flightData.print("Time[us], Temp[C], Pressure[hPa],");
-    flightData.print(" Omega_1[rad/s], Omega_2[rad/s], Omega_3[rad/s], acc_1[g], acc_2[g], acc_3[g],");
-    flightData.println(" mag_1[uT], mag_2[uT], mag_3[uT]");
+    flightData.print("RawA_x(m/2),RawA_y(m/s2),RawA_z(m/s2),");
+    flightData.print("gyro_x(rad/s),gyro_y(rad/s),gyro_z(rad/s),");
+    flightData.print("VerticalAccel(m/s2),GroundLevel(m),vel(m/s),");
+    flightData.print("Angle(rad),Altitude(m),Time(s),");
+    flightData.println("State");
     flightData.flush();
     if(Serial) Serial.println("...headers done.");
     fileName = flightData.name();
@@ -114,7 +116,7 @@ void SDLogger::writeLog(float acc1, float acc2, float acc3, float saam1, float s
   flightData.print(ang, 4);flightData.print(',');
   flightData.print(alt, 4);flightData.print(',');
   flightData.print(t_now, 4);flightData.print(',');
-  flighData.println(state);
+  flightData.println(state);
 
   flightData.flush();
 }
