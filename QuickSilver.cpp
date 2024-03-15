@@ -56,7 +56,6 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO
 
     // not doing sqrt to save a little cpu
     float acc_mag_squared = acc[VEC_X] * acc[VEC_X] + acc[VEC_Y] * acc[VEC_Y] + acc[VEC_Z] * acc[VEC_Z];
-    acc_mag_squared = 0.0;
     if (acc_mag_squared < 1.05 && acc_mag_squared > 0.95) { // todo test to see if this window is too small
         for (int axis = 0; axis < 3; axis++) {
             // slowly fuse the estimate towards the acc reading

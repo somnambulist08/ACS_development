@@ -117,7 +117,7 @@ void buzzerCallback(){
 }
 
 //main thread tracks the state
-void loop() __attribute__((weak)); //to let me define it when I'm not using the RTOS because Arduino compiles and links this file even if I don't include it
+//void loop() __attribute__((weak)); //to let me define it when I'm not using the RTOS because Arduino compiles and links this file even if I don't include it
 void loop(){
     while(1){
         determineState();

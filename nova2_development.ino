@@ -100,39 +100,39 @@ void loop(){
   gyro[0] = gyroFilters[0].apply(gyro[0]);
   gyro[1] = gyroFilters[1].apply(gyro[1]);
   gyro[2] = gyroFilters[2].apply(gyro[2]);
-  Serial.print("Acc: ");
-  Serial.print(acc[0]);
-  Serial.print(", ");
-  Serial.print(acc[1]);
-  Serial.print(", ");
-  Serial.print(acc[2]);
-  Serial.println();
-  Serial.print("Gyro: ");
-  Serial.print(gyro[0]);
-  Serial.print(", ");
-  Serial.print(gyro[1]);
-  Serial.print(", ");
-  Serial.print(gyro[2]);
-  Serial.println();
+  // Serial.print("Acc: ");
+  // Serial.print(acc[0]);
+  // Serial.print(", ");
+  // Serial.print(acc[1]);
+  // Serial.print(", ");
+  // Serial.print(acc[2]);
+  // Serial.println();
+  // Serial.print("Gyro: ");
+  // Serial.print(gyro[0]);
+  // Serial.print(", ");
+  // Serial.print(gyro[1]);
+  // Serial.print(", ");
+  // Serial.print(gyro[2]);
+  // Serial.println();
   
   tOld = tNow;
   tNow = ((float)(micros()))/1000000.0f;
   float dt = tNow - tOld;
   
   attitude.update_estimate(acc,gyro,dt);
-  float *grav = attitude.getGravityVector();
-  Serial.print("Grav: ");
-  Serial.print(grav[0]);
-  Serial.print(", ");
-  Serial.print(grav[1]);
-  Serial.print(", ");
-  Serial.print(grav[2]);
-  Serial.println();
-  Serial.println();
+  // float *grav = attitude.getGravityVector();
+  // Serial.print("Grav: ");
+  // Serial.print(grav[0]);
+  // Serial.print(", ");
+  // Serial.print(grav[1]);
+  // Serial.print(", ");
+  // Serial.print(grav[2]);
+  // Serial.println();
+  // Serial.println();
 
   float vert = attitude.vertical_acceleration_from_acc(acc);
-  // Serial.print("Vert: ");
-  // Serial.println(vert);
+  Serial.print("Vert: ");
+  Serial.println(vert);
   
   
   // Serial.print("dt: ");
@@ -575,6 +575,10 @@ void logging_RUN(){
 #include "QuickSilver.hh"
 #include "Filter.hh"
 
+#define GYRO_BIAS_X 0.138
+#define GYRO_BIAS_Y 0.122
+#define GYRO_BIAS_Z -0.226
+
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
 #define MIN_LOOPS_IN_STATE 3
@@ -583,8 +587,8 @@ void logging_RUN(){
 
 void prvReadSensors();
 void prvIntegrateAccel();
-void prvSensorFusion();
 void prvDoControl();
+void prvUpdateVars();
 
 //we need a new timer because they last 30 minutes before they overflow.
 //If we sit on the pad for longer than that then we don't know if we are just barely
@@ -607,12 +611,15 @@ float oldH=0;
 float ang=0;
 float h_groundLevel=0;
 
+int h_resetCounter=0;
+
 float a_raw[3] = {0,0,0};
 float g_raw[3] = {0.0f, 0.0f, 0.0f};
 float dt = 0.01;
 
 //pt1Filter acc_filter[3];
 QuickSilver attitude_estimate;
+pt1Filter gyroFilters[3];
 
 void setup(){
   //Serial.begin(115200);
@@ -622,7 +629,7 @@ void setup(){
 
   // initialize the acc_filters
   for (int axis = 0; axis < 3; axis++) {
-    //acc_filter[axis].init(5.0, 0.01); // TODO dt fed in here should be the rate at which we read new acc data
+    gyroFilters[axis].init(5.0, 0.1); // TODO dt fed in here should be the rate at which we read new acc data
   }
 
   attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
@@ -671,17 +678,19 @@ void determineState(){
 void sensorAndControl_PRE(){
   tim.reset(); //continue to reset tim until we determine we are in launch mode
   //get data
-  prvReadSensors();
+  prvReadSensors(); 
+
+  if(++h_resetCounter > 10)
+  {
+    h_groundLevel += h; //when in pre-flight, update the ground level every 10th pass
+    h_resetCounter=0;
+  }
 
   updateVars();
 }
 void sensorAndControl_LAUNCH(){
   //get data
   prvReadSensors();
-
-  //Apply sensor fusion
-  prvSensorFusion();
-
 
   //integrate acc to get vel
   prvIntegrateAccel();
@@ -693,18 +702,14 @@ void sensorAndControl_FULL(){
   //get data
   prvReadSensors();
 
-  //Apply sensor fusion
-  prvSensorFusion();
-
   //fuse sensors to get vel
   prvIntegrateAccel();
-
-  //update variables
-  updateVars();
 
   //set control value
   prvDoControl();
 
+  //update variables
+  updateVars();
 }
 
 
@@ -735,9 +740,18 @@ void buzz_POST(){
 
 
 void prvReadSensors(){
+  tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
+  // TODO get dt based on the time between last sample reads, not time since running this, it'll be more accurate this way
+  dt = (tNow - tOld);
   //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
   sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
+  g_raw[0] -= GYRO_BIAS_X;
+  g_raw[1] -= GYRO_BIAS_Y;
+  g_raw[2] -= GYRO_BIAS_Z;
+  g_raw[0] = gyroFilters[0].apply(g_raw[0]);
+  g_raw[1] = gyroFilters[1].apply(g_raw[1]);
+  g_raw[2] = gyroFilters[2].apply(g_raw[2]);
 
   //filter the acc data
   for (int axis = 0; axis < 3; axis++) {
@@ -753,28 +767,34 @@ void prvReadSensors(){
   //Serial.print("H:");
   //Serial.println(h);
   //convert A to m/s2
-  newAcc = a_raw[2] * G_TO_M_S2;
+  /*attitude_estimate.update_estimate(a_raw, g_raw, dt)
+  float a_ms2[3];
+  for(int i=0; i<3; i++){
+    a_ms2[i] = a_raw[i] * G_TO_M_S2;
+  }
+  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_ms2);*/
   //Serial.print("A:");
   //Serial.println(a_raw[2]);
 
+  attitude_estimate.update_estimate(a_raw, g_raw, dt); 
+  //float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
+  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_raw) * G_TO_M_S2; //keep in Gs until the last second
+
 }
+
 void prvIntegrateAccel(){
   //Serial.println("Entering prvIntegrateAccel");
-  tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
-  // TODO get dt based on the time between last sample reads, not time since running this, it'll be more accurate this way
-  dt = (tNow - tOld);
 
-  float fusion_gain = 0.2; // how much we trust accelerometer data
+  //make gain a function of vel?
+  float Ma = constrain(vel/343.0f, 0.0, 1.0);
+  float max_baro_trust = 0.8;
+  float fusion_gain = Ma * max_baro_trust + (1.0 - Ma) * (1.0 - max_baro_trust);
+  
 
   float acc_integration = newAcc * dt; // will drift, but accurate over short times
   float barometer_derivative = (h - oldH) / dt;
   vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
 
-}
-void prvSensorFusion(){
-  attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
-  float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
-  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
 }
 void prvDoControl(){
   ang = getControl(getDesired(tNow), predictAltitude(h,vel), tNow-tOld);
