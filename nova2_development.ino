@@ -6,10 +6,10 @@
  * 
  * Uncomment one of the following defines to choose which test to run
 ******************************************************************************/
-//#define DEVELOPMENT
+#define DEVELOPMENT
 //#define STATE_TEST
 //#define CONTROL_TEST
-#define FLIGHT
+//#define FLIGHT
 //#define SENSORTEST
 
 /*****************************************************************************
@@ -22,6 +22,7 @@
 #include "Filter.hh"
 #include "mbed.h"
 #include "rtos.h"
+#include "SDLogger.hh"
 
 #define BETA 0.05f
 #define DELAY_MS 100
@@ -43,6 +44,7 @@
 QuickSilver attitude;
 InternalSensors sensors;
 pt1Filter gyroFilters[3];
+SDLogger sd;
 
 //mbed::Ticker tick;
 //rtos::Thread gyroThread(osPriorityAboveNormal, 1024);
@@ -63,6 +65,8 @@ unsigned int sumCount = 0;
 void setup(){
   Serial.begin(115200);
   while(!Serial);
+
+  sd.openFile();
 
   gyroFilters[0].init(FILTER_CUTOFF_FREQUENCY, FILTER_DT_S);
   gyroFilters[1].init(FILTER_CUTOFF_FREQUENCY, FILTER_DT_S);
@@ -91,6 +95,9 @@ void loop(){
   Serial.print(avg[1], 4);
   Serial.print(", ");
   Serial.println(avg[2], 4);
+
+  sd.writeLog(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
   delay(DELAY_MS);
 
  
