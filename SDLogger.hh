@@ -21,7 +21,7 @@ public:
     SDLogger();
     SDLogger(String newFileName);
     void openFile(String newFileName);
-    void writeLog(float acc1, float acc2, float acc3, float saam1, float saam2, float saam3, float mag1, float mag2, float mag3, float ang, float alt, float t_now);
+    void writeLog(float acc1, float acc2, float acc3, float saam1, float saam2, float saam3, float mag1, float mag2, float mag3, float ang, float alt, float t_now, int state);
     void writeLog(float accel, float vel, float h, float ang);
     void writeLog(float a_raw[], float m[], float a[]);
 

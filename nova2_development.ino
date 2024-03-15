@@ -757,7 +757,7 @@ void sensorAndControl_FULL(){
 
 void logging_RUN(){
   //Serial.println("Entering logging_RUN");
-  sd.writeLog(a_raw[0], a_raw[1], a_raw[2], g_raw[0], g_raw[1], g_raw[2], newAcc, h_groundLevel, vel, ang, h, tNow);
+  sd.writeLog(a_raw[0], a_raw[1], a_raw[2], g_raw[0], g_raw[1], g_raw[2], newAcc, h_groundLevel, vel, ang, h, tNow, rocketState);
 }
 void logging_CLOSE(){
   sd.closeFile();

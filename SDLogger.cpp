@@ -46,7 +46,8 @@ void SDLogger::openFile(){
     flightData.print("RawA_x(m/2),RawA_y(m/s2),RawA_z(m/s2),");
     flightData.print("gyro(rad/s),SAAM_A_y(rad/s),SAAM_A_z(rad/s),");
     flightData.print("VerticalAccel(m/s2),GroundLevel(m),vel(m/s),");
-    flightData.println("Angle(rad),Altitude(m),Time(s)");
+    flightData.print("Angle(rad),Altitude(m),Time(s),");
+    flightData.println("State")
     flightData.flush();
     if(Serial) Serial.println("...headers done.");
     fileName = flightData.name();
@@ -99,7 +100,7 @@ void SDLogger::openFile(String newFileName){
   }
 }
 
-void SDLogger::writeLog(float acc1, float acc2, float acc3, float saam1, float saam2, float saam3, float mag1, float mag2, float mag3, float ang, float alt, float t_now){
+void SDLogger::writeLog(float acc1, float acc2, float acc3, float saam1, float saam2, float saam3, float mag1, float mag2, float mag3, float ang, float alt, float t_now, int state){
   if(Serial) Serial.println("Logging");
   flightData.print(acc1, 4);flightData.print(',');
   flightData.print(acc2, 4);flightData.print(',');
@@ -112,7 +113,8 @@ void SDLogger::writeLog(float acc1, float acc2, float acc3, float saam1, float s
   flightData.print(mag3, 4);flightData.print(',');
   flightData.print(ang, 4);flightData.print(',');
   flightData.print(alt, 4);flightData.print(',');
-  flightData.println(t_now, 4);
+  flightData.print(t_now, 4);flightData.print(',');
+  flighData.println(state);
 
   flightData.flush();
 }
