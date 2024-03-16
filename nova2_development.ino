@@ -833,8 +833,8 @@ void prvIntegrateAccel(){
   //make gain a function of vel?
   float Ma = constrain(vel/343.0f, 0.0, 1.0);
   float max_baro_trust = 0.8;
-  float fusion_gain = Ma * max_baro_trust + (1.0 - Ma) * (1.0 - max_baro_trust);
-  
+  //float fusion_gain = Ma * max_baro_trust + (1.0 - Ma) * (1.0 - max_baro_trust);
+  float fusion_gain = 0.8;
 
   float acc_integration = newAcc * dt; // will drift, but accurate over short times
   float barometer_derivative = (h - oldH) / dt;
