@@ -633,6 +633,11 @@ float a_raw[3] = {0,0,0};
 float g_raw[3] = {0.0f, 0.0f, 0.0f};
 float dt = 0.01;
 
+#define BACK_ACC_LENGTH 3
+float backAcc[BACK_ACC_LENGTH] = {0};
+float backDt[BACK_ACC_LENGTH] = {0};
+bool backCalcDone = false;
+
 //pt1Filter acc_filter[3];
 QuickSilver attitude_estimate;
 pt1Filter gyroFilters[3];
@@ -828,6 +833,12 @@ void prvReadSensors(){
 }
 
 void prvIntegrateAccel(){
+  if(!backCalcDone){
+    for(int i=BACK_ACC_LENGTH-1; i>=0; i--){
+      vel += backAcc[i] * backDt[i];
+    }
+    backCalcDone = true;
+  }
   //Serial.println("Entering prvIntegrateAccel");
 
   //make gain a function of vel?
@@ -850,6 +861,13 @@ void updateVars(){
   oldAcc = newAcc; 
   tOld = tNow;
   oldH = h;
+
+  backAcc[0] = oldAcc;
+  backDt[0] = dt;
+  for(int i=1; i<BACK_ACC_LENGTH; i++){
+    backAcc[i] = backAcc[i-1];
+    backDt[i] = backDt[i-1];
+  }
 }
 
 
