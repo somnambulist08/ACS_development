@@ -123,6 +123,10 @@ void SDLogger::closeFile(){
         flightData.close();
     }
 }
+void SDLogger::writeStr(String line){
+  flightData.print(line);
+  flightData.flush();
+}
 
 void SDLogger::writeLog(){}
 

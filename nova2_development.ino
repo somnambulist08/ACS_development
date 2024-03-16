@@ -637,6 +637,7 @@ float dt = 0.01;
 //pt1Filter acc_filter[3];
 QuickSilver attitude_estimate;
 pt1Filter gyroFilters[3];
+String queuedData="";
 
 void setup(){
   //Serial.begin(115200);
@@ -725,7 +726,7 @@ void sensorAndControl_PRE(){
 
   if(++h_resetCounter > 10)
   {
-    h_groundLevel += h; //when in pre-flight, update the ground level every 10th pass
+    // h_groundLevel += h; //when in pre-flight, update the ground level every 10th pass
     h_resetCounter=0;
   }
 
@@ -809,7 +810,7 @@ void prvReadSensors(){
   float tempH=0;
   sensors.readAltitude(tempH);
   //convert H to AGL
-  h = tempH -h_groundLevel;
+  h = tempH - h_groundLevel;
   //Serial.print("H:");
   //Serial.println(h);
   //convert A to m/s2
@@ -825,6 +826,10 @@ void prvReadSensors(){
   attitude_estimate.update_estimate(a_raw, g_raw, dt); 
   //float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
   newAcc = attitude_estimate.vertical_acceleration_from_acc(a_raw) * G_TO_M_S2; //keep in Gs until the last second
+  queuedData.concat(String(a_raw[0])+','+String(a_raw[1])+','+String(a_raw[2])+',');
+  queuedData.concat(String(g_raw[0])+','+String(g_raw[1])+','+String(g_raw[2])+',');
+  queuedData.concat(String(newAcc)+','+String(h_groundLevel)+','+String(vel)+','+String(ang)+',');
+  queuedData.concat(String(h)+','+String(tNow)+','+ String(rocketState)+'\n');
 
 }
 
