@@ -44,7 +44,7 @@ void SDLogger::openFile(){
   if (flightData) {
     if(Serial) Serial.print("Writing to " + fileName);
     flightData.print("RawA_x(m/2),RawA_y(m/s2),RawA_z(m/s2),");
-    flightData.print("gyro_x(rad/s),gyro_y(rad/s),gyro_z(rad/s),");
+    flightData.print("gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),");
     flightData.print("VerticalAccel(m/s2),GroundLevel(m),vel(m/s),");
     flightData.print("Angle(rad),Altitude(m),Time(s),");
     flightData.println("State");
@@ -83,7 +83,7 @@ void SDLogger::openFile(String newFileName){
   if (flightData) {
     if(Serial) Serial.print("Writing to " + fileName);
     flightData.print("RawA_x(m/2),RawA_y(m/s2),RawA_z(m/s2),");
-    flightData.print("gyro_x(rad/s),gyro_y(rad/s),gyro_z(rad/s),");
+    flightData.print("gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),");
     flightData.print("VerticalAccel(m/s2),GroundLevel(m),vel(m/s),");
     flightData.print("Angle(rad),Altitude(m),Time(s),");
     flightData.println("State");
