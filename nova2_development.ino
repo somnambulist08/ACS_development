@@ -724,7 +724,7 @@ void sensorAndControl_PRE(){
 
   if(++h_resetCounter > 10)
   {
-    h_groundLevel += h; //when in pre-flight, update the ground level every 10th pass
+    //h_groundLevel += h; //when in pre-flight, update the ground level every 10th pass
     h_resetCounter=0;
   }
 
