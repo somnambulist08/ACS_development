@@ -633,7 +633,7 @@ float a_raw[3] = {0,0,0};
 float g_raw[3] = {0.0f, 0.0f, 0.0f};
 float dt = 0.01;
 
-#define BACK_ACC_LENGTH 3
+#define BACK_ACC_LENGTH 10
 float backAcc[BACK_ACC_LENGTH] = {0};
 float backDt[BACK_ACC_LENGTH] = {0};
 bool backCalcDone = false;
@@ -686,6 +686,7 @@ void determineState(){
     if (!stay) leaveCounter++;
     if((!stay) && (leaveCounter > MIN_POINTS_TO_LEAVE)) proceed = true;
     if(stay) leaveCounter = 0;
+    //if (stayCounter > 100) proceed = true;
   }
   proceed = false;
   stayCounter = 0;
