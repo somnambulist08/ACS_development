@@ -69,11 +69,12 @@ void loggingCallback(){
             case(ROCKET_PRE):
             case(ROCKET_LAUNCH):
             case(ROCKET_FREEFALL):
+            case(ROCKET_RECOVERY):
                 logging_RUN();
                 break;
-            case(ROCKET_RECOVERY):
-                logging_CLOSE();
-                break;
+            // case(ROCKET_RECOVERY):
+            //     logging_CLOSE();
+            //     break;
             default:
                 logging_IDLE();
                 break;

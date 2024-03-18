@@ -2,7 +2,7 @@
 
 
 float getDesired(float time) {
-  return 950.0f * powf(M_E, -time) + 1015.9f;
+  return 700.0f * powf(M_E, -time) + 1015.9f;
 }
 
 
