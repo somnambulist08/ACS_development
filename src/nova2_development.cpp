@@ -734,7 +734,7 @@ void sensorAndControl_PRE(){
     h_resetCounter=0;
   }
 
-  updateVars();
+  prvUpdateVars();
 }
 void sensorAndControl_LAUNCH(){
   //get data
@@ -744,7 +744,7 @@ void sensorAndControl_LAUNCH(){
   prvIntegrateAccel();
 
   //update variables
-  updateVars();
+  prvUpdateVars();
 }
 void sensorAndControl_FULL(){
   //get data
@@ -757,7 +757,7 @@ void sensorAndControl_FULL(){
   prvDoControl();
 
   //update variables
-  updateVars();
+  prvUpdateVars();
 }
 
 
@@ -857,7 +857,7 @@ void prvDoControl(){
   ang = getControl(getDesired(tNow), predictAltitude(h,vel), tNow-tOld);
   stepper.setStepsTarget(microStepsFromFlapAngle(ang));
 }
-void updateVars(){
+void prvUpdateVars(){
   //Serial.println("Entering updateVars");
   oldAcc = newAcc; 
   tOld = tNow;
