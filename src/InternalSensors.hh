@@ -21,7 +21,6 @@
 #include <math.h>
 #include "GetData.hh"
 #include "sixteenIMU.hh"
-#include "SAAM.hh"
 
 class InternalSensors: public GetData{
 public:
