@@ -9,8 +9,9 @@
 //#define DEVELOPMENT
 //#define STATE_TEST
 //#define CONTROL_TEST
-#define FLIGHT
+//#define FLIGHT
 //#define SENSORTEST
+#define TEENSY_4_0_TESTING
 
 /*****************************************************************************
  * DEVELOPMENT
@@ -1002,5 +1003,25 @@ void logging_RUN(){
 
 #endif //SENSORTEST
 
+/*****************************************************************************
+ * TEENSY_4_0_TESTING
+*****************************************************************************/
+#ifdef TEENSY_4_0_TESTING
 
+#include "RocketRTOS.hh"
+
+void setup(){
+  Serial.begin(115200);
+  while(!Serial);
+
+  startRocketRTOS();
+}
+
+void stepper_RUN(){
+  Serial.println("Step :)");
+}
+
+
+
+#endif //TEENSY_4_0_TESTING
 

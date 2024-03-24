@@ -11,8 +11,9 @@
 #define ROCKET_RTOS_HH
 
 #include <Arduino.h>
-#include <mbed.h>
-#include <rtos.h>
+// #include <mbed.h>
+// #include <rtos.h>
+#include <FreeRTOS_TEENSY4.h>
 
 void startRocketRTOS();
 
@@ -30,9 +31,15 @@ extern RocketState_t rocketState;
 
 #define THREADS_STACK_DEPTH 1024
 //extern to expose them just in case
-extern rtos::Thread sensorAndControlThread;
-extern rtos::Thread loggingThread;
-extern rtos::Thread stepperThread;
+// extern rtos::Thread sensorAndControlThread;
+// extern rtos::Thread loggingThread;
+// extern rtos::Thread stepperThread;
+// extern rtos::Thread buzzerThread;
+extern TaskHandle_t sensorAndControlThread;
+extern TaskHandle_t loggingThread;
+extern TaskHandle_t stepperThread;
+extern TaskHandle_t buzzerThread;
+extern TaskHandle_t stateCheckingThread;
 
 
 //All delays are in addition to the execution time, meaning the period is

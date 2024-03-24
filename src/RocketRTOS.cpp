@@ -1,18 +1,28 @@
 #include "RocketRTOS.hh"
 
 //Threads at higher priority than main
-rtos::Thread sensorAndControlThread(osPriorityRealtime, THREADS_STACK_DEPTH);
-rtos::Thread loggingThread(osPriorityHigh, THREADS_STACK_DEPTH);
+// rtos::Thread sensorAndControlThread(osPriorityRealtime, THREADS_STACK_DEPTH);
+// rtos::Thread loggingThread(osPriorityHigh, THREADS_STACK_DEPTH);
+TaskHandle_t sensorAndControlThread;
+TaskHandle_t loggingThread;
+
+//The "Main Thread" (except FreeRTOS doesn't have a main thread. this is just the middle priority thread)
+TaskHandle_t stateCheckingThread;
+
 //Threads at lower priority than main
-rtos::Thread buzzerThread(osPriorityBelowNormal, THREADS_STACK_DEPTH);
-rtos::Thread stepperThread(osPriorityLow, THREADS_STACK_DEPTH);
+// rtos::Thread buzzerThread(osPriorityBelowNormal, THREADS_STACK_DEPTH);
+// rtos::Thread stepperThread(osPriorityLow, THREADS_STACK_DEPTH);
+TaskHandle_t buzzerThread;
+TaskHandle_t stepperThread;
 
 RocketState_t rocketState = ROCKET_BOOT;
 
-void sensorAndControlCallback();
-void loggingCallback();
-void stepperCallback();
-void buzzerCallback();
+void sensorAndControlCallback(void *in);
+void loggingCallback(void *in);
+void stepperCallback(void *in);
+void buzzerCallback(void *in);
+void determineStateCallback(void *in);
+
 
 //This file provides a definition for deterimining state, but if any other file wants to define it they may
 void determineState() __attribute__((weak));
@@ -37,13 +47,36 @@ void buzz_IDLE() __attribute__((weak));
 
 void startRocketRTOS(){
     rocketState = ROCKET_PRE;
-    sensorAndControlThread.start(sensorAndControlCallback);
-    loggingThread.start(loggingCallback);
-    stepperThread.start(stepperCallback);
-    buzzerThread.start(buzzerCallback);
+    // sensorAndControlThread.start(sensorAndControlCallback);
+    // loggingThread.start(loggingCallback);
+    // stepperThread.start(stepperCallback);
+    // buzzerThread.start(buzzerCallback);
+
+    BaseType_t status;
+    status = xTaskCreate(&sensorAndControlCallback, "Sensor&Control", THREADS_STACK_DEPTH, NULL, 7, &sensorAndControlThread);
+    if(status == pdFAIL) while(1){Serial.println("Can't Start Sensor&Control");}
+
+    status = xTaskCreate(&loggingCallback, "Logging", THREADS_STACK_DEPTH, NULL, 6, &loggingThread);
+    if(status == pdFAIL) while(1){Serial.println("Can't Start Logging");}
+
+    status = xTaskCreate(&determineStateCallback, "StateMachine", THREADS_STACK_DEPTH, NULL, 5, &stateCheckingThread);
+    if(status == pdFAIL) while(1){Serial.println("Can't Start StateMachine");}
+
+    status = xTaskCreate(&buzzerCallback, "Buzzer", THREADS_STACK_DEPTH, NULL, 4, &buzzerThread);
+    if(status == pdFAIL) while(1){Serial.println("Can't Start Buzzer");}
+
+    status = xTaskCreate(&stepperCallback, "Stepper", THREADS_STACK_DEPTH, NULL, 3, &stepperThread);
+    if(status == pdFAIL) while(1){Serial.println("Can't Start Stepper");}
+
+    vTaskStartScheduler();
 }   
 
-void sensorAndControlCallback(){
+void loop() __attribute__((weak)); //to let me define it when I'm not using the RTOS because Arduino compiles and links this file even if I don't include it
+void loop(){
+    while(1){Serial.println("Scheduler Aborted????");} //if we get here VERY BAD things have happened
+}
+
+void sensorAndControlCallback(void *in){
     while(1){
         switch(rocketState){
             case(ROCKET_PRE):
@@ -59,11 +92,12 @@ void sensorAndControlCallback(){
                 sensorAndControl_IDLE();
                 break;
         }
-        delay(SENSOR_AND_CONTROL_DELAY_MS);
+        //delay(SENSOR_AND_CONTROL_DELAY_MS);
+        vTaskDelay(SENSOR_AND_CONTROL_DELAY_MS/portTICK_PERIOD_MS);
     }
 }
 
-void loggingCallback(){
+void loggingCallback(void *in){
     while(1){
        switch(rocketState){
             case(ROCKET_PRE):
@@ -79,11 +113,12 @@ void loggingCallback(){
                 logging_IDLE();
                 break;
         }
-        delay(LOGGING_DELAY_MS);
+        //delay(LOGGING_DELAY_MS);
+        vTaskDelay(LOGGING_DELAY_MS/portTICK_PERIOD_MS);
     }
 }
 
-void stepperCallback(){
+void stepperCallback(void *in){
     while(1){
         switch(rocketState){
             case(ROCKET_FREEFALL):
@@ -100,7 +135,7 @@ void stepperCallback(){
     }
 }
 
-void buzzerCallback(){
+void buzzerCallback(void *in){
        while(1){
         switch(rocketState){
             case(ROCKET_PRE):
@@ -113,16 +148,24 @@ void buzzerCallback(){
                 buzz_IDLE();
                 break;
         }
-        delay(BUZZ_DELAY_MS);
+        //delay(BUZZ_DELAY_MS);
+        vTaskDelay(BUZZ_DELAY_MS/portTICK_PERIOD_MS);
     }
 }
 
 //main thread tracks the state
-void loop() __attribute__((weak)); //to let me define it when I'm not using the RTOS because Arduino compiles and links this file even if I don't include it
-void loop(){
+// void loop() __attribute__((weak)); //to let me define it when I'm not using the RTOS because Arduino compiles and links this file even if I don't include it
+// void loop(){
+//     while(1){
+//         determineState();
+//         delay(STATE_CHECKING_DELAY_MS); //make an opening for the stepper
+//     }
+// }
+void determineStateCallback(void *in){
     while(1){
         determineState();
-        delay(STATE_CHECKING_DELAY_MS); //make an opening for the stepper
+        //delay(STATE_CHECKING_DELAY_MS);
+        vTaskDelay(STATE_CHECKING_DELAY_MS/portTICK_PERIOD_MS);
     }
 }
 
