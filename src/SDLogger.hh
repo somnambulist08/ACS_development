@@ -4,17 +4,18 @@
  * Contains the functions to operate the SD card
  * 
  * 
- * 02/23/23 - created file
+ * 02/23/24 - created file
+ * 03/28/24 - adapted to teensy
 ******************************************************************************/
 #ifndef SD_LOGGER_HH
 #define SD_LOGGER_HH
-#define RED 22
-#define BLUE 23
-#define GREEN 24
+
+#define MAX_FILE_NAME_LENGTH 256
 
 #include "SDInterface.hh"
 #include <SD.h>
 
+const int chipSelect = BUILTIN_SDCARD;//Tells Teensy to use the on-board SD
 class SDLogger : public SDInterface {
 public:
     //personal

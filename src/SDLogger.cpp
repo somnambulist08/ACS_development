@@ -14,10 +14,7 @@ void SDLogger::openFile(){
   if (!SD.begin()) {
     if(Serial) Serial.println("initialization failed!");
     while (1) {
-      digitalWrite(RED, HIGH);
-      delay(1000);
-      digitalWrite(RED, LOW);
-      delay(1000);
+      //TODO: error handling
     }
   } else {
     if(Serial) Serial.println("SD Initialized");
@@ -35,14 +32,20 @@ void SDLogger::openFile(){
       fileName = String("0" + String(i) + ".csv");
     else
       fileName = String(String(i) + ".csv");
-    fileavail = !SD.exists(fileName);
+    fileavail = !SD.exists(fileName.c_str());
     i++;
   }
-  flightData = SD.open(fileName, FILE_WRITE);
-  if(Serial) Serial.println("Writing to File: " + fileName);
+  flightData = SD.open(fileName.c_str(), FILE_WRITE);
+  if(Serial) {
+    Serial.print("Trying to open to File: ");
+    Serial.println(fileName);
+  }
   // Write the headers:
   if (flightData) {
-    if(Serial) Serial.print("Writing to " + fileName);
+    if(Serial){
+      Serial.print("Writing to ");
+      Serial.println(fileName);
+    }
     flightData.print("RawA_x(m/2),RawA_y(m/s2),RawA_z(m/s2),");
     flightData.print("gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),");
     flightData.print("VerticalAccel(m/s2),GroundLevel(m),vel(m/s),");
@@ -52,13 +55,13 @@ void SDLogger::openFile(){
     if(Serial) Serial.println("...headers done.");
     fileName = flightData.name();
   } else {
-    if(Serial) Serial.println("error opening " + fileName);
+    if(Serial){
+      Serial.print("error opening ");
+      Serial.println(fileName);
+    }
     //red light means stop
     while (1) {
-      digitalWrite(RED, HIGH);
-      delay(500);
-      digitalWrite(RED, LOW);
-      delay(500);
+      //TODO: error handling
     }
   }
 }
@@ -68,20 +71,23 @@ void SDLogger::openFile(String newFileName){
   if (!SD.begin()) {
     if(Serial) Serial.println("initialization failed!");
     while (1) {
-      digitalWrite(RED, HIGH);
-      delay(1000);
-      digitalWrite(RED, LOW);
-      delay(1000);
+      //TODO: error handling
     }
   } else {
     if(Serial) Serial.println("SD Initialized");
   }
   fileName = newFileName;
-  flightData = SD.open(fileName, FILE_WRITE);
-  if(Serial) Serial.println("Writing to File: " + fileName);
+  flightData = SD.open(fileName.c_str(), FILE_WRITE);
+  if(Serial) {
+    Serial.print("Trying to open to File: ");
+    Serial.println(fileName);
+  }
   // Write the headers:
   if (flightData) {
-    if(Serial) Serial.print("Writing to " + fileName);
+    if(Serial){
+      Serial.print("Writing to ");
+      Serial.println(fileName);
+    }
     flightData.print("RawA_x(m/2),RawA_y(m/s2),RawA_z(m/s2),");
     flightData.print("gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),");
     flightData.print("VerticalAccel(m/s2),GroundLevel(m),vel(m/s),");
@@ -91,13 +97,13 @@ void SDLogger::openFile(String newFileName){
     if(Serial) Serial.println("...headers done.");
     fileName = flightData.name();
   } else {
-    if(Serial) Serial.println("error opening " + fileName);
+    if(Serial){
+      Serial.print("error opening ");
+      Serial.println(fileName);
+    }
     //red light means stop
     while (1) {
-      digitalWrite(RED, HIGH);
-      delay(500);
-      digitalWrite(RED, LOW);
-      delay(500);
+      //TODO: Error handling
     }
   }
 }
