@@ -47,28 +47,33 @@ void buzz_IDLE() __attribute__((weak));
 
 void startRocketRTOS(){
     rocketState = ROCKET_PRE;
+
+    Serial.println("In startRocketRTOS");
     // sensorAndControlThread.start(sensorAndControlCallback);
     // loggingThread.start(loggingCallback);
     // stepperThread.start(stepperCallback);
     // buzzerThread.start(buzzerCallback);
 
     BaseType_t status;
-    status = xTaskCreate(&sensorAndControlCallback, "Sensor&Control", THREADS_STACK_DEPTH, NULL, 7, &sensorAndControlThread);
+    status = xTaskCreate(sensorAndControlCallback, "Sensor&Control", THREADS_STACK_DEPTH, NULL, 7, &sensorAndControlThread);
     if(status == pdFAIL) while(1){Serial.println("Can't Start Sensor&Control");}
 
-    status = xTaskCreate(&loggingCallback, "Logging", THREADS_STACK_DEPTH, NULL, 6, &loggingThread);
+    status = xTaskCreate(loggingCallback, "Logging", THREADS_STACK_DEPTH, NULL, 6, &loggingThread);
     if(status == pdFAIL) while(1){Serial.println("Can't Start Logging");}
 
-    status = xTaskCreate(&determineStateCallback, "StateMachine", THREADS_STACK_DEPTH, NULL, 5, &stateCheckingThread);
+    status = xTaskCreate(determineStateCallback, "StateMachine", THREADS_STACK_DEPTH, NULL, 5, &stateCheckingThread);
     if(status == pdFAIL) while(1){Serial.println("Can't Start StateMachine");}
 
-    status = xTaskCreate(&buzzerCallback, "Buzzer", THREADS_STACK_DEPTH, NULL, 4, &buzzerThread);
+    status = xTaskCreate(buzzerCallback, "Buzzer", THREADS_STACK_DEPTH, NULL, 4, &buzzerThread);
     if(status == pdFAIL) while(1){Serial.println("Can't Start Buzzer");}
 
-    status = xTaskCreate(&stepperCallback, "Stepper", THREADS_STACK_DEPTH, NULL, 3, &stepperThread);
+    status = xTaskCreate(stepperCallback, "Stepper", THREADS_STACK_DEPTH, NULL, 3, &stepperThread);
     if(status == pdFAIL) while(1){Serial.println("Can't Start Stepper");}
 
+
+    Serial.println("Starting Scheduler");
     vTaskStartScheduler();
+    Serial.println("Scheduler Aborted");
 }   
 
 void loop() __attribute__((weak)); //to let me define it when I'm not using the RTOS because Arduino compiles and links this file even if I don't include it
@@ -78,8 +83,10 @@ void loop(){
 
 void sensorAndControlCallback(void *in){
     while(1){
+        Serial.println("SensorAndControl");
         switch(rocketState){
             case(ROCKET_PRE):
+            case(ROCKET_RECOVERY):
                 sensorAndControl_PRE();
                 break;
             case(ROCKET_LAUNCH):
@@ -99,7 +106,8 @@ void sensorAndControlCallback(void *in){
 
 void loggingCallback(void *in){
     while(1){
-       switch(rocketState){
+        Serial.println("Logging");
+        switch(rocketState){
             case(ROCKET_PRE):
             case(ROCKET_LAUNCH):
             case(ROCKET_FREEFALL):
@@ -120,6 +128,7 @@ void loggingCallback(void *in){
 
 void stepperCallback(void *in){
     while(1){
+        Serial.println("Stepper");
         switch(rocketState){
             case(ROCKET_FREEFALL):
                 stepper_RUN();
@@ -137,6 +146,7 @@ void stepperCallback(void *in){
 
 void buzzerCallback(void *in){
        while(1){
+        Serial.println("buzzer");
         switch(rocketState){
             case(ROCKET_PRE):
                 buzz_PRE();
@@ -163,6 +173,7 @@ void buzzerCallback(void *in){
 // }
 void determineStateCallback(void *in){
     while(1){
+        Serial.println("DetermineState");
         determineState();
         //delay(STATE_CHECKING_DELAY_MS);
         vTaskDelay(STATE_CHECKING_DELAY_MS/portTICK_PERIOD_MS);
