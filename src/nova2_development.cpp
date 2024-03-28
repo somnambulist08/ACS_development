@@ -12,6 +12,7 @@
 //#define FLIGHT
 //#define SENSORTEST
 #define TEENSY_4_1_TESTING
+#define TEENSY_4_1_TESTING
 
 /*****************************************************************************
  * DEVELOPMENT
@@ -1004,6 +1005,7 @@ void logging_RUN(){
 #endif //SENSORTEST
 
 /*****************************************************************************
+ * TEENSY_4_1_TESTING
  * TEENSY_4_1_TESTING
 *****************************************************************************/
 #ifdef TEENSY_4_1_TESTING
