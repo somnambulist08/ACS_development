@@ -12,6 +12,7 @@
 //#define FLIGHT
 //#define SENSORTEST
 #define TEENSY_4_1_TESTING
+#define TEENSY_4_1_TESTING
 
 /*****************************************************************************
  * DEVELOPMENT
@@ -1005,69 +1006,26 @@ void logging_RUN(){
 
 /*****************************************************************************
  * TEENSY_4_1_TESTING
+ * TEENSY_4_1_TESTING
 *****************************************************************************/
 #ifdef TEENSY_4_1_TESTING
-
-
-#ifdef DEBUG //Remove compiler optimizations for hardware debugging
-#pragma GCC optimize ("O0") 
-#endif
-
 #include "TeensyDebug.h"
 
-#define WAIT_FOR_DEBUGGER_SECONDS 120
-#define WAIT_FOR_SERIAL_SECONDS 20
+#include "RocketRTOS.hh"
 
-void setup(void)
-{
-  pinMode(LED_BUILTIN,OUTPUT);
-  bool debug_avail=false;
-  bool serial_avail=false;
+void setup(){
+  Serial.begin(115200);
+  while(!Serial);
+  Serial.println("Serial Connected");
 
-  //Debugger (gdb) support
-#ifdef DEBUG
-  {   
-    SerialUSB1.begin(115200);
-    for (uint8_t i = 0; i < (WAIT_FOR_DEBUGGER_SECONDS); i++)
-    {
-      digitalWrite(LED_BUILTIN,true);
-      delay(800);
-      digitalWrite(LED_BUILTIN,false);
-      delay(200);
-      if (SerialUSB1) {
-          debug_avail=true;
-          break;
-      }
-      if (Serial) {
-        serial_avail=true;
-        break;
-    }
-    }
-    if (debug_avail)
-    {
-      debug.begin(SerialUSB1);
-      delay(100);
-      halt_cpu();  
-      delay(100);
-      debug.printf("Debugger is connected. Connect USB serial monitor now ...\n");
-    }  
-  }
-#endif
-
-  //Serial wait block
-  for (uint16_t i = 0; i < (WAIT_FOR_SERIAL_SECONDS*10); i++)
-  {
-    if ((Serial) || (serial_avail)) 
-    {
-      Serial.println("Serial ready.");
-      break;
-    } else
-    {
-      delay(100);
-      digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
-    }
-  }
+  startRocketRTOS();
 }
+
+void stepper_RUN(){
+  Serial.println("Step :)");
+}
+
+
 
 #endif //TEENSY_4_1_TESTING
 
