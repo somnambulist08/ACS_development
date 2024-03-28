@@ -1008,11 +1008,20 @@ void logging_RUN(){
 *****************************************************************************/
 #ifdef TEENSY_4_1_TESTING
 
+#include "TeensyDebug.h"
+
 #include "RocketRTOS.hh"
 
 void setup(){
   Serial.begin(115200);
   while(!Serial);
+
+#ifdef DEBUG
+  Serial.println("Starting Debugger");
+  debug.begin(SerialUSB1);
+  while(!debug.isGDBConnected());
+  Serial.println("Debugger Online");
+#endif //DEBUG
   
   startRocketRTOS();
 }
