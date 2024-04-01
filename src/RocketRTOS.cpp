@@ -1,27 +1,40 @@
 #include "RocketRTOS.hh"
 
+
+#ifdef ROCKETRTOS_MBED
 //Threads at higher priority than main
-// rtos::Thread sensorAndControlThread(osPriorityRealtime, THREADS_STACK_DEPTH);
-// rtos::Thread loggingThread(osPriorityHigh, THREADS_STACK_DEPTH);
+rtos::Thread sensorAndControlThread(osPriorityRealtime, THREADS_STACK_DEPTH);
+rtos::Thread loggingThread(osPriorityHigh, THREADS_STACK_DEPTH);
+//Threads at lower priority than main
+rtos::Thread buzzerThread(osPriorityBelowNormal, THREADS_STACK_DEPTH);
+rtos::Thread stepperThread(osPriorityLow, THREADS_STACK_DEPTH);
+#endif //ROCKETRTOS_MBED
+#ifdef ROCKETRTOS_FREERTOS
+//Threads at higher priority than main
 TaskHandle_t sensorAndControlThread;
 TaskHandle_t loggingThread;
-
 //The "Main Thread" (except FreeRTOS doesn't have a main thread. this is just the middle priority thread)
 TaskHandle_t stateCheckingThread;
-
 //Threads at lower priority than main
-// rtos::Thread buzzerThread(osPriorityBelowNormal, THREADS_STACK_DEPTH);
-// rtos::Thread stepperThread(osPriorityLow, THREADS_STACK_DEPTH);
 TaskHandle_t buzzerThread;
 TaskHandle_t stepperThread;
+#endif //ROCKETRTOS_FREERTOS
 
 RocketState_t rocketState = ROCKET_BOOT;
 
+#ifdef ROCKETRTOS_FREERTOS
 void sensorAndControlCallback(void *in);
 void loggingCallback(void *in);
 void stepperCallback(void *in);
 void buzzerCallback(void *in);
 void determineStateCallback(void *in);
+#else //if not ROCKETRTOS_FREERTOS
+void sensorAndControlCallback();
+void loggingCallback();
+void stepperCallback();
+void buzzerCallback();
+void determineStateCallback();
+#endif //ROCKETRTOS_FREERTOS
 
 
 //This file provides a definition for deterimining state, but if any other file wants to define it they may
@@ -48,42 +61,94 @@ void buzz_IDLE() __attribute__((weak));
 void startRocketRTOS(){
     rocketState = ROCKET_PRE;
 
-    Serial.println("In startRocketRTOS");
-    // sensorAndControlThread.start(sensorAndControlCallback);
-    // loggingThread.start(loggingCallback);
-    // stepperThread.start(stepperCallback);
-    // buzzerThread.start(buzzerCallback);
+    #ifdef ROCKETRTOS_MBED
+        sensorAndControlThread.start(sensorAndControlCallback);
+        loggingThread.start(loggingCallback);
+        stepperThread.start(stepperCallback);
+        buzzerThread.start(buzzerCallback);
+    #endif
 
-    BaseType_t status;
-    status = xTaskCreate(sensorAndControlCallback, "Sensor&Control", THREADS_STACK_DEPTH, NULL, 7, &sensorAndControlThread);
-    if(status == pdFAIL) while(1){Serial.println("Can't Start Sensor&Control");}
+    #ifdef ROCKETRTOS_FREERTOS
+        Serial.println("In startRocketRTOS");
 
-    status = xTaskCreate(loggingCallback, "Logging", THREADS_STACK_DEPTH, NULL, 6, &loggingThread);
-    if(status == pdFAIL) while(1){Serial.println("Can't Start Logging");}
+        BaseType_t status;
+        status = xTaskCreate(sensorAndControlCallback, "Sensor&Control", THREADS_STACK_DEPTH, NULL, 7, &sensorAndControlThread);
+        if(status == pdFAIL) while(1){Serial.println("Can't Start Sensor&Control");}
 
-    status = xTaskCreate(determineStateCallback, "StateMachine", THREADS_STACK_DEPTH, NULL, 5, &stateCheckingThread);
-    if(status == pdFAIL) while(1){Serial.println("Can't Start StateMachine");}
+        status = xTaskCreate(loggingCallback, "Logging", THREADS_STACK_DEPTH, NULL, 6, &loggingThread);
+        if(status == pdFAIL) while(1){Serial.println("Can't Start Logging");}
 
-    status = xTaskCreate(buzzerCallback, "Buzzer", THREADS_STACK_DEPTH, NULL, 4, &buzzerThread);
-    if(status == pdFAIL) while(1){Serial.println("Can't Start Buzzer");}
+        status = xTaskCreate(determineStateCallback, "StateMachine", THREADS_STACK_DEPTH, NULL, 5, &stateCheckingThread);
+        if(status == pdFAIL) while(1){Serial.println("Can't Start StateMachine");}
 
-    status = xTaskCreate(stepperCallback, "Stepper", THREADS_STACK_DEPTH, NULL, 3, &stepperThread);
-    if(status == pdFAIL) while(1){Serial.println("Can't Start Stepper");}
+        status = xTaskCreate(buzzerCallback, "Buzzer", THREADS_STACK_DEPTH, NULL, 4, &buzzerThread);
+        if(status == pdFAIL) while(1){Serial.println("Can't Start Buzzer");}
+
+        status = xTaskCreate(stepperCallback, "Stepper", THREADS_STACK_DEPTH, NULL, 3, &stepperThread);
+        if(status == pdFAIL) while(1){Serial.println("Can't Start Stepper");}
 
 
-    Serial.println("Starting Scheduler");
-    vTaskStartScheduler();
-    Serial.println("Scheduler Aborted");
+        Serial.println("Starting Scheduler");
+        vTaskStartScheduler();
+        Serial.println("Scheduler Aborted");
+    #endif
+    
+    #ifdef ROCKETRTOS_TEENSYTHREADS
+
+    #endif
+
+    #ifdef ROCKETRTOS_NONE
+        if(Serial) Serial.println("RocketRTOS is currently running in fixed-loop mode. Did you implement stepper and buzzer interrupts?");
+    #endif
+
+
 }   
 
+#ifdef ROCKETRTOS_FREERTOS
+//main thread should never execute
 void loop() __attribute__((weak)); //to let me define it when I'm not using the RTOS because Arduino compiles and links this file even if I don't include it
 void loop(){
     while(1){Serial.println("Scheduler Aborted????");} //if we get here VERY BAD things have happened
 }
 
-void sensorAndControlCallback(void *in){
+void determineStateCallback(void *in){
     while(1){
-        Serial.println("SensorAndControl");
+        // Serial.println("DetermineState");
+        determineState();
+        vTaskDelay(STATE_CHECKING_DELAY_MS/portTICK_PERIOD_MS);
+    }
+}
+#else //If not ROCKETRTOS_FREERTOS
+    #ifndef ROCKETRTOS_NONE
+    //main thread tracks the state
+    void loop() __attribute__((weak)); //to let me define it when I'm not using the RTOS because Arduino compiles and links this file even if I don't include it
+    void loop(){
+        while(1){
+            determineState();
+            delay(STATE_CHECKING_DELAY_MS); //make an opening for the stepper
+        }
+    }
+    #else //if def ROCKETRTOS_NONE
+    void loop(){
+        determineState();
+        sensorAndControlCallback();
+        loggingCallback();
+        stepperCallback();
+        buzzerCallback();
+    }
+    #endif //ROCKETRTOS_NONE
+#endif //ROCKETRTOS_FREERTOS
+
+
+#ifdef ROCKETRTOS_FREERTOS
+void sensorAndControlCallback(void *in){
+#else
+void sensorAndControlCallback(){
+#endif //ROCKETRTOS_FREERTOS
+#ifndef ROCKETRTOS_NONE
+    while(1){
+#endif //ROCKETRTOS_NON
+        // Serial.println("SensorAndControl");
         switch(rocketState){
             case(ROCKET_PRE):
             case(ROCKET_RECOVERY):
@@ -99,14 +164,28 @@ void sensorAndControlCallback(void *in){
                 sensorAndControl_IDLE();
                 break;
         }
-        //delay(SENSOR_AND_CONTROL_DELAY_MS);
-        vTaskDelay(SENSOR_AND_CONTROL_DELAY_MS/portTICK_PERIOD_MS);
+        
+        #ifdef ROCKETRTOS_FREERTOS
+            vTaskDelay(SENSOR_AND_CONTROL_DELAY_MS/portTICK_PERIOD_MS);
+        #else
+            #ifndef ROCKETRTOS_NONE
+                delay(SENSOR_AND_CONTROL_DELAY_MS);
+            #endif //ROCKETRTOS_NONE
+        #endif
+#ifndef ROCKETRTOS_NONE
     }
+#endif //ROCKETRTOS_NON
 }
 
+#ifdef ROCKETRTOS_FREERTOS
 void loggingCallback(void *in){
+#else
+void loggingCallback(){
+#endif //ROCKETRTOS_FREERTOS
+#ifndef ROCKETRTOS_NONE
     while(1){
-        Serial.println("Logging");
+#endif //ROCKETRTOS_NON
+        // Serial.println("Logging");
         switch(rocketState){
             case(ROCKET_PRE):
             case(ROCKET_LAUNCH):
@@ -121,14 +200,26 @@ void loggingCallback(void *in){
                 logging_IDLE();
                 break;
         }
-        //delay(LOGGING_DELAY_MS);
-        vTaskDelay(LOGGING_DELAY_MS/portTICK_PERIOD_MS);
+        #ifdef ROCKETRTOS_FREERTOS
+            vTaskDelay(LOGGING_DELAY_MS/portTICK_PERIOD_MS);
+        #else
+            #ifndef ROCKETRTOS_NONE
+                delay(LOGGING_DELAY_MS);
+            #endif //ROCKETRTOS_NONE
+        #endif
+#ifndef ROCKETRTOS_NONE
     }
+#endif //ROCKETRTOS_NON
 }
-
+#ifdef ROCKETRTOS_FREERTOS
 void stepperCallback(void *in){
+#else
+void stepperCallback(){
+#endif //ROCKETRTOS_FREERTOS
+#ifndef ROCKETRTOS_NONE
     while(1){
-        Serial.println("Stepper");
+#endif //ROCKETRTOS_NON
+        // Serial.println("Stepper");
         switch(rocketState){
             case(ROCKET_FREEFALL):
                 stepper_RUN();
@@ -141,12 +232,21 @@ void stepperCallback(void *in){
                 break;
         }
         //No delay in lowest-priority thread
+#ifndef ROCKETRTOS_NONE
     }
+#endif //ROCKETRTOS_NON
 }
 
+
+#ifdef ROCKETRTOS_FREERTOS
 void buzzerCallback(void *in){
-       while(1){
-        Serial.println("buzzer");
+#else
+void buzzerCallback(){
+#endif //ROCKETRTOS_FREERTOS
+#ifndef ROCKETRTOS_NONE
+    while(1){
+#endif //ROCKETRTOS_NON
+        // Serial.println("buzzer");
         switch(rocketState){
             case(ROCKET_PRE):
                 buzz_PRE();
@@ -158,34 +258,22 @@ void buzzerCallback(void *in){
                 buzz_IDLE();
                 break;
         }
-        //delay(BUZZ_DELAY_MS);
-        vTaskDelay(BUZZ_DELAY_MS/portTICK_PERIOD_MS);
+        #ifdef ROCKETRTOS_FREERTOS
+            vTaskDelay(BUZZ_DELAY_MS/portTICK_PERIOD_MS);
+        #else
+            #ifndef ROCKETRTOS_NONE
+                delay(BUZZ_DELAY_MS);
+            #endif //ROCKETRTOS_NONE
+        #endif
+#ifndef ROCKETRTOS_NONE
     }
-}
-
-//main thread tracks the state
-// void loop() __attribute__((weak)); //to let me define it when I'm not using the RTOS because Arduino compiles and links this file even if I don't include it
-// void loop(){
-//     while(1){
-//         determineState();
-//         delay(STATE_CHECKING_DELAY_MS); //make an opening for the stepper
-//     }
-// }
-void determineStateCallback(void *in){
-    while(1){
-        Serial.println("DetermineState");
-        determineState();
-        //delay(STATE_CHECKING_DELAY_MS);
-        vTaskDelay(STATE_CHECKING_DELAY_MS/portTICK_PERIOD_MS);
-    }
+#endif //ROCKETRTOS_NON
 }
 
 //if nobody else defines determinState(), the state is always ROCKET_FREEFALL
 void determineState() {
     rocketState = ROCKET_FREEFALL;
 }
-
-
 
 //Default Task definitions
 void stepper_RUN() {stepper_IDLE();}
