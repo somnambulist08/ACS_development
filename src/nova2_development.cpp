@@ -712,7 +712,7 @@ void determineState(){
     //Serial.println("FREEFALL");
     rocketState = ROCKET_FREEFALL;
     delay(STATE_CHECKING_DELAY_MS);
-    bool stay = (newAcc > 0) || (stayCounter<MIN_LOOPS_IN_STATE);
+    bool stay = (vel > 0) || (stayCounter<MIN_LOOPS_IN_STATE);
     if (!stay) leaveCounter++;
     if((!stay) && (leaveCounter > MIN_POINTS_TO_LEAVE)) proceed = true;
     if(stay) leaveCounter = 0;
