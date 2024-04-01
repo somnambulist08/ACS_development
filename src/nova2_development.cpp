@@ -1007,23 +1007,72 @@ void logging_RUN(){
  * TEENSY_4_1_TESTING
 *****************************************************************************/
 #ifdef TEENSY_4_1_TESTING
-#include "TeensyDebug.h"
 
 #include "RocketRTOS.hh"
 
 void setup(){
   Serial.begin(115200);
   while(!Serial);
-  Serial.println("Serial Connected");
 
   startRocketRTOS();
 }
 
-void stepper_RUN(){
-  Serial.println("Step :)");
+#define BILLION ((long long int)1000000000) //one billion
+
+volatile static long long int i = 0;
+
+void determineState(){
+  i++;
+  if(i < BILLION) rocketState = ROCKET_PRE;
+  else if(i < 2*BILLION) rocketState = ROCKET_LAUNCH;
+  else if(i < 3*BILLION) rocketState = ROCKET_FREEFALL;
+  else if(i < 4*BILLION) rocketState = ROCKET_RECOVERY;
+  else i = 0;
 }
 
 
+void sensorAndControl_PRE(){
+  Serial.println("s&c pre");
+}
+void sensorAndControl_LAUNCH(){
+  Serial.println("s&c launch");
+}
+void sensorAndControl_FULL(){
+  Serial.println("s&c full");
+}
+void sensorAndControl_IDLE(){
+  Serial.println("s&c idle");
+}
+
+void logging_RUN(){
+  Serial.println("log run");
+}
+void logging_CLOSE(){
+  Serial.println("log close");
+}
+void logging_IDLE(){
+  Serial.println("log idle");
+}
+
+void stepper_RUN(){
+  Serial.println("step run");
+}
+void stepper_CLOSE(){
+  Serial.println("step close");
+}
+void stepper_IDLE(){
+  Serial.println("step idle");
+}
+
+void buzz_PRE(){
+  Serial.println("buzz pre");
+}
+void buzz_POST(){
+  Serial.println("buzz post");
+}
+void buzz_IDLE(){
+  Serial.println("buzz idle");
+}
 
 #endif //TEENSY_4_1_TESTING
 

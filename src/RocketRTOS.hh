@@ -10,10 +10,30 @@
 #ifndef ROCKET_RTOS_HH
 #define ROCKET_RTOS_HH
 
+
+/*****************************************************************************
+ * Choose one define!
+*****************************************************************************/
+//#define ROCKETRTOS_MBED
+//#define ROCKETRTOS_FREERTOS
+//#define ROCKETRTOS_TEENSYTHREADS
+#define ROCKETRTOS_NONE
+
+
+
+
+
 #include <Arduino.h>
-// #include <mbed.h>
-// #include <rtos.h>
+#ifdef ROCKETRTOS_MBED
+#include <mbed.h>
+#include <rtos.h>
+#endif //ROCKETRTOS_MBED
+#ifdef ROCKETRTOS_FREERTOS
 #include <FreeRTOS_TEENSY4.h>
+#endif //ROCKETRTOS_FREERTOS
+#ifdef ROCKETRTOS_TEENSYTHREADS
+#include <TeensyThreads.h>
+#endif //ROCKETRTOS_TEENSYTHREADS
 
 void startRocketRTOS();
 
@@ -31,15 +51,19 @@ extern RocketState_t rocketState;
 
 #define THREADS_STACK_DEPTH 1024
 //extern to expose them just in case
-// extern rtos::Thread sensorAndControlThread;
-// extern rtos::Thread loggingThread;
-// extern rtos::Thread stepperThread;
-// extern rtos::Thread buzzerThread;
+#ifdef ROCKETRTOS_MBED
+extern rtos::Thread sensorAndControlThread;
+extern rtos::Thread loggingThread;
+extern rtos::Thread stepperThread;
+extern rtos::Thread buzzerThread;
+#endif //ROCKETRTOS_MBED
+#ifdef ROCKETRTOS_FREERTOS
 extern TaskHandle_t sensorAndControlThread;
 extern TaskHandle_t loggingThread;
 extern TaskHandle_t stepperThread;
 extern TaskHandle_t buzzerThread;
 extern TaskHandle_t stateCheckingThread;
+#endif //ROCKETRTOS_FREERTOS
 
 
 //All delays are in addition to the execution time, meaning the period is
