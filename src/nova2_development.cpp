@@ -1017,16 +1017,30 @@ void setup(){
   startRocketRTOS();
 }
 
-#define BILLION ((long long int)1000000000) //one billion
+//#define STATE_CHANGER ((long long int)1000000000) //one billion
+#define STATE_CHANGER ((long long int)10) //one billion
+
 
 volatile static long long int i = 0;
 
 void determineState(){
+  delay(100);
   i++;
-  if(i < BILLION) rocketState = ROCKET_PRE;
-  else if(i < 2*BILLION) rocketState = ROCKET_LAUNCH;
-  else if(i < 3*BILLION) rocketState = ROCKET_FREEFALL;
-  else if(i < 4*BILLION) rocketState = ROCKET_RECOVERY;
+  if(i < STATE_CHANGER){
+    rocketState = ROCKET_PRE;
+    Serial.println("Pre");
+  } else if(i < 2*STATE_CHANGER){
+    rocketState = ROCKET_LAUNCH;
+    Serial.println("Launch");
+  } 
+  else if(i < 3*STATE_CHANGER){ 
+    rocketState = ROCKET_FREEFALL;
+    Serial.println("Freefall");
+  }
+  else if(i < 4*STATE_CHANGER){ 
+    rocketState = ROCKET_RECOVERY;
+    Serial.println("Recovery");
+  }
   else i = 0;
 }
 
