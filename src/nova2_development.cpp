@@ -1009,83 +1009,104 @@ void logging_RUN(){
 #ifdef TEENSY_4_1_TESTING
 
 #include "RocketRTOS.hh"
+#include "InterruptingStepper.hh"
+
+InterruptingStepper stepper;
 
 void setup(){
   Serial.begin(115200);
   while(!Serial);
+  Serial.println("Serial Connected");
+
+  stepper.start();
 
   startRocketRTOS();
 }
 
 //#define STATE_CHANGER ((long long int)1000000000) //one billion
-#define STATE_CHANGER ((long long int)10) //one billion
+#define STATE_CHANGER ((long long int)10000)
 
 
 volatile static long long int i = 0;
 
 void determineState(){
-  delay(100);
   i++;
   if(i < STATE_CHANGER){
     rocketState = ROCKET_PRE;
-    Serial.println("Pre");
+    //Serial.println("Pre");
   } else if(i < 2*STATE_CHANGER){
     rocketState = ROCKET_LAUNCH;
-    Serial.println("Launch");
+    //Serial.println("Launch");
   } 
   else if(i < 3*STATE_CHANGER){ 
     rocketState = ROCKET_FREEFALL;
-    Serial.println("Freefall");
+    //Serial.println("Freefall");
   }
   else if(i < 4*STATE_CHANGER){ 
     rocketState = ROCKET_RECOVERY;
-    Serial.println("Recovery");
+    //Serial.println("Recovery");
   }
   else i = 0;
 }
 
 
 void sensorAndControl_PRE(){
-  Serial.println("s&c pre");
+  //Serial.println("s&c pre");
 }
 void sensorAndControl_LAUNCH(){
-  Serial.println("s&c launch");
+  //Serial.println("s&c launch");
 }
 void sensorAndControl_FULL(){
-  Serial.println("s&c full");
+  //Serial.println("s&c full");
+  stepper.setStepsTarget(10000);
 }
 void sensorAndControl_IDLE(){
-  Serial.println("s&c idle");
+  //Serial.println("s&c idle");
 }
 
 void logging_RUN(){
-  Serial.println("log run");
+  //Serial.println("log run");
 }
 void logging_CLOSE(){
-  Serial.println("log close");
+  //Serial.println("log close");
 }
 void logging_IDLE(){
-  Serial.println("log idle");
+  //Serial.println("log idle");
 }
 
 void stepper_RUN(){
-  Serial.println("step run");
+  //Serial.println("step run");
+  // if(printStepHigh){
+  //   Serial.println("StepUp");
+  //   printStepHigh = false;
+  // }
+  // if(printStepLow){
+  //   Serial.println("StepDown");
+  //   printStepLow = false;
+  // }
+
+  // Serial.print("Current Step: ");
+  // Serial.println(currentStepGlobal);
+  // Serial.print("Step Goal: ");
+  // Serial.println(stepsTargetGlobal);
 }
 void stepper_CLOSE(){
-  Serial.println("step close");
+  stepper.setStepsTarget(0);
 }
 void stepper_IDLE(){
-  Serial.println("step idle");
+  //Serial.println("step idle");
 }
 
 void buzz_PRE(){
-  Serial.println("buzz pre");
+  //Serial.println("buzz pre");
+  //Serial.println("BZZZZZT");
 }
 void buzz_POST(){
-  Serial.println("buzz post");
+  //Serial.println("buzz post");
+  //Serial.println("BZZZT BZZT");
 }
 void buzz_IDLE(){
-  Serial.println("buzz idle");
+  //Serial.println("buzz idle");
 }
 
 #endif //TEENSY_4_1_TESTING

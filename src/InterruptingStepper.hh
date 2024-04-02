@@ -12,9 +12,9 @@
 #define DIRECTION_PIN 7
 #define STEP_PIN 6
 
-IntervalTimer tickerHigh;
-IntervalTimer tickerLow;
-IntervalTimer tickerOneshot;
+extern IntervalTimer tickerHigh;
+extern IntervalTimer tickerLow;
+extern IntervalTimer tickerOneshot;
 
 void stepperPullHigh();
 void stepperPullLow();
@@ -25,14 +25,16 @@ void startPullLow();
 #define TIMER_INTERRUPT_PRIORITY_EXTRA_HIGH 125
 
 //duplicates of these variables so they'll run faster in interrupt context.
-volatile int currentStepGlobal;
-volatile int stepsTargetGlobal;
-volatile int directionGlobal;
-volatile bool doStep;
+extern volatile int currentStepGlobal;
+extern volatile int stepsTargetGlobal;
+extern volatile int directionGlobal;
+//extern volatile bool printStepHigh;    
+//extern volatile bool printStepLow;
 
 class InterruptingStepper{ //: public StepperInterface {
 public:
     InterruptingStepper();
+    void start();
     void stepOnce(void);
     void setStepsTarget(int newTarget);
 };
