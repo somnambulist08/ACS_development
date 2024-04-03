@@ -712,7 +712,7 @@ void determineState(){
     //Serial.println("FREEFALL");
     rocketState = ROCKET_FREEFALL;
     delay(STATE_CHECKING_DELAY_MS);
-    bool stay = (newAcc > 0) || (stayCounter<MIN_LOOPS_IN_STATE);
+    bool stay = (vel > 0) || (stayCounter<MIN_LOOPS_IN_STATE);
     if (!stay) leaveCounter++;
     if((!stay) && (leaveCounter > MIN_POINTS_TO_LEAVE)) proceed = true;
     if(stay) leaveCounter = 0;
@@ -1036,21 +1036,84 @@ void logging_RUN(){
 *****************************************************************************/
 #ifdef TEENSY_4_1_TESTING
 
-#include "TeensyDebug.h"
-
 #include "RocketRTOS.hh"
 
 void setup(){
   Serial.begin(115200);
   while(!Serial);
 
-#ifdef DEBUG
-  Serial.println("Starting Debugger");
-  debug.begin(SerialUSB1);
-  while(!debug.isGDBConnected());
-  Serial.println("Debugger Online");
-#endif //DEBUG
-  
   startRocketRTOS();
 }
+
+//#define STATE_CHANGER ((long long int)1000000000) //one billion
+#define STATE_CHANGER ((long long int)10) //one billion
+
+
+volatile static long long int i = 0;
+
+void determineState(){
+  delay(100);
+  i++;
+  if(i < STATE_CHANGER){
+    rocketState = ROCKET_PRE;
+    Serial.println("Pre");
+  } else if(i < 2*STATE_CHANGER){
+    rocketState = ROCKET_LAUNCH;
+    Serial.println("Launch");
+  } 
+  else if(i < 3*STATE_CHANGER){ 
+    rocketState = ROCKET_FREEFALL;
+    Serial.println("Freefall");
+  }
+  else if(i < 4*STATE_CHANGER){ 
+    rocketState = ROCKET_RECOVERY;
+    Serial.println("Recovery");
+  }
+  else i = 0;
+}
+
+
+void sensorAndControl_PRE(){
+  Serial.println("s&c pre");
+}
+void sensorAndControl_LAUNCH(){
+  Serial.println("s&c launch");
+}
+void sensorAndControl_FULL(){
+  Serial.println("s&c full");
+}
+void sensorAndControl_IDLE(){
+  Serial.println("s&c idle");
+}
+
+void logging_RUN(){
+  Serial.println("log run");
+}
+void logging_CLOSE(){
+  Serial.println("log close");
+}
+void logging_IDLE(){
+  Serial.println("log idle");
+}
+
+void stepper_RUN(){
+  Serial.println("step run");
+}
+void stepper_CLOSE(){
+  Serial.println("step close");
+}
+void stepper_IDLE(){
+  Serial.println("step idle");
+}
+
+void buzz_PRE(){
+  Serial.println("buzz pre");
+}
+void buzz_POST(){
+  Serial.println("buzz post");
+}
+void buzz_IDLE(){
+  Serial.println("buzz idle");
+}
+
 #endif //TEENSY_4_1_TESTING
