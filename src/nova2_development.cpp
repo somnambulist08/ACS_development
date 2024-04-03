@@ -10,8 +10,8 @@
 //#define STATE_TEST
 //#define CONTROL_TEST
 //#define FLIGHT
-//#define SENSORTEST
-#define TEENSY_4_1_TESTING
+#define SENSORTEST
+//#define TEENSY_4_1_TESTING
 
 /*****************************************************************************
  * DEVELOPMENT
@@ -885,14 +885,14 @@ void prvUpdateVars(){
 #include "RocketRTOS.hh"
 //#include "SerialSpoofStepper.hh"
 #include "Control.hh"
-#include "InternalSensors.hh"
+#include "ExternalSensors.hh"
 #include "SDSpoofer.hh"
 #include "SDLogger.hh"
 
 SDSpoofer dummySD;
 //SDLogger sd; //seeing if this is causing a runtime error//jonse
 //SerialSpoofStepper stepper;
-InternalSensors intSensors; //patmer: declare internal sensors object
+ExternalSensors intSensors; //marbe: yeah it makes shit-all for sense but I'm testing here
 
 
 float accel=0;
@@ -917,15 +917,18 @@ float temperature_data = -1.0f;
 
 
 void setup(){
-  intSensors.startupTasks();
+
   Serial.begin(115200);
   while(!Serial);
-
+  Serial.println("Serial Setup Complete");
+  intSensors.startupTasks();
+  Serial.println("Sensor Startup Complete");
   dummySD.openFile();
   //sd.openFile();
 
-  startRocketRTOS();
+ // startRocketRTOS();
 }
+
 
 /* patmer Orientation & altitude gathering functions*/
 void getOrientationAltitude(){ //patmer get orientation & altitude
@@ -973,10 +976,35 @@ void getOrientationAltitude(){ //patmer get orientation & altitude
 
 }
 
+  unsigned long t0 = 0;
+  unsigned long tnow = 0;
+
+int n_max = 10000;
+//how fast we goin herrre....
+void loop(){
+  unsigned long del_t = 0;
+  for (int i = 0; i < n_max; i++)  {
+  t0 = micros();
+  intSensors.readAcceleration(accelerometer_data_x, accelerometer_data_y, accelerometer_data_z);
+  intSensors.readPressure(pressure_data);
+  intSensors.readTemperature(temperature_data);
+  intSensors.readMagneticField(magfield_data_x, magfield_data_y, magfield_data_z);
+  intSensors.readGyroscope(gyro_data_x, gyro_data_y, gyro_data_z);
+  intSensors.readAltitude(altitude_data);
+  tnow=micros();
+  del_t+=tnow-t0;
+  }
+//  del_t = (1000)*(1000000)/del_t;
+//  Serial.println("Average loop rate: "+String(del_t)+" Hz");
+  del_t = del_t/(n_max);
+  Serial.println("Average loop time: "+String(del_t)+" us");
+  getOrientationAltitude();
+}
+
+
+
 void displayOrientationAltitude_SDSpoof(){ //patmer Display results over serial with SDSpoofer
   Serial.println("Displaying data to SDSpoofer");
-
-
 
   dummySD.writeLog(accel, vel, h, ang);
 }
@@ -1025,7 +1053,4 @@ void setup(){
   
   startRocketRTOS();
 }
-
-
 #endif //TEENSY_4_1_TESTING
-
