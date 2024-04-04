@@ -37,7 +37,10 @@ void SDSpoofer::writeLog(String log){
     Serial.println(log);
 }
 
-
+void SDSpoofer::writeLine(String line){
+  Serial.print(line);
+  Serial.println();
+}
 void SDSpoofer::closeFile()
 {
     Serial.println("File Saved");

@@ -8,11 +8,13 @@
 ******************************************************************************/
 #ifndef SD_INTERFACE_HH
 #define SD_INTERFACE_HH
+#include <Arduino.h>
 
 class SDInterface {
 public:
     SDInterface(){} //Initializer should open the file and write any header collumns //jonse
     virtual void writeLog()=0;
+   // virtual void writeLine()=0;
     virtual void closeFile()=0;
     virtual void openFile()=0;
 };
