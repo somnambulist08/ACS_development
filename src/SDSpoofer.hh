@@ -18,6 +18,7 @@ public:
     SDSpoofer();
     void writeLog(float accel, float vel, float h, float ang, float tSim, float tLaunch, int state);
     void writeLine(String line);
+    void writeLog(String log); //duplicate for compatability
     //inherited
   //  virtual void writeLine() override;
     virtual void openFile() override;
