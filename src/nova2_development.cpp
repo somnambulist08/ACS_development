@@ -1047,18 +1047,29 @@ void logging_RUN(){
 
 #include "RocketRTOS.hh"
 #include "InterruptingStepper.hh"
-#include "SDLogger.hh"
+// #include "SDLogger.hh"
 #include "Control.hh"
 #include "QuickSilver.hh"
 #include "Filter.hh"
 #include "StateMachine.hh"
 #include "ExternalSensors.hh"
 //#include "SimulinkData.hh"
-//#include "SDSpoofer.hh"
+#include "SDSpoofer.hh"
+#include <IntervalTimer.h>
+#include <climits>
 
-#define GYRO_BIAS_X 0.138
-#define GYRO_BIAS_Y 0.122
-#define GYRO_BIAS_Z -0.226
+// IntervalTimer buzzerTicker;
+// bool doBuzz = false;
+// int buzzerMicros = 500000;
+// #define BZZT_PIN 39
+// void prvBuzzer();
+
+// #define GYRO_BIAS_X 0.998988f
+// #define GYRO_BIAS_Y 0.574029f
+// #define GYRO_BIAS_Z -12.5213f
+#define GYRO_BIAS_X 1.91
+#define GYRO_BIAS_Y 5.89
+#define GYRO_BIAS_Z 5.43
 // #define ACC_BIAS_X -0.0012
 // #define ACC_BIAS_Y 0.0015
 // #define ACC_BIAS_Z 0.0040
@@ -1071,8 +1082,8 @@ void logging_RUN(){
 #define G_TO_M_S2 9.8f
 
 InterruptingStepper stepper;
-SDLogger sd;
-// SDSpoofer sd;
+// SDLogger sd;
+SDSpoofer sd;
 // SimulinkFile simIn;
 StateMachine state;
 ExternalSensors sensors;
@@ -1122,9 +1133,11 @@ pt1Filter accFilters[3];
 pt1Filter hFilter;
 
 void setup(){
-  // Serial.begin(115200);
-  // while(!Serial);
-  // Serial.println("Serial Connected");
+  Serial.begin(115200);
+  while(!Serial);
+  Serial.println("Serial Connected");
+  // buzzerTicker.priority(130);
+  // buzzerTicker.begin(prvBuzzer, buzzerMicros);
 
   // initialize the filteres
   for (int axis = 0; axis < 3; axis++) {
@@ -1142,7 +1155,7 @@ void setup(){
   sensors.startupTasks();
   sensors.readAltitude(h_groundLevel);
 
-  sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, dt, 1/dt, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2]");
+  sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, dt, 1/dt, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
 
   delay(500);
 
@@ -1186,14 +1199,28 @@ void logging_RUN(){
   //Serial.println("log run");
   //sd.writeLog(newAcc, vel, h, ang, simTime, burnoutTime, rocketState);
   //sd.writeLog(String("A: ") + String(newAcc) + String(", V:") + String(vel) + String(", H: ") + String(h) + String(", Ang:") + String(ang) + String(", simTime:") + String(simTime) + String(", burnoutTime") + String(burnoutTime) + String(", State:") + String(rocketState) + String(", H_d:") + String(desiredH) + String(", H_p:") + String(predictedH));
-  String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
-            + String(", ") + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState) + String(", ") 
-            + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") 
-            + String(", ") + String(dt) + String(", ") + String((1.0f/dt)) + String(", ") 
-            + String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") 
-            + String(a_filtered[0]) + String(", ") + String(a_filtered[1]) + String(", ") + String(", ") + String(a_filtered[2]) + String(", ") 
-            + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]) + String(", ") 
-            + String(g_filtered[0]) + String(", ") + String(g_filtered[1]) + String(", ") + String(g_filtered[2]);
+  // String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
+  //           + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState) + String(", ") 
+  //           + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") 
+  //           + String(dt) + String(", ") + String((1.0f/dt)) + String(", ") 
+  //           + String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") 
+  //           + String(a_filtered[0]) + String(", ") + String(a_filtered[1]) + String(", ") + String(a_filtered[2]) + String(", ") 
+  //           + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]) + String(", ") 
+  //           + String(g_filtered[0]) + String(", ") + String(g_filtered[1]) + String(", ") + String(g_filtered[2]) + String(", ")
+  //           + String(attitude_estimate.getGravityVector()[0]) + String(", ") + String(attitude_estimate.getGravityVector()[1]) + String(", ") + String(attitude_estimate.getGravityVector()[2]);
+  static float sums[3] = {0.0,0.0,0.0};
+  static int count = 0;
+
+  for(int axis = 0; axis < 3; axis++){
+    sums[axis] += g_raw[axis];
+  }
+  count++;
+  
+  // String log = String("GyroX:") + String(g_raw[0]) + String(", GyroY:") + String(g_raw[1]) + String(", GyroZ:") + String(g_raw[2]);
+  // String log = String("GyroX:") + String(sums[0]/((float)count)) + String(", GyroY:") + String(sums[1]/((float)count)) + String(", GyroZ:") + String(sums[2]/((float)count));
+  // String log = String("GravX:") + String(attitude_estimate.getGravityVector()[0]) + String(", GravX:") + String(attitude_estimate.getGravityVector()[0]) + String(", GravZ:") + String(attitude_estimate.getGravityVector()[2]);
+  String log = String("X:") + String(a_raw[0]) + String(", Y:") + String(a_raw[1]) + String(", Z:") + String(a_raw[2]);
+  
   sd.writeLine(log);
 }
 void logging_CLOSE(){
@@ -1228,15 +1255,20 @@ void stepper_IDLE(){
 }
 
 void buzz_PRE(){
+  // doBuzz = true;
+  // buzzerMicros = 1000000;
   //Serial.println("buzz pre");
   //Serial.println("BZZZZZT");
 }
 void buzz_POST(){
+  // doBuzz = true;
+  // buzzerMicros = 250000;
   //Serial.println("buzz post");
   //Serial.println("BZZZT BZZT");
 }
 void buzz_IDLE(){
   //Serial.println("buzz idle");
+  // doBauzz = false;
 }
 
 
@@ -1248,9 +1280,9 @@ void prvReadSensors(){
   //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
   sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
-  // g_raw[0] -= GYRO_BIAS_X;
-  // g_raw[1] -= GYRO_BIAS_Y;
-  // g_raw[2] -= GYRO_BIAS_Z;
+  g_raw[0] -= GYRO_BIAS_X;
+  g_raw[1] -= GYRO_BIAS_Y;
+  g_raw[2] -= GYRO_BIAS_Z;
   // a_raw[0] -= ACC_BIAS_X;
   // a_raw[1] -= ACC_BIAS_Y;
   // a_raw[2] -= ACC_BIAS_Z;
@@ -1342,6 +1374,12 @@ void prvUpdateVars(){
   }
 }
 
+
+// void prvBuzzer(){
+//   if(doBuzz){
+//     digitalToggleFast(BZZT_PIN);
+//   }
+// }
 
 
 
