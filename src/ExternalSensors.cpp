@@ -10,7 +10,7 @@ void ExternalSensors::startupTasks(){
     //start barometer in SPI
 
     if (!BMP_a.begin()) {
-    Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
+    if(Serial) Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
                       "try a different address!"));
     while (1) delay(10);
   }
@@ -19,15 +19,15 @@ void ExternalSensors::startupTasks(){
                   Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
                   Adafruit_BMP280::FILTER_X16,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
-    Serial.println("Barometer Setup Complete");
+    if(Serial) Serial.println("Barometer Setup Complete");
 
 
   int status = IMU_a.init();
   if (status < 0) {
-    Serial.println("IMU initialization unsuccessful");
-    Serial.println("Check IMU wiring or try cycling power");
-    Serial.print("Status: ");
-    Serial.println(status);
+    if(Serial) Serial.println("IMU initialization unsuccessful");
+    if(Serial) Serial.println("Check IMU wiring or try cycling power");
+    if(Serial) Serial.print("Status: ");
+    if(Serial) Serial.println(status);
     while(1) {}
   }
   IMU_a.setAccRange(MPU9250_ACC_RANGE_16G);
