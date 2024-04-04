@@ -26,7 +26,10 @@ void SDSpoofer::writeLog(float accel, float vel, float h, float ang){
     Serial.println(ang);
 }
 
-
+void SDSpoofer::writeLine(String line){
+  Serial.print(line);
+  Serial.println();
+}
 void SDSpoofer::closeFile()
 {
     Serial.println("File Saved");

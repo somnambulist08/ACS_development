@@ -129,7 +129,7 @@ void determineStateCallback(void *in){
         }
     }
     #else //if def ROCKETRTOS_NONE
-    void loop(){
+    void loop_back(){
         determineState();
         sensorAndControlCallback();
         loggingCallback();

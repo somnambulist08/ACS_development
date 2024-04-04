@@ -882,15 +882,15 @@ void prvUpdateVars(){
 *****************************************************************************/
 #ifdef SENSORTEST
 
-#include "RocketRTOS.hh"
+//#include "RocketRTOS.hh"
 //#include "SerialSpoofStepper.hh"
 #include "Control.hh"
 #include "ExternalSensors.hh"
-#include "SDSpoofer.hh"
+//#include "SDSpoofer.hh"
 #include "SDLogger.hh"
 
-SDSpoofer dummySD;
-//SDLogger sd; //seeing if this is causing a runtime error//jonse
+//SDSpoofer dummySD;
+SDLogger sd; //seeing if this is causing a runtime error//jonse
 //SerialSpoofStepper stepper;
 ExternalSensors intSensors; //marbe: yeah it makes shit-all for sense but I'm testing here
 
@@ -923,8 +923,8 @@ void setup(){
   Serial.println("Serial Setup Complete");
   intSensors.startupTasks();
   Serial.println("Sensor Startup Complete");
-  dummySD.openFile();
-  //sd.openFile();
+  //dummySD.openFile();
+  sd.openFile();
 
  // startRocketRTOS();
 }
@@ -978,8 +978,8 @@ void getOrientationAltitude(){ //patmer get orientation & altitude
 
   unsigned long t0 = 0;
   unsigned long tnow = 0;
-
-int n_max = 10000;
+String bufferedline = "";
+int n_max = 1000;
 //how fast we goin herrre....
 void loop(){
   unsigned long del_t = 0;
@@ -992,13 +992,22 @@ void loop(){
   intSensors.readGyroscope(gyro_data_x, gyro_data_y, gyro_data_z);
   intSensors.readAltitude(altitude_data);
   tnow=micros();
+  bufferedline.append(String(t0)+',');
+  bufferedline.append(String(accelerometer_data_x)+','+ String(accelerometer_data_y)+','+ String(accelerometer_data_z)+',');
+  bufferedline.append(String(gyro_data_x)+','+ String(gyro_data_y)+','+ String(gyro_data_z)+',');
+  bufferedline.append(String(magfield_data_x)+','+ String(magfield_data_y)+','+ String(magfield_data_z)+',');
+  bufferedline.append(String(pressure_data)+','+ String(temperature_data)+','+ String(altitude_data)+'\n');
   del_t+=tnow-t0;
   }
-//  del_t = (1000)*(1000000)/del_t;
-//  Serial.println("Average loop rate: "+String(del_t)+" Hz");
   del_t = del_t/(n_max);
-  Serial.println("Average loop time: "+String(del_t)+" us");
-  getOrientationAltitude();
+  //Serial.println("Average loop time: "+String(del_t)+" us");
+  t0 = micros();
+  sd.writeLine(bufferedline);
+  tnow = micros();
+  Serial.println("Write time for "+String(n_max)+" lines of data: "+String(tnow-t0)+" us");
+  bufferedline="";
+  sd.closeFile();
+
 }
 
 
@@ -1006,7 +1015,7 @@ void loop(){
 void displayOrientationAltitude_SDSpoof(){ //patmer Display results over serial with SDSpoofer
   Serial.println("Displaying data to SDSpoofer");
 
-  dummySD.writeLog(accel, vel, h, ang);
+  sd.writeLog(accel, vel, h, ang);
 }
 
 void displayOrientationAltitude_SD(){ //patmer Save results to a real SD card

@@ -8,10 +8,9 @@ SDLogger::SDLogger(){
 SDLogger::SDLogger(String newFileName){
 
 }
-
 void SDLogger::openFile(){
   if(Serial) Serial.println("Initializing SD card...");
-  if (!SD.begin()) {
+  if (!SD.begin(chipSelect)) {
     if(Serial) Serial.println("initialization failed!");
     while (1) {
       //TODO: error handling
@@ -108,6 +107,7 @@ void SDLogger::openFile(String newFileName){
   }
 }
 
+
 void SDLogger::writeLog(float acc1, float acc2, float acc3, float saam1, float saam2, float saam3, float mag1, float mag2, float mag3, float ang, float alt, float t_now, int state){
   if(Serial) Serial.println("Logging");
   flightData.print(acc1, 4);flightData.print(',');
@@ -170,6 +170,12 @@ void SDLogger::writeLog(float a_raw[], float m[], float a[]){
   flightData.print("a[2]:");
   flightData.print(a[2]);
 
+  flightData.println();
+  flightData.flush();
+}
+
+void SDLogger::writeLine(String line){
+  flightData.print(line);
   flightData.println();
   flightData.flush();
 }
