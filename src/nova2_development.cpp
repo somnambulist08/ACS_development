@@ -1277,6 +1277,18 @@ void prvReadSensors(){
   // newAcc = simIn.getInterpolatedAcceleration(simTime);
 
 
+  //Attitude Determination
+  //Using Raw
+  // attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  // float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
+  // newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
+  //Using FIltered
+  attitude_estimate.update_estimate(a_filtered, g_filtered, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_filtered);
+  newAcc *= G_TO_M_S2;
+
+
+
 }
 void prvIntegrateAccel(){
   if(!backCalcDone){
@@ -1308,17 +1320,6 @@ void prvIntegrateAccel(){
 
   //Serial.print("vel=");
   //Serial.println(vel);
-}
-void prvSensorFusion(){
-  //Using Raw
-  // attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
-  // float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
-  // newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
-  //Using FIltered
-  attitude_estimate.update_estimate(a_filtered, g_filtered, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
-  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_filtered);
-  newAcc *= G_TO_M_S2;
-
 }
 void prvDoControl(){
   desiredH = getDesired(burnoutTime);
