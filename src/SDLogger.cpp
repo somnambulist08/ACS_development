@@ -65,9 +65,9 @@ void SDLogger::openFile(){
   }
 }
 
-void SDLogger::openFile(String newFileName){
-  if(Serial) Serial.println("Initializing SD card...");
-  if (!SD.begin()) {
+void SDLogger::openFile(String headerString){
+    if(Serial) Serial.println("Initializing SD card...");
+  if (!SD.begin(chipSelect)) {
     if(Serial) Serial.println("initialization failed!");
     while (1) {
       //TODO: error handling
@@ -75,7 +75,22 @@ void SDLogger::openFile(String newFileName){
   } else {
     if(Serial) Serial.println("SD Initialized");
   }
-  fileName = newFileName;
+  //less stupid naming convention - 0000.csv to 9999.csv
+  //look through SD card, find the next available filename
+  bool fileavail = false;
+  int i = 0;
+  while (!fileavail) {  
+    if (i < 10)
+      fileName = String("000" + String(i) + ".csv");
+    else if (i < 100)
+      fileName = String("00" + String(i) + ".csv");
+    else if (i < 1000)
+      fileName = String("0" + String(i) + ".csv");
+    else
+      fileName = String(String(i) + ".csv");
+    fileavail = !SD.exists(fileName.c_str());
+    i++;
+  }
   flightData = SD.open(fileName.c_str(), FILE_WRITE);
   if(Serial) {
     Serial.print("Trying to open to File: ");
@@ -87,11 +102,7 @@ void SDLogger::openFile(String newFileName){
       Serial.print("Writing to ");
       Serial.println(fileName);
     }
-    flightData.print("RawA_x(m/2),RawA_y(m/s2),RawA_z(m/s2),");
-    flightData.print("gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),");
-    flightData.print("VerticalAccel(m/s2),GroundLevel(m),vel(m/s),");
-    flightData.print("Angle(rad),Altitude(m),Time(s),");
-    flightData.println("State");
+    flightData.println(headerString);
     flightData.flush();
     if(Serial) Serial.println("...headers done.");
     fileName = flightData.name();

@@ -46,7 +46,7 @@ void stepperPullHigh(){
     }
     if(doStep){
         //printStepHigh = true;
-        doStep = true;
+        //doStep = true;
         //ODR |= 1 << STEP_PIN;
         digitalWriteFast(STEP_PIN, 1);
     }
