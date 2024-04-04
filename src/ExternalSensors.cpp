@@ -30,23 +30,24 @@ void ExternalSensors::startupTasks(){
     if(Serial) Serial.println(status);
     while(1) {}
   }
+
+//   IMU_a.autoOffsets();
+
   IMU_a.setAccRange(MPU9250_ACC_RANGE_16G);
   IMU_a.setGyrRange(MPU9250_GYRO_RANGE_2000);
   IMU_a.setMagOpMode(AK8963_PWR_DOWN);
   IMU_a.enableGyrDLPF();
-  IMU_a.setGyrDLPF(MPU9250_DLPF_6);
-  IMU_a.setSampleRateDivider(5);
+  IMU_a.setGyrDLPF(MPU9250_DLPF_0);
+  IMU_a.setSampleRateDivider(8);
   IMU_a.enableAccDLPF(true);
-  IMU_a.setAccDLPF(MPU9250_DLPF_6);
+  IMU_a.setAccDLPF(MPU9250_DLPF_0);
 
-
-  IMU_a.autoOffsets();
 };
 void ExternalSensors::readAcceleration(float &x, float &y, float &z){
     xyzFloat acc = IMU_a.getGValues();
-    x=acc.x;
-    y=acc.y;
-    z=acc.z;
+    x = acc.x / 8.0f; //I think it's reporting in m/s2 so this is to convert to G
+    y = acc.y / 8.0f; //OR maybe it is just not scaling properly and we need to divide by 8 because 
+    z = acc.z / 8.0f; //we went from 2G to 16G range?
 };
 void ExternalSensors::readAltitude(float &H){
     H = pressureAlt(BMP_a.readPressure());
