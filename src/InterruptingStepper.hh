@@ -9,8 +9,8 @@
 #include <IntervalTimer.h>
 #include <StepperInterface.hh>
 
-#define DIRECTION_PIN 7
-#define STEP_PIN 6
+#define DIRECTION_PIN 9
+#define STEP_PIN 10
 
 extern IntervalTimer tickerHigh;
 extern IntervalTimer tickerLow;
