@@ -3,11 +3,11 @@
 
 #include "GetData.hh"
 #include <SD.h>
-//#include <list>
 
 #define MAX_INPUT_LINE_LENGTH 20
 #define MAX_DATA_POINTS 6200
 
+const int chipSelect = BUILTIN_SDCARD;//Tells Teensy to use the on-board SD
 
 class SimulinkFile : public GetData {
 public:
@@ -50,30 +50,6 @@ private:
     float altitude[MAX_DATA_POINTS];
     int dataCount = 0;
 	
-	/*File simulation_log;
-	std::list<float> alt;
-	std::list<float> acc;
-	std::list<float> time_steps;
-	std::list<float>::iterator alt_iter;
-	std::list<float>::iterator acc_iter;
-	std::list<float>::iterator time_iter;*/
 };
-
-#ifndef DataLogger_h
-#define DataLogger_h
-
-#include <Arduino.h>
-#include <SPI.h>
-#include <SD.h>
-
-class DataLogger {
-  private:
-    
-
-  public:
-
-};
-
-#endif
 
 #endif

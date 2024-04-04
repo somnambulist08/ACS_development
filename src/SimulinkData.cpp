@@ -77,15 +77,15 @@ void SimulinkFile::printData() {
 }
 
 void SimulinkFile::startupTasks(){
-  if (!SD.begin()) {
-    Serial.println("SD card initialization failed!");
-    return;
-  }
-  loadData("TEST1.CSV");
+  startupTasks("TEST1.CSV");
 }
 void SimulinkFile::startupTasks(const char* file){  
-  if (!SD.begin()) {
+  if (!SD.begin(chipSelect)) {
     Serial.println("SD card initialization failed!");
+    while(!SD.begin(chipSelect)){
+      Serial.println("Retrying...");
+    }
+    Serial.println("SD begin on later attempt");
     return;
   }
   loadData(file);
