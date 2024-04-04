@@ -1091,7 +1091,6 @@ float burnoutTime=0; //time since burnout
 float simTime = 0;
 float newAcc=0;
 float vel=0;
-float oldAcc=0;
 float h_raw=0;
 float oldH=0;
 float ang=0;
@@ -1330,12 +1329,11 @@ void prvDoControl(){
 }
 void prvUpdateVars(){
   //Serial.println("Entering updateVars");
-  oldAcc = newAcc; 
   oldH = h_filtered;
   microsOld = microsNow;
 
 
-  backAcc[0] = oldAcc;
+  backAcc[0] = newAcc;
   backDt[0] = dt;
   for(int i=1; i<BACK_ACC_LENGTH; i++){
     backAcc[i] = backAcc[i-1];
