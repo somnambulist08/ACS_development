@@ -130,11 +130,15 @@ void determineStateCallback(void *in){
     }
     #else //if def ROCKETRTOS_NONE
     void loop(){
-        determineState();
-        sensorAndControlCallback();
-        loggingCallback();
-        stepperCallback();
-        buzzerCallback();
+        static unsigned long oldMicros = 0;
+        if((micros() - oldMicros) >= 1000){
+            determineState();
+            sensorAndControlCallback();
+            loggingCallback();
+            stepperCallback();
+            buzzerCallback();
+            oldMicros = micros();
+        }
     }
     #endif //ROCKETRTOS_NONE
 #endif //ROCKETRTOS_FREERTOS
