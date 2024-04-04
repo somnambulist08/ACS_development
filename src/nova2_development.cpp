@@ -1010,65 +1010,139 @@ void logging_RUN(){
 
 #include "RocketRTOS.hh"
 #include "InterruptingStepper.hh"
+// #include "SDLogger.hh"
+#include "Control.hh"
+#include "QuickSilver.hh"
+#include "Filter.hh"
+#include "StateMachine.hh"
+#include "SimulinkData.hh"
+#include "SDSpoofer.hh"
+
+#define GYRO_BIAS_X 0.138
+#define GYRO_BIAS_Y 0.122
+#define GYRO_BIAS_Z -0.226
+// #define ACC_BIAS_X -0.0012
+// #define ACC_BIAS_Y 0.0015
+// #define ACC_BIAS_Z 0.0040
+
+#define LAUNCH_THRESHOLD_A_M_S2 10
+#define LAUNCH_THRESHOLD_H_M 20
+#define MIN_LOOPS_IN_STATE 3
+#define MIN_POINTS_TO_LEAVE 3
+
+#define G_TO_M_S2 9.8f
 
 InterruptingStepper stepper;
+// SDLogger sd;
+SDSpoofer sd;
+SimulinkFile simIn;
+StateMachine state;
+
+void prvReadSensors();
+void prvIntegrateAccel();
+void prvDoControl();
+void prvUpdateVars();
+
+unsigned long microsNow=0;
+unsigned long microsOld = 0;
+unsigned long deltaMicros = 1;
+unsigned long testStartMicros = 0;
+unsigned long burnoutMicros = 0;
+float burnoutTime=0; //time since burnout
+float simTime = 0;
+float newAcc=0;
+float vel=0;
+float oldAcc=0;
+float h=0;
+float oldH=0;
+float ang=0;
+float h_groundLevel=0;
+
+int h_resetCounter=0;
+
+float a_raw[3] = {0,0,0};
+float g_raw[3] = {0.0f, 0.0f, 0.0f};
+float dt = 0.01;
+
+#define BACK_ACC_LENGTH 10
+float backAcc[BACK_ACC_LENGTH] = {0};
+float backDt[BACK_ACC_LENGTH] = {0};
+bool backCalcDone = false;
+
+float desiredH = 0;
+float predictedH = 0;
+
+//pt1Filter acc_filter[3];
+QuickSilver attitude_estimate;
+pt1Filter gyroFilters[3];
 
 void setup(){
   Serial.begin(115200);
   while(!Serial);
   Serial.println("Serial Connected");
 
-  stepper.start();
+   // initialize the acc_filters
+  for (int axis = 0; axis < 3; axis++) {
+    gyroFilters[axis].init(5.0, 0.1); // TODO dt fed in here should be the rate at which we read new acc data
+  }
 
+  attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
+
+  // sensors.readAltitude(h_groundLevel);
+
+  Serial.println("Reading from simulation file");
+  simIn.startupTasks("TEST12.CSV");
+
+  simIn.printData();
+
+  sd.openFile();
+
+  delay(500);
+
+  stepper.start();
+  testStartMicros = micros();
   startRocketRTOS();
 }
 
-//#define STATE_CHANGER ((long long int)1000000000) //one billion
-#define STATE_CHANGER ((long long int)10000)
 
-
-volatile static long long int i = 0;
 
 void determineState(){
-  i++;
-  if(i < STATE_CHANGER){
-    rocketState = ROCKET_PRE;
-    //Serial.println("Pre");
-  } else if(i < 2*STATE_CHANGER){
-    rocketState = ROCKET_LAUNCH;
-    //Serial.println("Launch");
-  } 
-  else if(i < 3*STATE_CHANGER){ 
-    rocketState = ROCKET_FREEFALL;
-    //Serial.println("Freefall");
-  }
-  else if(i < 4*STATE_CHANGER){ 
-    rocketState = ROCKET_RECOVERY;
-    //Serial.println("Recovery");
-  }
-  else i = 0;
+  state.updateState(h, vel, newAcc);
 }
 
 
 void sensorAndControl_PRE(){
-  //Serial.println("s&c pre");
+  prvReadSensors(); 
+
+  // if(++h_resetCounter > 10)
+  // {
+  //   h_groundLevel += h; //when in pre-flight, update the ground level every 10th pass
+  //   h_resetCounter=0;
+  // }
+
+  prvUpdateVars();
 }
 void sensorAndControl_LAUNCH(){
-  //Serial.println("s&c launch");
+  burnoutMicros = micros(); //what to do if overflow during this?
+  prvReadSensors();
+  prvIntegrateAccel();
+  prvUpdateVars();
 }
 void sensorAndControl_FULL(){
-  //Serial.println("s&c full");
-  stepper.setStepsTarget(10000);
-}
-void sensorAndControl_IDLE(){
-  //Serial.println("s&c idle");
+  prvReadSensors();
+  prvIntegrateAccel();
+  prvDoControl();
+  prvUpdateVars();
 }
 
 void logging_RUN(){
   //Serial.println("log run");
+  //sd.writeLog(newAcc, vel, h, ang, simTime, burnoutTime, rocketState);
+  sd.writeLog(String("A: ") + String(newAcc) + String(", V:") + String(vel) + String(", H: ") + String(h) + String(", Ang:") + String(ang) + String(", simTime:") + String(simTime) + String(", burnoutTime") + String(burnoutTime) + String(", State:") + String(rocketState) + String(", H_d:") + String(desiredH) + String(", H_p:") + String(predictedH));
 }
 void logging_CLOSE(){
   //Serial.println("log close");
+  sd.closeFile();
 }
 void logging_IDLE(){
   //Serial.println("log idle");
@@ -1108,6 +1182,88 @@ void buzz_POST(){
 void buzz_IDLE(){
   //Serial.println("buzz idle");
 }
+
+
+
+
+void prvReadSensors(){
+
+
+  //Serial.println("Entering prvReadSensors");
+  //sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  //sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
+  //float tempH=0;
+  //sensors.readAltitude(tempH);
+  //convert H to AGL
+  //Serial.print("H from Sensor:");
+  //Serial.println(tempH - h_groundLevel);
+  //convert A to m/s2
+  //Serial.print("A from Sensors:");
+  //Serial.println(a_raw[2] * G_TO_M_S2); //TODO: if sensor fusion works, then change this!
+
+    //filter the acc data
+  // for (int axis = 0; axis < 3; axis++) {
+  //   //a_raw[axis] = acc_filter[axis].apply(a_raw[axis]);
+  //   a[axis] = acc_filter[axis].apply(a_raw[axis]);
+  // }
+
+  simTime = ((float)( micros() - testStartMicros)) / 1000000.0f;
+  // float t = ((float)(simTimer.elapsed_time().count()))/1000000.0f;
+  h = simIn.getInterpolatedAltitude(simTime);
+  newAcc = simIn.getInterpolatedAcceleration(simTime);
+
+
+}
+void prvIntegrateAccel(){
+  burnoutTime = ((float)( micros() - burnoutMicros )) / 1000000.0f;
+  //Serial.println("Entering prvIntegrateAccel");
+  //tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
+
+  microsNow = micros();
+  //calculate dt but catch any overflow error
+  if(microsNow > microsOld){
+    deltaMicros = (microsNow - microsOld);
+  } else {
+    deltaMicros = (ULONG_MAX - microsOld) - microsNow;
+  }
+
+  dt = ((float)deltaMicros) / 1000000.0f;
+
+  float fusion_gain = 0.5; // how much we trust accelerometer data
+
+  float acc_integration = newAcc * dt; // will drift, but accurate over short times
+  float barometer_derivative = (h - oldH) / dt;
+  vel = fusion_gain * (vel + acc_integration) + (1.0 - fusion_gain) * barometer_derivative;
+
+
+  //Serial.print("vel=");
+  //Serial.println(vel);
+}
+void prvSensorFusion(){
+  //attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  //float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
+  //newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
+  // attitude_estimate.update_estimate(a, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  // float a_m_s[3] = {a[0] * G_TO_M_S2, a[1] * G_TO_M_S2, a[2] * G_TO_M_S2};
+  //newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
+
+}
+void prvDoControl(){
+  desiredH = getDesired(burnoutTime);
+  predictedH = predictAltitude(h,vel);
+  // ang = getControl(getDesired(burnoutTime), predictAltitude(h,vel), dt);
+  ang = getControl(desiredH, predictedH, dt);
+  stepper.setStepsTarget(microStepsFromFlapAngle(ang));
+}
+void prvUpdateVars(){
+  //Serial.println("Entering updateVars");
+  oldAcc = newAcc; 
+  oldH = h;
+  microsOld = microsNow;
+}
+
+
+
 
 #endif //TEENSY_4_1_TESTING
 
