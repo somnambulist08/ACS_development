@@ -21,6 +21,9 @@ InterruptingStepper::InterruptingStepper(){
     //printStepHigh = false;
 }
 void InterruptingStepper::start(){
+    pinMode(DIRECTION_PIN, OUTPUT);
+    pinMode(STEP_PIN, OUTPUT);
+
     tickerHigh.priority(TIMER_INTERRUPT_PRIORITY_HIGH);
     tickerLow.priority(TIMER_INTERRUPT_PRIORITY_LOW);
     tickerOneshot.priority(TIMER_INTERRUPT_PRIORITY_EXTRA_HIGH);
