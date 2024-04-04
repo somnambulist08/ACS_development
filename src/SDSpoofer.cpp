@@ -16,14 +16,25 @@ void SDSpoofer::writeLog(){
     }
 }
 
-void SDSpoofer::writeLog(float accel, float vel, float h, float ang){
+void SDSpoofer::writeLog(float accel, float vel, float h, float ang, float tSim, float tLaunch, int state){
     Serial.print(accel);
     Serial.print(", ");
     Serial.print(vel);
     Serial.print(", ");
     Serial.print(h);
     Serial.print(", ");
-    Serial.println(ang);
+    Serial.print(ang);
+    Serial.print(", ");
+    Serial.print(tSim);
+    Serial.print(", ");
+    Serial.print(tLaunch);
+    Serial.print(", ");
+    Serial.println(state);
+
+}
+
+void SDSpoofer::writeLog(String log){
+    Serial.println(log);
 }
 
 
@@ -38,5 +49,5 @@ void SDSpoofer::openFile()
     Serial.println("Writing Headers:");
 
     //Write headers here...
-    Serial.println("Accel, Vel, H, Ang");
+    Serial.println("a, v, h, tSim, tLaunch, state");
 }

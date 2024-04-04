@@ -10,13 +10,14 @@
 #define SD_SPOOFER_HH
 
 #include "SDInterface.hh"
+#include <Arduino.h>
 
 class SDSpoofer : public SDInterface {
 public:
     //personal
     SDSpoofer();
-    void writeLog(float accel, float vel, float h, float ang);
-
+    void writeLog(float accel, float vel, float h, float ang, float tSim, float tLaunch, int state);
+    void writeLog(String log);
     //inherited
     virtual void openFile() override;
     virtual void writeLog() override;
