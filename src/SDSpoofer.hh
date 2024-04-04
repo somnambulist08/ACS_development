@@ -16,6 +16,7 @@ class SDSpoofer : public SDInterface {
 public:
     //personal
     SDSpoofer();
+    void openFile(String headers);
     void writeLog(float accel, float vel, float h, float ang, float tSim, float tLaunch, int state);
     void writeLine(String line);
     void writeLog(String log); //duplicate for compatability

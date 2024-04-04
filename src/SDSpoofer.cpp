@@ -54,3 +54,8 @@ void SDSpoofer::openFile()
     //Write headers here...
     Serial.println("a, v, h, tSim, tLaunch, state");
 }
+
+void SDSpoofer::openFile(String headers)
+{
+    Serial.println(headers);
+}
