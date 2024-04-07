@@ -15,14 +15,14 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO
         gravity_vector_temp[axis] = gravity_vector[axis];
     }
 
-    gravity_vector[VEC_Z] -= pitch_delta * gravity_vector_temp[VEC_X];
-    gravity_vector[VEC_X] += pitch_delta * gravity_vector_temp[VEC_Z];
+    gravity_vector[VEC_Z] += pitch_delta * gravity_vector_temp[VEC_X];
+    gravity_vector[VEC_X] -= pitch_delta * gravity_vector_temp[VEC_Z];
 
-    gravity_vector[VEC_Y] += roll_delta * gravity_vector_temp[VEC_Z];
-    gravity_vector[VEC_Z] -= roll_delta * gravity_vector_temp[VEC_Y];
+    gravity_vector[VEC_Y] -= roll_delta * gravity_vector_temp[VEC_Z];
+    gravity_vector[VEC_Z] += roll_delta * gravity_vector_temp[VEC_Y];
 
-    gravity_vector[VEC_X] -= yaw_delta * gravity_vector_temp[VEC_Y];
-    gravity_vector[VEC_Y] += yaw_delta * gravity_vector_temp[VEC_X];
+    gravity_vector[VEC_X] += yaw_delta * gravity_vector_temp[VEC_Y];
+    gravity_vector[VEC_Y] -= yaw_delta * gravity_vector_temp[VEC_X];
 
 
 //   const float cosx = cosf(roll_delta);
@@ -56,6 +56,7 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO
 
     // not doing sqrt to save a little cpu
     float acc_mag_squared = acc[VEC_X] * acc[VEC_X] + acc[VEC_Y] * acc[VEC_Y] + acc[VEC_Z] * acc[VEC_Z];
+    // acc_mag_squared = 0; //disable acc fusing
     if (acc_mag_squared < 1.05 && acc_mag_squared > 0.95) { // todo test to see if this window is too small
         for (int axis = 0; axis < 3; axis++) {
             // slowly fuse the estimate towards the acc reading
@@ -99,7 +100,7 @@ void QuickSilver::initialize(float b) {
     beta = b;
     gravity_vector[VEC_X] = 0.0;
     gravity_vector[VEC_Y] = 0.0;
-    gravity_vector[VEC_Z] = 1.0;
+    gravity_vector[VEC_Z] = -1.0;
 }
 
 float* QuickSilver::getGravityVector(){
