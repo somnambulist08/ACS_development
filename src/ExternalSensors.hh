@@ -32,7 +32,9 @@
 #define MISO 12
 #define SCK 13
 
-#define pressureAlt(pressure) ((1 - powf((pressure / 101325), 0.190284)) * 145366.45 * 0.3048)
+#define CALIBRATION_LOOPS 100
+
+#define pressureAlt(pressure) ((1.0f - powf((((float)pressure) / 101325.0f), 0.190284f)) * 145366.45f * 0.3048f)
 
 class ExternalSensors : public GetData
 {
@@ -47,7 +49,10 @@ public:
     virtual void readTemperature(float &T) override;
     virtual void readAltitude(float &H) override;
     virtual void readPressure(float &P) override;
+    void calibrateOffsets();
     private:
+    float gyroOffsets[3];
+    float accOffsets[3];
     //Adafruit_BMP280 BMP_a;
     //Adafruit_BMP280 BMP_b(CSB_b);
 };
