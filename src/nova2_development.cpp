@@ -1067,9 +1067,9 @@ void logging_RUN(){
 // #define GYRO_BIAS_X 0.998988f
 // #define GYRO_BIAS_Y 0.574029f
 // #define GYRO_BIAS_Z -12.5213f
-#define GYRO_BIAS_X 1.91
-#define GYRO_BIAS_Y 5.89
-#define GYRO_BIAS_Z 5.43
+// #define GYRO_BIAS_X 1.91 //these are now taken care of by the ExternalSensors class
+// #define GYRO_BIAS_Y 5.89
+// #define GYRO_BIAS_Z 5.43
 // #define ACC_BIAS_X -0.0012
 // #define ACC_BIAS_Y 0.0015
 // #define ACC_BIAS_Z 0.0040
@@ -1116,7 +1116,7 @@ float a_raw[3] = {0.0f, 0.0f, 0.0f};
 float a_filtered[3] = {0.0f, 0.0f, 0.0f};
 float g_raw[3] = {0.0f, 0.0f, 0.0f};
 float g_filtered[3] = {0.0f, 0.0f, 0.0f};
-float dt = 0.01;
+float dt = 0.001;
 
 #define BACK_ACC_LENGTH 10
 float backAcc[BACK_ACC_LENGTH] = {0};
@@ -1141,7 +1141,7 @@ void setup(){
 
   // initialize the filteres
   for (int axis = 0; axis < 3; axis++) {
-    gyroFilters[axis].init(5.0, 0.001); // TODO dt fed in here should be the rate at which we read new acc data
+    gyroFilters[axis].init(1.0, 0.001); // TODO dt fed in here should be the rate at which we read new acc data
     accFilters[axis].init(5.0, 0.001);
   }
   hFilter.init(5.0, 0.001);
@@ -1218,9 +1218,10 @@ void logging_RUN(){
   
   // String log = String("GyroX:") + String(g_raw[0]) + String(", GyroY:") + String(g_raw[1]) + String(", GyroZ:") + String(g_raw[2]);
   // String log = String("GyroX:") + String(sums[0]/((float)count)) + String(", GyroY:") + String(sums[1]/((float)count)) + String(", GyroZ:") + String(sums[2]/((float)count));
-  // String log = String("GravX:") + String(attitude_estimate.getGravityVector()[0]) + String(", GravX:") + String(attitude_estimate.getGravityVector()[0]) + String(", GravZ:") + String(attitude_estimate.getGravityVector()[2]);
-  String log = String("X:") + String(a_raw[0]) + String(", Y:") + String(a_raw[1]) + String(", Z:") + String(a_raw[2]);
-  
+  // String log = String("GravX:") + String(attitude_estimate.getGravityVector()[0]) + String(", GravY:") + String(attitude_estimate.getGravityVector()[1]) + String(", GravZ:") + String(attitude_estimate.getGravityVector()[2]);
+  // String log = String("AccX:") + String(a_raw[0]) + String(", AccY:") + String(a_raw[1]) + String(", AccZ:") + String(a_raw[2]);
+  // String log = log1 + String("; ") + log2;
+  String log = String("VertAcc: ") + String(newAcc);
   sd.writeLine(log);
 }
 void logging_CLOSE(){
@@ -1280,9 +1281,9 @@ void prvReadSensors(){
   //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
   sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
-  g_raw[0] -= GYRO_BIAS_X;
-  g_raw[1] -= GYRO_BIAS_Y;
-  g_raw[2] -= GYRO_BIAS_Z;
+  // g_raw[0] -= GYRO_BIAS_X;
+  // g_raw[1] -= GYRO_BIAS_Y;
+  // g_raw[2] -= GYRO_BIAS_Z;
   // a_raw[0] -= ACC_BIAS_X;
   // a_raw[1] -= ACC_BIAS_Y;
   // a_raw[2] -= ACC_BIAS_Z;
