@@ -32,7 +32,8 @@
 #define MISO 12
 #define SCK 13
 
-#define CALIBRATION_LOOPS 100
+#define CALIBRATION_LOOPS 10000
+#define STATIC_OFFSETS
 
 #define pressureAlt(pressure) ((1.0f - powf((((float)pressure) / 101325.0f), 0.190284f)) * 145366.45f * 0.3048f)
 

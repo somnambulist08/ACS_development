@@ -36,31 +36,66 @@ void ExternalSensors::startupTasks(){
   }
 
 //   IMU_a.autoOffsets();
+  IMU_a.setMagOpMode(AK8963_PWR_DOWN);
   IMU_a.enableGyrDLPF();
+  IMU_a.setGyrDLPF(MPU9250_DLPF_0);
   IMU_a.enableAccDLPF(true);
   IMU_a.setAccDLPF(MPU9250_DLPF_0);
+  IMU_a.setSampleRateDivider(8);
   IMU_a.setAccRange(MPU9250_ACC_RANGE_16G);
   IMU_a.setGyrRange(MPU9250_GYRO_RANGE_2000);
-  IMU_a.setMagOpMode(AK8963_PWR_DOWN);
-  IMU_a.setGyrDLPF(MPU9250_DLPF_0);
-  IMU_a.setSampleRateDivider(8);
+
+
+
+  //Manually Set 16G range
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  digitalWrite(NCSa, 0);
+  SPI.transfer(28); //register 28: Accel Config 1
+  SPI.transfer(0x18); //16G mode
+  digitalWrite(NCSa, 1);
+  delayMicroseconds(100);
+  SPI.endTransaction(); 
+
+  //Manually Set 2000dps range //WARNING: Removes DLPF work //TODO: figure out what value the Fchoice_b bit should be
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  digitalWrite(NCSa, 0);
+  SPI.transfer(28); //register 27: Gyro Config
+  SPI.transfer(0x18); //2000dps mode
+  digitalWrite(NCSa, 1);
+  delayMicroseconds(100);
+  SPI.endTransaction(); 
+
+
+
+
+
 
   if(Serial) Serial.println("Calibrating offsets. Don't move");
   calibrateOffsets();
-  if(Serial) Serial.println("Offset Calibration Complete Offsets: ");
+  if(Serial) Serial.println("Offset Calibration Complete");
+  if(Serial) Serial.println("Gyro Offsets: ");
   if(Serial) Serial.print("X:");
-  if(Serial) Serial.print(gyroOffsets[0]);
+  if(Serial) Serial.print(gyroOffsets[0], 9);
   if(Serial) Serial.print(", Y:");
-  if(Serial) Serial.print(gyroOffsets[1]);
+  if(Serial) Serial.print(gyroOffsets[1], 9);
   if(Serial) Serial.print(", Z:");
-  if(Serial) Serial.println(gyroOffsets[2]);
+  if(Serial) Serial.println(gyroOffsets[2], 9);
+
+  if(Serial) Serial.println("Acc Offsets: ");
+  if(Serial) Serial.print("X:");
+  if(Serial) Serial.print(accOffsets[0], 9);
+  if(Serial) Serial.print(", Y:");
+  if(Serial) Serial.print(accOffsets[1], 9);
+  if(Serial) Serial.print(", Z:");
+  if(Serial) Serial.println(accOffsets[2], 9);
 
 };
 void ExternalSensors::readAcceleration(float &x, float &y, float &z){
     xyzFloat acc = IMU_a.getGValues();
-    x = -acc.x ;/// -8.0f; //I think it's reporting in m/s2 so this is to convert to G
-    y = -acc.y ;/// -8.0f; //OR maybe it is just not scaling properly and we need to divide by 8 because 
-    z = -(acc.z - 1.0f) ;/// -8.0f; //we went from 2G to 16G range? //ALso, there is a bais on this axis
+    x = -acc.x ;/// 8.0f; //I think it's reporting in m/s2 so this is to convert to G
+    y = -acc.y ;/// 8.0f; //OR maybe it is just not scaling properly and we need to divide by 8 because 
+    // z = -(acc.z - 1.0f);/// 8.0f; //we went from 2G to 16G range? //ALso, there is a bais on this axis
+    z = -acc.z;
     x -= accOffsets[0];
     y -= accOffsets[1];
     z -= accOffsets[2];
@@ -91,24 +126,33 @@ void ExternalSensors::readTemperature(float &T){
 };
 
 void ExternalSensors::calibrateOffsets(){
+#ifndef STATIC_OFFSETS
   float sumGyro[3] = {0.0f,0.0f,0.0f};
-  // float sumAcc[3] = {0.0f,0.0f,0.0f};
+  float sumAcc[3] = {0.0f,0.0f,0.0f};
   float gyro[3] = {0.0f,0.0f,0.0f};
-  // float acc[3] = {0.0f,0.0f,0.0f};
+  float acc[3] = {0.0f,0.0f,0.0f};
   
   for(int i=0; i<CALIBRATION_LOOPS; i++){
     delay(1);
     readGyroscope(gyro[0], gyro[1], gyro[2]);
-    // readAcceleration(acc[0], acc[1], acc[2]);
+    readAcceleration(acc[0], acc[1], acc[2]);
     for(int axis = 0; axis < 3; axis++){
       sumGyro[axis] += gyro[axis];
-      // sumAcc[axis] += acc[axis];
+      sumAcc[axis] += acc[axis];
     }
   }
 
   for(int axis = 0; axis < 3; axis++){
     gyroOffsets[axis] = sumGyro[axis] / ((float)CALIBRATION_LOOPS);
-    // accOffsets[axis] = sumGyro[axis] / 100.0f;
+    accOffsets[axis] = sumAcc[axis] / ((float)CALIBRATION_LOOPS);
   }
+#else//if def STATIC_OFFSETS
+  gyroOffsets[0] = 1.641498089;
+  gyroOffsets[1] = 6.574512276;
+  gyroOffsets[2] = 6.048394680;
+  accOffsets[0] =  0.020327978;
+  accOffsets[1] = -0.012061133;
+  accOffsets[2] = -0.118538260;
+#endif //STATIC_OFFSETS
   
 }
