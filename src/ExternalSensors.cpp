@@ -46,7 +46,8 @@ void ExternalSensors::startupTasks(){
   IMU_a.setGyrRange(MPU9250_GYRO_RANGE_2000);
 
 
-
+  delayMicroseconds(100);
+  
   //Manually Set 16G range
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
   digitalWrite(NCSa, 0);
@@ -59,7 +60,7 @@ void ExternalSensors::startupTasks(){
   //Manually Set 2000dps range //WARNING: Removes DLPF work //TODO: figure out what value the Fchoice_b bit should be
   SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
   digitalWrite(NCSa, 0);
-  SPI.transfer(28); //register 27: Gyro Config
+  SPI.transfer(27); //register 27: Gyro Config
   SPI.transfer(0x18); //2000dps mode
   digitalWrite(NCSa, 1);
   delayMicroseconds(100);
@@ -147,12 +148,12 @@ void ExternalSensors::calibrateOffsets(){
     accOffsets[axis] = sumAcc[axis] / ((float)CALIBRATION_LOOPS);
   }
 #else//if def STATIC_OFFSETS
-  gyroOffsets[0] = 1.641498089;
-  gyroOffsets[1] = 6.574512276;
-  gyroOffsets[2] = 6.048394680;
-  accOffsets[0] =  0.020327978;
-  accOffsets[1] = -0.012061133;
-  accOffsets[2] = -0.118538260;
+  gyroOffsets[0] = 0.193225101;
+  gyroOffsets[1] = 0.798162818;
+  gyroOffsets[2] = 0.757739246;
+  accOffsets[0] =  0.033792432;
+  accOffsets[1] =  0.009087305;
+  accOffsets[2] = -0.119937062;
 #endif //STATIC_OFFSETS
   
 }
