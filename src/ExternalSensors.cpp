@@ -20,8 +20,8 @@ void ExternalSensors::startupTasks(){
   }
     BMP_a.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
                   Adafruit_BMP280::SAMPLING_X1,     /* Temp. oversampling */
-                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::SAMPLING_X8,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X8,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
     if(Serial) Serial.println("Barometer Setup Complete");
 
