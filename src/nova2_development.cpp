@@ -1047,14 +1047,14 @@ void logging_RUN(){
 
 #include "RocketRTOS.hh"
 #include "InterruptingStepper.hh"
-#include "SDLogger.hh"
+// #include "SDLogger.hh"
 #include "Control.hh"
 #include "QuickSilver.hh"
 #include "Filter.hh"
 #include "StateMachine.hh"
 #include "ExternalSensors.hh"
 //#include "SimulinkData.hh"
-// #include "SDSpoofer.hh"
+#include "SDSpoofer.hh"
 #include <IntervalTimer.h>
 #include <climits>
 // #include <InterruptingBuzzer.hh>
@@ -1088,8 +1088,8 @@ void logging_RUN(){
 #define G_TO_M_S2 9.8f
 
 InterruptingStepper stepper;
-SDLogger sd;
-// SDSpoofer sd;
+// SDLogger sd;
+SDSpoofer sd;
 // SimulinkFile simIn;
 StateMachine state;
 ExternalSensors sensors;
@@ -1140,9 +1140,9 @@ pt1Filter accFilters[3];
 pt1Filter hFilter;
 
 void setup(){
-  // Serial.begin(115200);
-  // while(!Serial);
-  // Serial.println("Serial Connected");
+  Serial.begin(115200);
+  while(!Serial);
+  Serial.println("Serial Connected");
   // buzzerTicker.priority(130);
   // buzzerTicker.begin(prvBuzzer, buzzerMicros);
 
@@ -1168,8 +1168,8 @@ void setup(){
   delay(1000);
   digitalWrite(BUZZ_PIN, 0);
 
-  sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, dt, 1/dt, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
-  // sd.openFile("AX, AY, AZ, GX, GY, GZ");
+  // sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, dt, 1/dt, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
+  sd.openFile("AX, AY, AZ, GX, GY, GZ");
 
   delay(500);
 
@@ -1213,15 +1213,15 @@ void logging_RUN(){
   //Serial.println("log run");
   //sd.writeLog(newAcc, vel, h, ang, simTime, burnoutTime, rocketState);
   // sd.writeLog(String("A: ") + String(newAcc) + String(", V:") + String(vel) + String(", H: ") + String(h) + String(", Ang:") + String(ang) + String(", simTime:") + String(simTime) + String(", burnoutTime") + String(burnoutTime) + String(", State:") + String(rocketState) + String(", H_d:") + String(desiredH) + String(", H_p:") + String(predictedH));
-  String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
-            + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState) + String(", ") 
-            + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") 
-            + String(dt) + String(", ") + String((1.0f/dt)) + String(", ") 
-            + String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") 
-            + String(a_filtered[0]) + String(", ") + String(a_filtered[1]) + String(", ") + String(a_filtered[2]) + String(", ") 
-            + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]) + String(", ") 
-            + String(g_filtered[0]) + String(", ") + String(g_filtered[1]) + String(", ") + String(g_filtered[2]) + String(", ")
-            + String(attitude_estimate.getGravityVector()[0]) + String(", ") + String(attitude_estimate.getGravityVector()[1]) + String(", ") + String(attitude_estimate.getGravityVector()[2]);
+  // String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
+  //           + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState) + String(", ") 
+  //           + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") 
+  //           + String(dt) + String(", ") + String((1.0f/dt)) + String(", ") 
+  //           + String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") 
+  //           + String(a_filtered[0]) + String(", ") + String(a_filtered[1]) + String(", ") + String(a_filtered[2]) + String(", ") 
+  //           + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]) + String(", ") 
+  //           + String(g_filtered[0]) + String(", ") + String(g_filtered[1]) + String(", ") + String(g_filtered[2]) + String(", ")
+  //           + String(attitude_estimate.getGravityVector()[0]) + String(", ") + String(attitude_estimate.getGravityVector()[1]) + String(", ") + String(attitude_estimate.getGravityVector()[2]);
   // static float sums[3] = {0.0,0.0,0.0};
   // static int count = 0;
 
@@ -1236,7 +1236,7 @@ void logging_RUN(){
   // String log1 = String("AccX:") + String(a_raw[0]) + String(", AccY:") + String(a_raw[1]) + String(", AccZ:") + String(a_raw[2]);
   // String log = log1 + String("; ") + log2;
   // String log = String("VertAcc: ") + String(newAcc);
-  // String log = String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]);
+  String log = String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]);
   sd.writeLine(log);
 }
 void logging_CLOSE(){
