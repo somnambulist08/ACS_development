@@ -1235,8 +1235,8 @@ void logging_RUN(){
   // String log = String("GravX:") + String(attitude_estimate.getGravityVector()[0]) + String(", GravY:") + String(attitude_estimate.getGravityVector()[1]) + String(", GravZ:") + String(attitude_estimate.getGravityVector()[2]);
   // String log1 = String("AccX:") + String(a_raw[0]) + String(", AccY:") + String(a_raw[1]) + String(", AccZ:") + String(a_raw[2]);
   // String log = log1 + String("; ") + log2;
-  // String log = String("VertAcc: ") + String(newAcc);
-  String log = String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]);
+  String log = String("VertAcc: ") + String(newAcc);
+  // String log = String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]);
   sd.writeLine(log);
 }
 void logging_CLOSE(){
@@ -1364,7 +1364,8 @@ void prvReadSensors(){
 void prvIntegrateAccel(){
   if(!backCalcDone){
     for(int i=BACK_ACC_LENGTH-1; i>=0; i--){
-      vel += backAcc[i] * backDt[i];
+      // vel += backAcc[i] * backDt[i];
+      intA += backAcc[i] * backDt[i];
     }
     backCalcDone = true;
   }
