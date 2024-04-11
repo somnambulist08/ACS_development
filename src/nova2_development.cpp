@@ -1105,6 +1105,7 @@ unsigned long deltaMicros = 1;
 unsigned long testStartMicros = 0;
 unsigned long burnoutMicros = 0;
 unsigned long buzzMicros = 0;
+unsigned long altimeterMicros = 0;
 float burnoutTime=0; //time since burnout
 float simTime = 0;
 float newAcc=0;
@@ -1124,6 +1125,7 @@ float a_filtered[3] = {0.0f, 0.0f, 0.0f};
 float g_raw[3] = {0.0f, 0.0f, 0.0f};
 float g_filtered[3] = {0.0f, 0.0f, 0.0f};
 float dt = 0.001;
+float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
 
 #define BACK_ACC_LENGTH 10
 float backAcc[BACK_ACC_LENGTH] = {0};
@@ -1326,10 +1328,10 @@ void prvReadSensors(){
   // a_raw[1] -= ACC_BIAS_Y;
   // a_raw[2] -= ACC_BIAS_Z;
 
-  //float tempH=0;
-  sensors.readAltitude(h_raw);
-  //convert H to AGL
-  h_raw -= h_groundLevel;
+  // //float tempH=0;
+  // sensors.readAltitude(h_raw);
+  // //convert H to AGL
+  // h_raw -= h_groundLevel;
   //Serial.print("H from Sensor:");
   //Serial.println(tempH - h_groundLevel);
   //convert A to m/s2
@@ -1341,7 +1343,18 @@ void prvReadSensors(){
     a_filtered[axis] = accFilters[axis].apply(a_raw[axis]);
     g_filtered[axis] = gyroFilters[axis].apply(g_raw[axis]);
   }
-  h_filtered = hFilter.apply(h_raw);
+
+  //read h and calculate diffH when a new value of h is ready
+  if( (micros() - altimeterMicros) > 23000){ //19.5 ms is the typical pressure read case. Worst case is 22.5 ms. Standby is 0.5 ms
+    sensors.readAltitude(h_raw);
+    h_raw -= h_groundLevel;
+
+    oldH = h_filtered;
+    h_filtered = hFilter.apply(h_raw);
+    dt_h = micros() - altimeterMicros;
+    altimeterMicros = micros();
+    diffH = (h_filtered - oldH) / dt;
+  }
 
   simTime = ((float)( micros() - testStartMicros)) / 1000000.0f;
   // h = simIn.getInterpolatedAltitude(simTime);
@@ -1386,7 +1399,7 @@ void prvIntegrateAccel(){
   float fusion_gain = 0.5; // how much we trust accelerometer data
 
   intA = newAcc * dt; // will drift, but accurate over short times
-  diffH = (h_filtered - oldH) / dt;
+  // diffH = (h_filtered - oldH) / dt; //moved to prvReadSensors
   vel = fusion_gain * (vel + intA) + (1.0 - fusion_gain) * diffH;
 
 
@@ -1402,7 +1415,8 @@ void prvDoControl(){
 }
 void prvUpdateVars(){
   //Serial.println("Entering updateVars");
-  oldH = h_filtered;
+  // oldH = h_filtered; //this one was moved to when the filter is applied
+  // oldH_raw = h_raw;
   microsOld = microsNow;
 
 
