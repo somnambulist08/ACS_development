@@ -23,6 +23,8 @@ InterruptingStepper::InterruptingStepper(){
 void InterruptingStepper::start(){
     pinMode(DIRECTION_PIN, OUTPUT);
     pinMode(STEP_PIN, OUTPUT);
+    pinMode(ENABLE_PIN, OUTPUT);
+    digitalWrite(ENABLE_PIN, 0); //have stepper turned off by default
 
     tickerHigh.priority(TIMER_INTERRUPT_PRIORITY_HIGH);
     tickerLow.priority(TIMER_INTERRUPT_PRIORITY_LOW);
@@ -68,4 +70,9 @@ void startPullLow(){
     tickerLow.begin(stepperPullLow, pwmicros);
     tickerOneshot.end();
 }
-
+void InterruptingStepper::enable(){
+    digitalWrite(ENABLE_PIN, 1);
+}
+void InterruptingStepper::disable(){
+    digitalWrite(ENABLE_PIN, 0);
+}
