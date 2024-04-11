@@ -2,8 +2,12 @@
 
 
 
-Adafruit_BMP280 BMP_a(CSBa);
+Adafruit_BMP280 BMP_a(CSBa, &SPI);
 MPU9250_WE IMU_a = MPU9250_WE(&SPI, NCSa, true);
+
+Adafruit_BMP280 BMP_b(CSBb, &SPI);
+MPU9250_WE IMU_b = MPU9250_WE(&SPI, NCSb, true);
+
 ExternalSensors::ExternalSensors(){
   for(int i=0; i<3; i++){
     gyroOffsets[i] = 0;
@@ -14,23 +18,41 @@ void ExternalSensors::startupTasks(){
   Serial.println("In sensor startup");
   if(Serial) Serial.println("IfSerial");
     //start barometer in SPI
-  Serial.println("Trying BMP");
-  if (!BMP_a.begin()) {
-    Serial.println("BMP Fail");
-    if(Serial) Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
-                      "try a different address!"));
-    while (1) delay(10);
-  }
-  Serial.println("BMP success, configuring");
-  BMP_a.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
-                Adafruit_BMP280::SAMPLING_X1,     /* Temp. oversampling */
-                Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-                Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
-  if(Serial) Serial.println("Barometer Setup Complete");
-  Serial.println("BMP done");
+  // Serial.println("Trying BMPa");
+  // if (!BMP_a.begin(NULL, NULL)) {
+  //   Serial.println("BMPa Fail");
+  //   if(Serial) Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
+  //                     "try a different address!"));
+  //   //while (1) delay(10);
+  // } else {
+  //   Serial.println("BMPa success, configuring");
+  // }
+  // BMP_a.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+  //               Adafruit_BMP280::SAMPLING_X1,     /* Temp. oversampling */
+  //               Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+  //               Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+  //               Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
+  // if(Serial) Serial.println("Barometer Setup Complete");
+  // Serial.println("BMPa done");
 
+  // Serial.println("Trying BMPb");
+  // if (!BMP_b.begin(NULL, NULL)) {
+  //   Serial.println("BMPb Fail");
+  //   if(Serial) Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
+  //                   "try a different address!"));
+  //   //while (1) delay(10);
+  // } else {
+  //   Serial.println("BMPb success, configuring");
+  // }
+  // BMP_b.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+  //             Adafruit_BMP280::SAMPLING_X1,     /* Temp. oversampling */
+  //             Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+  //             Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+  //             Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
+  // if(Serial) Serial.println("Barometer Setup Complete");
+  // Serial.println("BMPb done");
 
+  Serial.println("IMUa init");
   int status = IMU_a.init();
   if (status < 0) {
     if(Serial) Serial.println("IMU initialization unsuccessful");
@@ -39,7 +61,9 @@ void ExternalSensors::startupTasks(){
     if(Serial) Serial.println(status);
     while(1) {}
   }
+  Serial.println("IMUa init success");
 
+  Serial.println("IMUa config");
   // IMU_a.autoOffsets();
   IMU_a.setSampleRateDivider(8);
   IMU_a.setMagOpMode(AK8963_PWR_DOWN);
@@ -49,6 +73,30 @@ void ExternalSensors::startupTasks(){
   IMU_a.setAccRange(MPU9250_ACC_RANGE_16G);
   IMU_a.enableAccDLPF(true);
   IMU_a.setAccDLPF(MPU9250_DLPF_0);
+  Serial.println("IMUa config success");
+
+  Serial.println("IMUb init");
+  status = IMU_b.init();
+  if (status < 0) {
+    if(Serial) Serial.println("IMU initialization unsuccessful");
+    if(Serial) Serial.println("Check IMU wiring or try cycling power");
+    if(Serial) Serial.print("Status: ");
+    if(Serial) Serial.println(status);
+    while(1) {}
+  }
+  Serial.println("IMUb init success");
+
+  Serial.println("IMUb config");
+  // IMU_a.autoOffsets();
+  IMU_b.setSampleRateDivider(8);
+  IMU_b.setMagOpMode(AK8963_PWR_DOWN);
+  IMU_b.setGyrRange(MPU9250_GYRO_RANGE_2000);
+  IMU_b.enableGyrDLPF();
+  IMU_b.setGyrDLPF(MPU9250_DLPF_0);
+  IMU_b.setAccRange(MPU9250_ACC_RANGE_16G);
+  IMU_b.enableAccDLPF(true);
+  IMU_b.setAccDLPF(MPU9250_DLPF_0);
+  Serial.println("IMUb config success");
 
 
   if(Serial) Serial.println("Calibrating offsets. Don't move");
