@@ -1060,12 +1060,12 @@ void logging_RUN(){
 
 
 
-// #define BUZZ_PIN 6
-#define BUZZ_PIN 38 //To disable the buzzer so I can code in public :)
-#define BUZZ_TIME 250000 //0.25 sec
+#define BUZZ_PIN 6
+// #define BUZZ_PIN 38 //To disable the buzzer so I can code in public :)
+#define BUZZ_TIME 125000 //0.125 sec
 #define PAUSE_SHORT 500000 //0.5 sec
-// #define PAUSE_LONG 5000000 //5.0 sec
-#define PAUSE_LONG 2000000 //2.0 sec
+#define PAUSE_LONG 5000000 //5.0 sec
+// #define PAUSE_LONG 2000000 //2.0 sec
 
 
 #define LAUNCH_THRESHOLD_A_M_S2 10
@@ -1106,6 +1106,8 @@ float intA=0;
 float diffH=0;
 float h_filtered=0;
 
+float integralOfAccel = 0;
+
 int h_resetCounter=0;
 
 float a_raw[3] = {0.0f, 0.0f, 0.0f};
@@ -1115,7 +1117,7 @@ float g_filtered[3] = {0.0f, 0.0f, 0.0f};
 float dt = 0.001;
 float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
 
-#define BACK_ACC_LENGTH 10
+#define BACK_ACC_LENGTH 1000
 float backAcc[BACK_ACC_LENGTH] = {0};
 float backDt[BACK_ACC_LENGTH] = {0};
 bool backCalcDone = false;
@@ -1136,8 +1138,8 @@ void setup(){
 
   // initialize the filteres
   for (int axis = 0; axis < 3; axis++) {
-    gyroFilters[axis].init(1.0, dt); // dt fed in here should be the rate at which we read new acc data
-    accFilters[axis].init(1.0, dt);
+    gyroFilters[axis].init(10.0, dt); // dt fed in here should be the rate at which we read new acc data
+    accFilters[axis].init(5.0, dt);
   }
   hFilter.init(1.0, dt_h);
 
@@ -1156,7 +1158,7 @@ void setup(){
   delay(1000);
   digitalWrite(BUZZ_PIN, 0);
 
-  sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, dt, 1/dt, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
+  sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, IntegralOfA, dt, 1/dt, dt_h, 1/dt_h, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
   // sd.openFile("AX, AY, AZ, GX, GY, GZ");
 
   delay(500);
@@ -1178,14 +1180,14 @@ void sensorAndControl_PRE(){
 
   if(++h_resetCounter > 100000) //every 100 seconds
   {
-    h_groundLevel += h_filtered; //when in pre-flight, update the ground level every 10th pass
+    h_groundLevel += h_filtered; //when in pre-flight, update the ground level every nth pass
     h_resetCounter=0;
   }
 
   prvUpdateVars();
 }
 void sensorAndControl_LAUNCH(){
-  burnoutMicros = micros(); //TODO: what to do if overflow during this?
+  burnoutMicros = micros(); //TODO: what to do if overflow during this? Overflow occurs just over an hour after power-on
   prvReadSensors();
   prvIntegrateAccel();
   prvUpdateVars();
@@ -1203,8 +1205,8 @@ void logging_RUN(){
   // sd.writeLog(String("A: ") + String(newAcc) + String(", V:") + String(vel) + String(", H: ") + String(h) + String(", Ang:") + String(ang) + String(", simTime:") + String(simTime) + String(", burnoutTime") + String(burnoutTime) + String(", State:") + String(rocketState) + String(", H_d:") + String(desiredH) + String(", H_p:") + String(predictedH));
   String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
             + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState) + String(", ") 
-            + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") 
-            + String(dt) + String(", ") + String((1.0f/dt)) + String(", ") 
+            + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") + String(integralOfAccel) + String(", ")
+            + String(dt) + String(", ") + String((1.0f/dt)) + String(", ")  + String(dt_h) + String(", ") + String(1.0f/dt_h) + String(", ")
             + String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") 
             + String(a_filtered[0]) + String(", ") + String(a_filtered[1]) + String(", ") + String(a_filtered[2]) + String(", ") 
             + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]) + String(", ") 
@@ -1293,14 +1295,24 @@ void prvReadSensors(){
 
     oldH = h_filtered;
     h_filtered = hFilter.apply(h_raw);
-    dt_h = micros() - altimeterMicros;
+    dt_h = (micros() - altimeterMicros) / 1000000.0f;
     altimeterMicros = micros();
-    diffH = (h_filtered - oldH) / dt;
+    diffH = (h_filtered - oldH) / dt_h;
   }
 
   simTime = ((float)( micros() - testStartMicros)) / 1000000.0f;
   // h = simIn.getInterpolatedAltitude(simTime);
   // newAcc = simIn.getInterpolatedAcceleration(simTime);
+  
+  microsNow = micros();
+  //calculate dt but catch any overflow error
+  if(microsNow > microsOld){
+    deltaMicros = (microsNow - microsOld);
+  } else {
+    deltaMicros = (ULONG_MAX - microsOld) - microsNow;
+  }
+
+  dt = ((float)deltaMicros) / 1000000.0f;
 
 
   //Attitude Determination
@@ -1322,26 +1334,30 @@ void prvIntegrateAccel(){
       // vel += backAcc[i] * backDt[i];
       intA += backAcc[i] * backDt[i]; //This should fix the mega spike at start?
     }
-    backCalcDone = true;
+    // backCalcDone = true;
+  } else {
+    intA = newAcc * dt; // will drift, but accurate over short times
   }
   burnoutTime = ((float)( micros() - burnoutMicros )) / 1000000.0f;
 
 
-  microsNow = micros();
-  //calculate dt but catch any overflow error
-  if(microsNow > microsOld){
-    deltaMicros = (microsNow - microsOld);
-  } else {
-    deltaMicros = (ULONG_MAX - microsOld) - microsNow;
-  }
+  // microsNow = micros();
+  // //calculate dt but catch any overflow error
+  // if(microsNow > microsOld){
+  //   deltaMicros = (microsNow - microsOld);
+  // } else {
+  //   deltaMicros = (ULONG_MAX - microsOld) - microsNow;
+  // }
 
-  dt = ((float)deltaMicros) / 1000000.0f;
+  // dt = ((float)deltaMicros) / 1000000.0f;
 
-  float fusion_gain = 0.5; // how much we trust accelerometer data
+  float fusion_gain = 0.99; // how much we trust accelerometer data
 
-  intA = newAcc * dt; // will drift, but accurate over short times
+  // intA = vel; //Make sure the accelerometer gets info from the previous fusion
+  integralOfAccel += intA;
   // diffH = (h_filtered - oldH) / dt; //moved to prvReadSensors
   vel = fusion_gain * (vel + intA) + (1.0 - fusion_gain) * diffH;
+
 
 }
 void prvDoControl(){
