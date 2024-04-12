@@ -9,8 +9,9 @@
 #include <IntervalTimer.h>
 #include <StepperInterface.hh>
 
-#define DIRECTION_PIN 9
-#define STEP_PIN 10
+#define ENABLE_PIN 7
+#define DIRECTION_PIN 8
+#define STEP_PIN 9
 
 extern IntervalTimer tickerHigh;
 extern IntervalTimer tickerLow;
@@ -37,6 +38,8 @@ public:
     void start();
     void stepOnce(void);
     void setStepsTarget(int newTarget);
+    void enable();
+    void disable();
 };
 
 

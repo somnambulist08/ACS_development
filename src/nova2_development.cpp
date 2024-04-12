@@ -1237,12 +1237,14 @@ void logging_IDLE(){
 }
 
 void stepper_RUN(){
+  stepper.enable();
 }
 void stepper_CLOSE(){
+  stepper.enable();
   stepper.setStepsTarget(0);
 }
 void stepper_IDLE(){
-  //Serial.println("step idle");
+  stepper.disable();
 }
 
 void buzz_PRE(){

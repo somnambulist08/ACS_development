@@ -23,6 +23,8 @@ InterruptingStepper::InterruptingStepper(){
 void InterruptingStepper::start(){
     pinMode(DIRECTION_PIN, OUTPUT);
     pinMode(STEP_PIN, OUTPUT);
+    pinMode(ENABLE_PIN, OUTPUT);
+    disable(); //start in disabled state //TODO: decide if this is proper
 
     tickerHigh.priority(TIMER_INTERRUPT_PRIORITY_HIGH);
     tickerLow.priority(TIMER_INTERRUPT_PRIORITY_LOW);
@@ -37,6 +39,12 @@ void InterruptingStepper::setStepsTarget(int newTarget){
     digitalWrite(DIRECTION_PIN, directionGlobal);
 }
 void InterruptingStepper::stepOnce(){}
+void InterruptingStepper::enable(){
+    digitalWrite(ENABLE_PIN, 1);
+}
+void InterruptingStepper::disable(){
+    digitalWrite(ENABLE_PIN, 0);
+}
 
 void stepperPullHigh(){
     if(directionGlobal){
