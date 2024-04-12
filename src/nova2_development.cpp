@@ -1082,10 +1082,9 @@ SDLogger sd;
 StateMachine state;
 ExternalSensors sensors;
 
-void prvReadSensors();
-void prvIntegrateAccel();
-void prvDoControl();
-void prvUpdateVars();
+inline void prvReadSensors();
+inline void prvIntegrateAccel();
+inline void prvDoControl();
 
 unsigned long microsNow=0;
 unsigned long microsOld = 0;
@@ -1184,20 +1183,16 @@ void sensorAndControl_PRE(){
     h_groundLevel += h_filtered; //when in pre-flight, update the ground level every nth pass
     h_resetCounter=0;
   }
-
-  prvUpdateVars();
 }
 void sensorAndControl_LAUNCH(){
   burnoutMicros = micros(); //TODO: what to do if overflow during this? Overflow occurs just over an hour after power-on
   prvReadSensors();
   prvIntegrateAccel();
-  prvUpdateVars();
 }
 void sensorAndControl_FULL(){
   prvReadSensors();
   prvIntegrateAccel();
   prvDoControl();
-  prvUpdateVars();
 }
 
 void logging_RUN(){
@@ -1240,23 +1235,25 @@ void logging_IDLE(){
 }
 
 void stepper_RUN(){
-  stepper.enable();
+  // stepper.enable();
+  digitalWriteFast(ENABLE_PIN, 1);
 }
 void stepper_CLOSE(){
-  stepper.enable();
+  //stepper.enable(); //we can assume that it went through run before getting to close, so no need to re-enable
   stepper.setStepsTarget(0);
 }
 void stepper_IDLE(){
-  stepper.disable();
+  // stepper.disable();
+  digitalWriteFast(ENABLE_PIN, 0);
 }
 
 void buzz_PRE(){
   unsigned long localDiff = micros() - buzzMicros;
   if(localDiff > (BUZZ_TIME+PAUSE_LONG)){
-    digitalWrite(BUZZ_PIN, 1);
+    digitalWriteFast(BUZZ_PIN, 1);
     buzzMicros = micros();
   } else if(localDiff > BUZZ_TIME){
-    digitalWrite(BUZZ_PIN, 0);
+    digitalWriteFast(BUZZ_PIN, 0);
   }
 }
 void buzz_POST(){
@@ -1273,13 +1270,13 @@ void buzz_POST(){
   }
 }
 void buzz_IDLE(){
-  digitalWrite(BUZZ_PIN, 0);
+  digitalWriteFast(BUZZ_PIN, 0);
 }
 
 
 
 
-void prvReadSensors(){
+inline void prvReadSensors(){
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
   sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
   //Apply Filters
@@ -1302,6 +1299,7 @@ void prvReadSensors(){
   }
 
   simTime = ((float)( micros() - testStartMicros)) / 1000000.0f;
+  burnoutTime = ((float)( micros() - burnoutMicros )) / 1000000.0f;
   // h = simIn.getInterpolatedAltitude(simTime);
   // newAcc = simIn.getInterpolatedAcceleration(simTime);
   
@@ -1326,10 +1324,15 @@ void prvReadSensors(){
   newAcc = attitude_estimate.vertical_acceleration_from_acc(a_filtered);
   newAcc *= G_TO_M_S2;
 
+  //update old variables
+  microsOld = microsNow;
 
-
+  //fill back-calculation list
+  backAcc[backCalcIndex] = newAcc;
+  backDt[backCalcIndex] = dt;
+  backCalcIndex = ((backCalcIndex+1)<=BACK_ACC_LENGTH) ? (backCalcIndex+1) : 0; 
 }
-void prvIntegrateAccel(){
+inline void prvIntegrateAccel(){
   if(!backCalcDone){
     for(int i=BACK_ACC_LENGTH-1; i>=0; i--){
       // vel += backAcc[i] * backDt[i];
@@ -1339,49 +1342,21 @@ void prvIntegrateAccel(){
   } else {
     intA = newAcc * dt; // will drift, but accurate over short times
   }
-  burnoutTime = ((float)( micros() - burnoutMicros )) / 1000000.0f;
-
-
-  // microsNow = micros();
-  // //calculate dt but catch any overflow error
-  // if(microsNow > microsOld){
-  //   deltaMicros = (microsNow - microsOld);
-  // } else {
-  //   deltaMicros = (ULONG_MAX - microsOld) - microsNow;
-  // }
-
-  // dt = ((float)deltaMicros) / 1000000.0f;
 
   float fusion_gain = 0.99; // how much we trust accelerometer data
-
-  // intA = vel; //Make sure the accelerometer gets info from the previous fusion
   integralOfAccel += intA;
   // diffH = (h_filtered - oldH) / dt; //moved to prvReadSensors
   vel = fusion_gain * (vel + intA) + (1.0 - fusion_gain) * diffH;
 
-
 }
-void prvDoControl(){
+inline void prvDoControl(){
   desiredH = getDesired(burnoutTime);
   predictedH = predictAltitude(h_filtered,vel);
   // ang = getControl(getDesired(burnoutTime), predictAltitude(h,vel), dt);
   ang = getControl(desiredH, predictedH, dt);
   stepper.setStepsTarget(microStepsFromFlapAngle(ang));
 }
-void prvUpdateVars(){
-  // oldH = h_filtered; //this one was moved to when the filter is applied
-  microsOld = microsNow;
 
-  backAcc[backCalcIndex] = newAcc;
-  backDt[backCalcIndex] = dt;
-  backCalcIndex = ((backCalcIndex+1)<=BACK_ACC_LENGTH) ? (backCalcIndex+1) : 0; 
-  // backAcc[0] = newAcc;
-  // backDt[0] = dt;
-  // for(int i=1; i<BACK_ACC_LENGTH; i++){
-  //   backAcc[i] = backAcc[i-1];
-  //   backDt[i] = backDt[i-1];
-  // }
-}
 
 
 #endif //TEENSY_4_1_TESTING
