@@ -1047,38 +1047,26 @@ void logging_RUN(){
 
 #include "RocketRTOS.hh"
 #include "InterruptingStepper.hh"
-// #include "SDLogger.hh"
+#include "SDLogger.hh"
 #include "Control.hh"
 #include "QuickSilver.hh"
 #include "Filter.hh"
 #include "StateMachine.hh"
 #include "ExternalSensors.hh"
 //#include "SimulinkData.hh"
-#include "SDSpoofer.hh"
+// #include "SDSpoofer.hh"
 #include <IntervalTimer.h>
 #include <climits>
-// #include <InterruptingBuzzer.hh>
-// #define BUZZ_PIN 39
+
+
+
+// #define BUZZ_PIN 6
 #define BUZZ_PIN 38 //To disable the buzzer so I can code in public :)
 #define BUZZ_TIME 250000 //0.25 sec
 #define PAUSE_SHORT 500000 //0.5 sec
 // #define PAUSE_LONG 5000000 //5.0 sec
 #define PAUSE_LONG 2000000 //2.0 sec
-// IntervalTimer buzzerTicker;
-// bool doBuzz = false;
-// int buzzerMicros = 500000;
-// #define BZZT_PIN 39
-// void prvBuzzer();
 
-// #define GYRO_BIAS_X 0.998988f
-// #define GYRO_BIAS_Y 0.574029f
-// #define GYRO_BIAS_Z -12.5213f
-// #define GYRO_BIAS_X 1.91 //these are now taken care of by the ExternalSensors class
-// #define GYRO_BIAS_Y 5.89
-// #define GYRO_BIAS_Z 5.43
-// #define ACC_BIAS_X -0.0012
-// #define ACC_BIAS_Y 0.0015
-// #define ACC_BIAS_Z 0.0040
 
 #define LAUNCH_THRESHOLD_A_M_S2 10
 #define LAUNCH_THRESHOLD_H_M 20
@@ -1088,8 +1076,8 @@ void logging_RUN(){
 #define G_TO_M_S2 9.8f
 
 InterruptingStepper stepper;
-// SDLogger sd;
-SDSpoofer sd;
+SDLogger sd;
+// SDSpoofer sd;
 // SimulinkFile simIn;
 StateMachine state;
 ExternalSensors sensors;
@@ -1142,18 +1130,16 @@ pt1Filter accFilters[3];
 pt1Filter hFilter;
 
 void setup(){
-  Serial.begin(115200);
-  while(!Serial);
-  Serial.println("Serial Connected");
-  // buzzerTicker.priority(130);
-  // buzzerTicker.begin(prvBuzzer, buzzerMicros);
+  // Serial.begin(115200);
+  // while(!Serial);
+  // Serial.println("Serial Connected");
 
   // initialize the filteres
   for (int axis = 0; axis < 3; axis++) {
-    gyroFilters[axis].init(1.0, 0.001); // TODO dt fed in here should be the rate at which we read new acc data
-    accFilters[axis].init(5.0, 0.001);
+    gyroFilters[axis].init(1.0, dt); // dt fed in here should be the rate at which we read new acc data
+    accFilters[axis].init(1.0, dt);
   }
-  hFilter.init(5.0, 0.001);
+  hFilter.init(1.0, dt_h);
 
   attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
@@ -1170,8 +1156,8 @@ void setup(){
   delay(1000);
   digitalWrite(BUZZ_PIN, 0);
 
-  // sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, dt, 1/dt, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
-  sd.openFile("AX, AY, AZ, GX, GY, GZ");
+  sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, dt, 1/dt, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
+  // sd.openFile("AX, AY, AZ, GX, GY, GZ");
 
   delay(500);
 
@@ -1190,16 +1176,16 @@ void determineState(){
 void sensorAndControl_PRE(){
   prvReadSensors(); 
 
-  // if(++h_resetCounter > 10)
-  // {
-  //   h_groundLevel += h; //when in pre-flight, update the ground level every 10th pass
-  //   h_resetCounter=0;
-  // }
+  if(++h_resetCounter > 100000) //every 100 seconds
+  {
+    h_groundLevel += h_filtered; //when in pre-flight, update the ground level every 10th pass
+    h_resetCounter=0;
+  }
 
   prvUpdateVars();
 }
 void sensorAndControl_LAUNCH(){
-  burnoutMicros = micros(); //what to do if overflow during this?
+  burnoutMicros = micros(); //TODO: what to do if overflow during this?
   prvReadSensors();
   prvIntegrateAccel();
   prvUpdateVars();
@@ -1215,15 +1201,15 @@ void logging_RUN(){
   //Serial.println("log run");
   //sd.writeLog(newAcc, vel, h, ang, simTime, burnoutTime, rocketState);
   // sd.writeLog(String("A: ") + String(newAcc) + String(", V:") + String(vel) + String(", H: ") + String(h) + String(", Ang:") + String(ang) + String(", simTime:") + String(simTime) + String(", burnoutTime") + String(burnoutTime) + String(", State:") + String(rocketState) + String(", H_d:") + String(desiredH) + String(", H_p:") + String(predictedH));
-  // String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
-  //           + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState) + String(", ") 
-  //           + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") 
-  //           + String(dt) + String(", ") + String((1.0f/dt)) + String(", ") 
-  //           + String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") 
-  //           + String(a_filtered[0]) + String(", ") + String(a_filtered[1]) + String(", ") + String(a_filtered[2]) + String(", ") 
-  //           + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]) + String(", ") 
-  //           + String(g_filtered[0]) + String(", ") + String(g_filtered[1]) + String(", ") + String(g_filtered[2]) + String(", ")
-  //           + String(attitude_estimate.getGravityVector()[0]) + String(", ") + String(attitude_estimate.getGravityVector()[1]) + String(", ") + String(attitude_estimate.getGravityVector()[2]);
+  String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
+            + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState) + String(", ") 
+            + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") 
+            + String(dt) + String(", ") + String((1.0f/dt)) + String(", ") 
+            + String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") 
+            + String(a_filtered[0]) + String(", ") + String(a_filtered[1]) + String(", ") + String(a_filtered[2]) + String(", ") 
+            + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]) + String(", ") 
+            + String(g_filtered[0]) + String(", ") + String(g_filtered[1]) + String(", ") + String(g_filtered[2]) + String(", ")
+            + String(attitude_estimate.getGravityVector()[0]) + String(", ") + String(attitude_estimate.getGravityVector()[1]) + String(", ") + String(attitude_estimate.getGravityVector()[2]);
   // static float sums[3] = {0.0,0.0,0.0};
   // static int count = 0;
 
@@ -1237,8 +1223,9 @@ void logging_RUN(){
   // String log = String("GravX:") + String(attitude_estimate.getGravityVector()[0]) + String(", GravY:") + String(attitude_estimate.getGravityVector()[1]) + String(", GravZ:") + String(attitude_estimate.getGravityVector()[2]);
   // String log1 = String("AccX:") + String(a_raw[0]) + String(", AccY:") + String(a_raw[1]) + String(", AccZ:") + String(a_raw[2]);
   // String log = log1 + String("; ") + log2;
-  String log = String("VertAcc: ") + String(newAcc);
+  // String log = String("VertAcc: ") + String(newAcc);
   // String log = String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]);
+  // String log = String("Vel: ") + String(vel) + String(", IntA: ") + String(intA) + String(", DiffH: ") + String(diffH);
   sd.writeLine(log);
 }
 void logging_CLOSE(){
@@ -1250,20 +1237,6 @@ void logging_IDLE(){
 }
 
 void stepper_RUN(){
-  //Serial.println("step run");
-  // if(printStepHigh){
-  //   Serial.println("StepUp");
-  //   printStepHigh = false;
-  // }
-  // if(printStepLow){
-  //   Serial.println("StepDown");
-  //   printStepLow = false;
-  // }
-
-  // Serial.print("Current Step: ");
-  // Serial.println(currentStepGlobal);
-  // Serial.print("Step Goal: ");
-  // Serial.println(stepsTargetGlobal);
 }
 void stepper_CLOSE(){
   stepper.setStepsTarget(0);
@@ -1273,12 +1246,6 @@ void stepper_IDLE(){
 }
 
 void buzz_PRE(){
-  // doBuzz = true;
-  // buzzerMicros = 1000000;
-  //Serial.println("buzz pre");
-  //Serial.println("BZZZZZT");
-  // enablePreBuzz();
-
   unsigned long localDiff = micros() - buzzMicros;
   if(localDiff > (BUZZ_TIME+PAUSE_LONG)){
     digitalWrite(BUZZ_PIN, 1);
@@ -1288,11 +1255,6 @@ void buzz_PRE(){
   }
 }
 void buzz_POST(){
-  // doBuzz = true;
-  // buzzerMicros = 250000;
-  //Serial.println("buzz post");
-  //Serial.println("BZZZT BZZT");
-  // enablePostBuzz();
   unsigned long localDiff = micros() - buzzMicros;
   if(localDiff > (BUZZ_TIME+PAUSE_SHORT+BUZZ_TIME+PAUSE_LONG)){
     digitalWrite(BUZZ_PIN, 1);
@@ -1306,9 +1268,6 @@ void buzz_POST(){
   }
 }
 void buzz_IDLE(){
-  // disableBuzz();
-  //Serial.println("buzz idle");
-  // doBauzz = false;
   digitalWrite(BUZZ_PIN, 0);
 }
 
@@ -1316,33 +1275,14 @@ void buzz_IDLE(){
 
 
 void prvReadSensors(){
-
-
-  //Serial.println("Entering prvReadSensors");
   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
   sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
-  // g_raw[0] -= GYRO_BIAS_X;
-  // g_raw[1] -= GYRO_BIAS_Y;
-  // g_raw[2] -= GYRO_BIAS_Z;
-  // a_raw[0] -= ACC_BIAS_X;
-  // a_raw[1] -= ACC_BIAS_Y;
-  // a_raw[2] -= ACC_BIAS_Z;
-
-  // //float tempH=0;
-  // sensors.readAltitude(h_raw);
-  // //convert H to AGL
-  // h_raw -= h_groundLevel;
-  //Serial.print("H from Sensor:");
-  //Serial.println(tempH - h_groundLevel);
-  //convert A to m/s2
-  //Serial.print("A from Sensors:");
-  //Serial.println(a_raw[2] * G_TO_M_S2); //TODO: if sensor fusion works, then change this!
-
   //Apply Filters
   for (int axis = 0; axis < 3; axis++) {
     a_filtered[axis] = accFilters[axis].apply(a_raw[axis]);
     g_filtered[axis] = gyroFilters[axis].apply(g_raw[axis]);
   }
+
 
   //read h and calculate diffH when a new value of h is ready
   if( (micros() - altimeterMicros) > 23000){ //19.5 ms is the typical pressure read case. Worst case is 22.5 ms. Standby is 0.5 ms
@@ -1378,13 +1318,12 @@ void prvIntegrateAccel(){
   if(!backCalcDone){
     for(int i=BACK_ACC_LENGTH-1; i>=0; i--){
       // vel += backAcc[i] * backDt[i];
-      intA += backAcc[i] * backDt[i];
+      intA += backAcc[i] * backDt[i]; //This should fix the mega spike at start?
     }
     backCalcDone = true;
   }
   burnoutTime = ((float)( micros() - burnoutMicros )) / 1000000.0f;
-  //Serial.println("Entering prvIntegrateAccel");
-  //tNow = ((float)(tim.elapsed_time().count()))/1000000.0f;
+
 
   microsNow = micros();
   //calculate dt but catch any overflow error
@@ -1402,9 +1341,6 @@ void prvIntegrateAccel(){
   // diffH = (h_filtered - oldH) / dt; //moved to prvReadSensors
   vel = fusion_gain * (vel + intA) + (1.0 - fusion_gain) * diffH;
 
-
-  //Serial.print("vel=");
-  //Serial.println(vel);
 }
 void prvDoControl(){
   desiredH = getDesired(burnoutTime);
@@ -1414,9 +1350,7 @@ void prvDoControl(){
   stepper.setStepsTarget(microStepsFromFlapAngle(ang));
 }
 void prvUpdateVars(){
-  //Serial.println("Entering updateVars");
   // oldH = h_filtered; //this one was moved to when the filter is applied
-  // oldH_raw = h_raw;
   microsOld = microsNow;
 
 
@@ -1427,14 +1361,6 @@ void prvUpdateVars(){
     backDt[i] = backDt[i-1];
   }
 }
-
-
-// void prvBuzzer(){
-//   if(doBuzz){
-//     digitalToggleFast(BZZT_PIN);
-//   }
-// }
-
 
 
 #endif //TEENSY_4_1_TESTING
