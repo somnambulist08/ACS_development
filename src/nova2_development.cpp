@@ -1121,6 +1121,7 @@ float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms ty
 float backAcc[BACK_ACC_LENGTH] = {0};
 float backDt[BACK_ACC_LENGTH] = {0};
 bool backCalcDone = false;
+int backCalcIndex = 0;
 
 float desiredH = 0;
 float predictedH = 0;
@@ -1334,7 +1335,7 @@ void prvIntegrateAccel(){
       // vel += backAcc[i] * backDt[i];
       intA += backAcc[i] * backDt[i]; //This should fix the mega spike at start?
     }
-    // backCalcDone = true;
+    backCalcDone = true;
   } else {
     intA = newAcc * dt; // will drift, but accurate over short times
   }
@@ -1371,13 +1372,15 @@ void prvUpdateVars(){
   // oldH = h_filtered; //this one was moved to when the filter is applied
   microsOld = microsNow;
 
-
-  backAcc[0] = newAcc;
-  backDt[0] = dt;
-  for(int i=1; i<BACK_ACC_LENGTH; i++){
-    backAcc[i] = backAcc[i-1];
-    backDt[i] = backDt[i-1];
-  }
+  backAcc[backCalcIndex] = newAcc;
+  backDt[backCalcIndex] = dt;
+  backCalcIndex = ((backCalcIndex+1)>=BACK_ACC_LENGTH) ? (backCalcIndex+1) : 0; 
+  // backAcc[0] = newAcc;
+  // backDt[0] = dt;
+  // for(int i=1; i<BACK_ACC_LENGTH; i++){
+  //   backAcc[i] = backAcc[i-1];
+  //   backDt[i] = backDt[i-1];
+  // }
 }
 
 
