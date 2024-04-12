@@ -1374,7 +1374,7 @@ void prvUpdateVars(){
 
   backAcc[backCalcIndex] = newAcc;
   backDt[backCalcIndex] = dt;
-  backCalcIndex = ((backCalcIndex+1)>=BACK_ACC_LENGTH) ? (backCalcIndex+1) : 0; 
+  backCalcIndex = ((backCalcIndex+1)<=BACK_ACC_LENGTH) ? (backCalcIndex+1) : 0; 
   // backAcc[0] = newAcc;
   // backDt[0] = dt;
   // for(int i=1; i<BACK_ACC_LENGTH; i++){
