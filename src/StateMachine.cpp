@@ -17,7 +17,7 @@ void StateMachine::updateState(float h, float v, float a) {
                 nextState = ROCKET_LAUNCH;
                 break;
             case(ROCKET_LAUNCH):
-                stay = (a > 0);
+                stay = (a > -10); //-10 is roughly gravity, so will always be reached. Technically, this value should be whatever the force of drag is at that point
                 nextState = ROCKET_FREEFALL;
                 break;
             case(ROCKET_FREEFALL):
