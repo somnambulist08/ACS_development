@@ -8,7 +8,7 @@
 
 class QuickSilver {
 public:
-    void update_estimate(float acc[], float gyro[], float dt);
+    void update_estimate(float acc[], float gyro[], float dt, bool fuseAcc);
     float vertical_acceleration_from_acc(float acc[]);
     void initialize(float b);
     float* getGravityVector();

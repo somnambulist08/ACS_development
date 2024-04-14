@@ -5,7 +5,7 @@
 #include <Arduino.h>
 // acc should be in units of g's and gyro in rad/s
 // acc should be filtered at this point
-void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO potentially add a vay to disable acc entirely during some parts of flight
+void QuickSilver::update_estimate(float acc[], float gyro[], float dt, bool fuseAcc) { // TODO potentially add a vay to disable acc entirely during some parts of flight
     float pitch_delta = gyro[PITCH] * dt * DEG_TO_RAD;
     float roll_delta = gyro[ROLL] * dt * DEG_TO_RAD;
     float yaw_delta = gyro[YAW] * dt * DEG_TO_RAD;
@@ -53,16 +53,18 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO
 //   gravity_vector[1] = gravity_vector_temp[0] * mat[0][1] + gravity_vector_temp[1] * mat[1][1] + gravity_vector_temp[2] * mat[2][1];
 //   gravity_vector[2] = gravity_vector_temp[0] * mat[0][2] + gravity_vector_temp[1] * mat[1][2] + gravity_vector_temp[2] * mat[2][2];
 
-
-    // not doing sqrt to save a little cpu
-    float acc_mag_squared = acc[VEC_X] * acc[VEC_X] + acc[VEC_Y] * acc[VEC_Y] + acc[VEC_Z] * acc[VEC_Z];
-    // acc_mag_squared = 0; //disable acc fusing
-    if (acc_mag_squared < 1.1 && acc_mag_squared > 0.9) { // todo test to see if this window is too small
-        for (int axis = 0; axis < 3; axis++) {
-            // slowly fuse the estimate towards the acc reading
-            gravity_vector[axis] += beta * (acc[axis] - gravity_vector[axis]);
+    if(fuseAcc){
+        // not doing sqrt to save a little cpu
+        float acc_mag_squared = acc[VEC_X] * acc[VEC_X] + acc[VEC_Y] * acc[VEC_Y] + acc[VEC_Z] * acc[VEC_Z];
+        // acc_mag_squared = 0; //disable acc fusing
+        if (acc_mag_squared < 1.1 && acc_mag_squared > 0.9) { // todo test to see if this window is too small
+            for (int axis = 0; axis < 3; axis++) {
+                // slowly fuse the estimate towards the acc reading
+                gravity_vector[axis] += beta * (acc[axis] - gravity_vector[axis]);
+            }
         }
     }
+    
 
     // normalize the gravity_vector
     float gravity_mag = sqrt(gravity_vector[VEC_X] * gravity_vector[VEC_X] + gravity_vector[VEC_Y] * gravity_vector[VEC_Y] + gravity_vector[VEC_Z] * gravity_vector[VEC_Z]);

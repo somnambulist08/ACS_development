@@ -275,7 +275,7 @@ inline void prvReadSensors(){
   // float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
   // newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
   //Using FIltered
-  attitude_estimate.update_estimate(a_filtered, g_filtered, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  attitude_estimate.update_estimate(a_filtered, g_filtered, dt, rocketState==ROCKET_PRE); //Only fuse acc if rocket is in pre-flight state //WARNING: ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
   newAcc = attitude_estimate.vertical_acceleration_from_acc(a_filtered);
   newAcc *= G_TO_M_S2;
 
