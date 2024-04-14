@@ -198,8 +198,8 @@ void stepper_CLOSE(){
 }
 void stepper_IDLE(){
   // stepper.disable();
-  // digitalWriteFast(ENABLE_PIN, MOTOR_DISABLE);
-  digitalWriteFast(ENABLE_PIN, MOTOR_ENABLE);  
+  digitalWriteFast(ENABLE_PIN, MOTOR_DISABLE);
+  // digitalWriteFast(ENABLE_PIN, MOTOR_ENABLE);  
 }
 
 void buzz_PRE(){
