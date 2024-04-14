@@ -38,7 +38,13 @@ void InterruptingStepper::setStepsTarget(int newTarget){
     directionGlobal = (currentStepGlobal < stepsTargetGlobal) ? 1 : 0 ;
     digitalWrite(DIRECTION_PIN, directionGlobal);
 }
-void InterruptingStepper::stepOnce(){}
+void InterruptingStepper::stepOnce(){
+    if(directionGlobal){
+        setStepsTarget(stepsTargetGlobal+1);
+    } else {
+        setStepsTarget(stepsTargetGlobal-1);
+    }
+}
 void InterruptingStepper::enable(){
     digitalWrite(ENABLE_PIN, MOTOR_ENABLE);
 }
