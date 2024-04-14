@@ -40,10 +40,10 @@ void InterruptingStepper::setStepsTarget(int newTarget){
 }
 void InterruptingStepper::stepOnce(){}
 void InterruptingStepper::enable(){
-    digitalWrite(ENABLE_PIN, 1);
+    digitalWrite(ENABLE_PIN, MOTOR_ENABLE);
 }
 void InterruptingStepper::disable(){
-    digitalWrite(ENABLE_PIN, 0);
+    digitalWrite(ENABLE_PIN, MOTOR_DISABLE);
 }
 
 void stepperPullHigh(){

@@ -1236,7 +1236,7 @@ void logging_IDLE(){
 
 void stepper_RUN(){
   // stepper.enable();
-  digitalWriteFast(ENABLE_PIN, 1);
+  digitalWriteFast(ENABLE_PIN, MOTOR_ENABLE);
 }
 void stepper_CLOSE(){
   //stepper.enable(); //we can assume that it went through run before getting to close, so no need to re-enable
@@ -1244,7 +1244,8 @@ void stepper_CLOSE(){
 }
 void stepper_IDLE(){
   // stepper.disable();
-  digitalWriteFast(ENABLE_PIN, 0);
+  // digitalWriteFast(ENABLE_PIN, MOTOR_DISABLE);
+  digitalWriteFast(ENABLE_PIN, MOTOR_ENABLE);  
 }
 
 void buzz_PRE(){

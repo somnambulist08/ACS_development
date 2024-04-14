@@ -13,6 +13,9 @@
 #define DIRECTION_PIN 8
 #define STEP_PIN 9
 
+#define MOTOR_ENABLE 0
+#define MOTOR_DISABLE 1
+
 extern IntervalTimer tickerHigh;
 extern IntervalTimer tickerLow;
 extern IntervalTimer tickerOneshot;
