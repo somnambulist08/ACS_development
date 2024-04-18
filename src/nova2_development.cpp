@@ -12,8 +12,8 @@
 #include <IntervalTimer.h>
 #include <climits>
 
-#define FLAP_OPEN_PIN 23
-#define FLAP_CLOSE_PIN 22
+#define FLAP_OPEN_PIN 22
+#define FLAP_CLOSE_PIN 23
 
 #define BUZZ_PIN 6
 // #define BUZZ_PIN 38 //To disable the buzzer so I can code in public :)
@@ -87,9 +87,9 @@ pt1Filter accFilters[3];
 pt1Filter hFilter;
 
 void setup(){
-  // Serial.begin(115200);
-  // while(!Serial);
-  // Serial.println("Serial Connected");
+  Serial.begin(115200);
+  while(!Serial);
+  Serial.println("Serial Connected");
 
   pinMode(FLAP_CLOSE_PIN, INPUT);
   pinMode(FLAP_OPEN_PIN, INPUT);
@@ -203,6 +203,14 @@ void stepper_CLOSE(){
 void stepper_IDLE(){
   bool close = digitalReadFast(FLAP_CLOSE_PIN);
   bool open = digitalReadFast(FLAP_OPEN_PIN);
+  Serial.print("close: ");
+  Serial.print(close);
+  Serial.print(", open: ");
+  Serial.print(open);
+  Serial.print(", Steps Target: ");
+  Serial.print(stepsTargetGlobal);
+  Serial.print(", Zero: ");
+  Serial.println(zeroStepGlobal);
 
   if(!(open || close)){
     // stepper.disable();

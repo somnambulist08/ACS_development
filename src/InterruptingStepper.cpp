@@ -4,6 +4,7 @@
 volatile int stepsTargetGlobal = 0;
 volatile int currentStepGlobal = 0;
 volatile int directionGlobal = 0;
+volatile int zeroStepGlobal = 0;
 static volatile bool doStep = false;
 //volatile bool printStepLow = false;
 //volatile bool printStepHigh = false;
@@ -34,15 +35,19 @@ void InterruptingStepper::start(){
     tickerOneshot.begin(startPullLow, pw_on);
 }
 void InterruptingStepper::setStepsTarget(int newTarget){
-    stepsTargetGlobal = newTarget;
+    stepsTargetGlobal = newTarget - zeroStepGlobal;
     directionGlobal = (currentStepGlobal < stepsTargetGlobal) ? 1 : 0 ;
     digitalWrite(DIRECTION_PIN, directionGlobal);
 }
+void InterruptingStepper::setZero(int newZero){
+    zeroStepGlobal = newZero;
+    setStepsTarget(stepsTargetGlobal);
+}
 void InterruptingStepper::stepOnce(){
     if(directionGlobal){
-        setStepsTarget(stepsTargetGlobal+1);
+        setZero(zeroStepGlobal+STEPS_PER_STEP_ONCE);
     } else {
-        setStepsTarget(stepsTargetGlobal-1);
+        setZero(zeroStepGlobal-STEPS_PER_STEP_ONCE);
     }
 }
 void InterruptingStepper::enable(){

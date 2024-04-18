@@ -16,6 +16,8 @@
 #define MOTOR_ENABLE 0
 #define MOTOR_DISABLE 1
 
+#define STEPS_PER_STEP_ONCE 1
+
 extern IntervalTimer tickerHigh;
 extern IntervalTimer tickerLow;
 extern IntervalTimer tickerOneshot;
@@ -32,6 +34,7 @@ void startPullLow();
 extern volatile int currentStepGlobal;
 extern volatile int stepsTargetGlobal;
 extern volatile int directionGlobal;
+extern volatile int zeroStepGlobal;
 //extern volatile bool printStepHigh;    
 //extern volatile bool printStepLow;
 
@@ -43,6 +46,7 @@ public:
     void setStepsTarget(int newTarget);
     void enable();
     void disable();
+    void setZero(int newZero);
 };
 
 
