@@ -16,7 +16,7 @@
 #define MOTOR_ENABLE 0
 #define MOTOR_DISABLE 1
 
-#define STEPS_PER_STEP_ONCE 1
+#define STEPS_PER_STEP_ONCE 5
 
 extern IntervalTimer tickerHigh;
 extern IntervalTimer tickerLow;

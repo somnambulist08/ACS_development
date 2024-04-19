@@ -40,8 +40,9 @@ void InterruptingStepper::setStepsTarget(int newTarget){
     digitalWrite(DIRECTION_PIN, directionGlobal);
 }
 void InterruptingStepper::setZero(int newZero){
+    int oldZero = zeroStepGlobal;
     zeroStepGlobal = newZero;
-    setStepsTarget(stepsTargetGlobal);
+    setStepsTarget(stepsTargetGlobal+oldZero);
 }
 void InterruptingStepper::stepOnce(){
     if(directionGlobal){
