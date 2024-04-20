@@ -15,6 +15,13 @@ extern const unsigned long pps;
 extern const unsigned long pwmicros;
 extern const unsigned long pw_on;
 
+#define FLAP_LEVER_ARM 32.580300796647045f
+#define FLAP_LEVER_ANGLE 0.049743810028906f
+#define L_END 102.8899540467910f
+#define DELTA_R 44.81012f
+#define HINGE_SQUARED 6814.5025f //(82.55f * 82.55f)
+
+
 int microStepsFromFlapAngle(float angle); 
 
 class StepperInterface {
