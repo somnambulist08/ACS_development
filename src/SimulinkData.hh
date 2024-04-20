@@ -5,7 +5,7 @@
 #include <SD.h>
 
 #define MAX_INPUT_LINE_LENGTH 20
-#define MAX_DATA_POINTS 6200
+#define MAX_DATA_POINTS 12400
 
 const int chipSelect = BUILTIN_SDCARD;//Tells Teensy to use the on-board SD
 
