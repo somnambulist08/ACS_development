@@ -2,7 +2,7 @@
 
 
 float getDesired(float time) {
-  return 700.0f * powf(M_E, -time) + 1015.9f;
+  return 2250.0f * powf(M_E, -1.0f/3.0f * time) + 3048.0f;
 }
 
 
@@ -17,7 +17,7 @@ float getControl(float desired, float predicted, float dt){
   integratorState += CONTROL_I*err*dt;
  
   control += CONTROL_BIAS;
-  if (control > M_PI_2) control = M_PI_2;
+  if (control > UPPER_CONTROL_SATURATION) control = UPPER_CONTROL_SATURATION;
   if (control < 0) control = 0;
   return control;
 }
