@@ -22,20 +22,16 @@
 
 //sensor pins
 //GY-91a
-#define CSBa (int8_t)20 //bmp280
-#define NCSa (uint8_t)21 //MPU9250
+#define CSBa 20 //bmp280
+#define NCSa 21 //MPU9250
 //GY-91b
-#define CSBb (int8_t)40 //bmp280
-#define NCSb (uint8_t)41 //MPU9250
-//SPI
-#define MOSI 11
-#define MISO 12
-#define SCK 13
-
+#define CSBb 40 //bmp280
+#define NCSb 41 //MPU9250
 #define CALIBRATION_LOOPS 10000
 #define STATIC_OFFSETS
 
 #define pressureAlt(pressure) ((1.0f - powf((((float)pressure) / 101325.0f), 0.190284f)) * 145366.45f * 0.3048f)
+
 
 class ExternalSensors : public GetData
 {
@@ -51,11 +47,13 @@ public:
     virtual void readAltitude(float &H) override;
     virtual void readPressure(float &P) override;
     void calibrateOffsets();
-    private:
+
+private:
     float gyroOffsets[3];
     float accOffsets[3];
-    //Adafruit_BMP280 BMP_a;
-    //Adafruit_BMP280 BMP_b(CSB_b);
+
+  Adafruit_BMP280 BMP_a=Adafruit_BMP280((int8_t)CSBa);
+  MPU9250_WE IMU_a = MPU9250_WE(&SPI, NCSa,true);
 };
 
 #endif

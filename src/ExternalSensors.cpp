@@ -1,19 +1,14 @@
 #include "ExternalSensors.hh"
 
-
-
-Adafruit_BMP280 BMP_a(CSBa);
-MPU9250_WE IMU_a = MPU9250_WE(&SPI, NCSa, true);
 ExternalSensors::ExternalSensors(){
-  for(int i=0; i<3; i++){
-    gyroOffsets[i] = 0;
-    accOffsets[1] = 0;
-  }
-};
+}
 void ExternalSensors::startupTasks(){
-    //start barometer in SPI
+  for(int i=0; i<3; i++){
+    ExternalSensors::gyroOffsets[i] = 0;
+    ExternalSensors::accOffsets[i] = 0;
+  }
 
-    if (!BMP_a.begin()) {
+  if (!BMP_a.begin()) {
     if(Serial) Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
                       "try a different address!"));
     while (1) delay(10);
@@ -21,11 +16,14 @@ void ExternalSensors::startupTasks(){
     BMP_a.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
                   Adafruit_BMP280::SAMPLING_X1,     /* Temp. oversampling */
                   Adafruit_BMP280::SAMPLING_X8,    /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_X8,      /* Filtering. */
+                  Adafruit_BMP280::FILTER_X2,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
-    if(Serial) Serial.println("Barometer Setup Complete");
-
-
+    if(Serial) Serial.print("Barometer Setup Complete, starting pressure at P = : ");
+    float press = BMP_a.readPressure();
+    if(Serial) Serial.println(String(press));
+    exposeTHESENUTS = press;
+    yankTHESENUTS = pressureAlt(exposeTHESENUTS);
+    
   int status = IMU_a.init();
   if (status < 0) {
     if(Serial) Serial.println("IMU initialization unsuccessful");
@@ -47,9 +45,9 @@ void ExternalSensors::startupTasks(){
 
 
   delayMicroseconds(100);
-  
+ 
   //Manually Set 16G range
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
   digitalWrite(NCSa, 0);
   SPI.transfer(28); //register 28: Accel Config 1
   SPI.transfer(0x18); //16G mode
@@ -58,13 +56,13 @@ void ExternalSensors::startupTasks(){
   SPI.endTransaction(); 
 
   //Manually Set 2000dps range //WARNING: Removes DLPF work //TODO: figure out what value the Fchoice_b bit should be
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
   digitalWrite(NCSa, 0);
   SPI.transfer(27); //register 27: Gyro Config
   SPI.transfer(0x18); //2000dps mode
   digitalWrite(NCSa, 1);
   delayMicroseconds(100);
-  SPI.endTransaction(); 
+  SPI.endTransaction();
 
 
 
@@ -90,7 +88,12 @@ void ExternalSensors::startupTasks(){
   if(Serial) Serial.print(", Z:");
   if(Serial) Serial.println(accOffsets[2], 9);
 
-};
+
+  
+
+
+
+}
 void ExternalSensors::readAcceleration(float &x, float &y, float &z){
     xyzFloat acc = IMU_a.getGValues();
     x = -acc.x ;/// 8.0f; //I think it's reporting in m/s2 so this is to convert to G
@@ -100,10 +103,11 @@ void ExternalSensors::readAcceleration(float &x, float &y, float &z){
     x -= accOffsets[0];
     y -= accOffsets[1];
     z -= accOffsets[2];
-};
+}
 void ExternalSensors::readAltitude(float &H){
-    H = pressureAlt(BMP_a.readPressure());
-};
+    H=pressureAlt(BMP_a.readPressure());
+}
+
 void ExternalSensors::readGyroscope(float &x, float &y, float &z){
     xyzFloat gyr = IMU_a.getGyrValues();
     x=gyr.x ;/// 8.0f; //the gyros also seem to be having a problem with the increased resolution
@@ -112,19 +116,19 @@ void ExternalSensors::readGyroscope(float &x, float &y, float &z){
     x -= gyroOffsets[0];
     y -= gyroOffsets[1];
     z -= gyroOffsets[2];
-};
+}
 void ExternalSensors::readMagneticField(float &x, float &y, float &z){
     //placeholders so nothing breaks downstream - mag off for power
     x = -1;
     y = -1;
     z = -1; 
-};
+}
 void ExternalSensors::readPressure(float &P){
-    P = BMP_a.readPressure();
-};
+  P = BMP_a.readPressure();
+}
 void ExternalSensors::readTemperature(float &T){
     T=BMP_a.readTemperature();
-};
+}
 
 void ExternalSensors::calibrateOffsets(){
 #ifndef STATIC_OFFSETS

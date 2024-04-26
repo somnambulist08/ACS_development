@@ -131,7 +131,7 @@ void determineStateCallback(void *in){
     #else //if def ROCKETRTOS_NONE
     void loop(){
         static unsigned long oldMicros = 0;
-        if((micros() - oldMicros) >= 1000){
+        if((micros() - oldMicros) >= 10000){
             determineState();
             sensorAndControlCallback();
             loggingCallback();

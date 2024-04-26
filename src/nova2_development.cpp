@@ -1,22 +1,23 @@
 #include <Arduino.h>
 #include "RocketRTOS.hh"
 #include "InterruptingStepper.hh"
-#include "SDLogger.hh"
+//#include "SDLogger.hh"
 #include "Control.hh"
 #include "QuickSilver.hh"
 #include "Filter.hh"
 #include "StateMachine.hh"
 #include "ExternalSensors.hh"
 // #include "SimulinkData.hh"
-// #include "SDSpoofer.hh"
+#include "SDSpoofer.hh"
 #include <IntervalTimer.h>
 #include <climits>
 
 #define FLAP_OPEN_PIN 22
 #define FLAP_CLOSE_PIN 23
 
-#define BUZZ_PIN 6
+//#define BUZZ_PIN 6
 // #define BUZZ_PIN 38 //To disable the buzzer so I can code in public :)
+#define BUZZ_PIN 5 //screw disabling, make the blinkenlight blinken
 #define BUZZ_TIME 125000 //0.125 sec
 #define PAUSE_SHORT 500000 //0.5 sec
 #define PAUSE_LONG 5000000 //5.0 sec
@@ -31,15 +32,15 @@
 #define G_TO_M_S2 9.8f
 
 InterruptingStepper stepper;
-SDLogger sd;
-// SDSpoofer sd;
+//SDLogger sd;
+SDSpoofer sd;
 // SimulinkFile simIn;
 StateMachine state;
 ExternalSensors sensors;
-
 inline void prvReadSensors();
 inline void prvIntegrateAccel();
 inline void prvDoControl();
+
 
 static unsigned long microsNow=0;
 static unsigned long microsOld = 0;
@@ -48,37 +49,38 @@ static unsigned long testStartMicros = 0;
 static unsigned long burnoutMicros = 0;
 static unsigned long buzzMicros = 0;
 static unsigned long altimeterMicros = 0;
-static float burnoutTime=0; //time since burnout
-static float simTime = 0;
-static float newAcc=0;
-static float vel=0;
-static float h_raw=0;
-static float oldH=0;
-static float ang=0;
-static float h_groundLevel=0;
-static float intA=0;
-static float diffH=0;
-static float h_filtered=0;
+float burnoutTime=0; //time since burnout
+float simTime = 0;
+float newAcc=0;
+float vel=0;
+float h_raw=0;
+float oldH=0;
+float ang=0;
+float h_groundLevel=-1.0f;
+float intA=0;
+float diffH=-1.0f;
+float h_filtered=-1.0f;
 
-static float integralOfAccel = 0;
+float integralOfAccel = 0;
 
-static int h_resetCounter=0;
+int h_resetCounter=0;
 
-static float a_raw[3] = {0.0f, 0.0f, 0.0f};
-static float a_filtered[3] = {0.0f, 0.0f, 0.0f};
-static float g_raw[3] = {0.0f, 0.0f, 0.0f};
-static float g_filtered[3] = {0.0f, 0.0f, 0.0f};
-static float dt = 0.001;
-static float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
+float a_raw[3] = {0.0f, 0.0f, 0.0f};
+float a_filtered[3] = {0.0f, 0.0f, 0.0f};
+float g_raw[3] = {0.0f, 0.0f, 0.0f};
+float g_filtered[3] = {0.0f, 0.0f, 0.0f};
+float dt = 0.001;
+float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
 
 #define BACK_ACC_LENGTH 1000
-static float backAcc[BACK_ACC_LENGTH] = {0};
-static float backDt[BACK_ACC_LENGTH] = {0};
-static bool backCalcDone = false;
-static int backCalcIndex = 0;
+float backAcc[BACK_ACC_LENGTH] = {0};
+float backDt[BACK_ACC_LENGTH] = {0};
+bool backCalcDone = false;
+int backCalcIndex = 0;
 
-static float desiredH = 0;
-static float predictedH = 0;
+float desiredH = 0;
+float predictedH = 0;
+
 
 //pt1Filter acc_filter[3];
 QuickSilver attitude_estimate;
@@ -87,9 +89,10 @@ pt1Filter accFilters[3];
 pt1Filter hFilter;
 
 void setup(){
-  // Serial.begin(115200);
-  // while(!Serial);
-  // Serial.println("Serial Connected");
+  Serial.begin(115200);
+   while(!Serial);
+   Serial.println("Serial Connected");
+
 
   pinMode(FLAP_CLOSE_PIN, INPUT);
   pinMode(FLAP_OPEN_PIN, INPUT);
@@ -99,7 +102,7 @@ void setup(){
     gyroFilters[axis].init(10.0, dt); // dt fed in here should be the rate at which we read new acc data
     accFilters[axis].init(5.0, dt);
   }
-  hFilter.init(1.0, dt_h);
+  //hFilter.init(1.0, dt_h);
 
   attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
@@ -108,26 +111,43 @@ void setup(){
   //simIn.printData();
 
   sensors.startupTasks();
-  sensors.readAltitude(h_groundLevel);
+  
 
-  // initializeBuzzer();
+  //initializeBuzzer();
   pinMode(BUZZ_PIN, OUTPUT);
   digitalWrite(BUZZ_PIN, 1);
   delay(1000);
   digitalWrite(BUZZ_PIN, 0);
 
+
   sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, IntegralOfA, dt, 1/dt, dt_h, 1/dt_h, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
   // sd.openFile("AX, AY, AZ, GX, GY, GZ");
   // sd.openFile("t, state, ang, desired, predicted, burnoutTime, burnoutMicros, micros");
 
-  delay(500);
+
 
   stepper.start();
   testStartMicros = micros();
   startRocketRTOS();
+
 }
+/*static unsigned long oldMicros = 0;
+void loop(){
+        if((micros() - oldMicros) >= 5000000){
+          float P = 0.0f;
+          sensors.readPressure(P);
+          float H = 0.0f;
+          sensors.readAltitude(H);
 
+              Serial.print("Pressure: ");
+    Serial.println(P);
+    Serial.print("Altitude: ");
+    Serial.println(H);        
+          
 
+            oldMicros = micros();
+        }
+    }*/
 
 void determineState(){
   state.updateState(h_filtered, vel, newAcc);
@@ -136,7 +156,6 @@ void determineState(){
 
 void sensorAndControl_PRE(){
   prvReadSensors(); 
-
   if(++h_resetCounter > 100000) //every 100 seconds
   {
     h_groundLevel += h_filtered; //when in pre-flight, update the ground level every nth pass
@@ -186,7 +205,7 @@ void logging_RUN(){
   // String log = String("Vel: ") + String(vel) + String(", IntA: ") + String(intA) + String(", DiffH: ") + String(diffH);
   // String log =String(simTime) + String(", ") + String(rocketState) + String(", ") + String(ang) + String(", ") + String(desiredH) + String(", ") + String(predictedH) + String(", ") 
   // + String(burnoutTime) + String(", ") + String(burnoutMicros) + String(", ") + String(micros());
-  sd.writeLine(log);
+  //sd.writeLine(log);
 }
 void logging_CLOSE(){
   //Serial.println("log close");
@@ -262,8 +281,8 @@ void buzz_IDLE(){
 
 
 inline void prvReadSensors(){
-  sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
-  sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
+  //sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  //sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
   //Apply Filters
   for (int axis = 0; axis < 3; axis++) {
     a_filtered[axis] = accFilters[axis].apply(a_raw[axis]);
@@ -274,6 +293,17 @@ inline void prvReadSensors(){
   //read h and calculate diffH when a new value of h is ready
   if( (micros() - altimeterMicros) > 23000){ //19.5 ms is the typical pressure read case. Worst case is 22.5 ms. Standby is 0.5 ms
     sensors.readAltitude(h_raw);
+    float P=0.0f;//sensors.ExternalSensors::exposeTHESENUTS;
+    
+    sensors.readPressure(P);
+
+
+    Serial.print("P raw: ");
+    Serial.println(P);
+    Serial.print("h raw: ");
+    Serial.println(h_raw);
+    
+    delay(2000);
     h_raw -= h_groundLevel;
 
     oldH = h_filtered;
