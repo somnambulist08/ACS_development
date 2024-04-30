@@ -18,11 +18,13 @@ void ExternalSensors::startupTasks(){
                   Adafruit_BMP280::SAMPLING_X8,    /* Pressure oversampling */
                   Adafruit_BMP280::FILTER_X2,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
-    if(Serial) Serial.print("Barometer Setup Complete, starting pressure at P = : ");
-    float press = BMP_a.readPressure();
-    if(Serial) Serial.println(String(press));
-    exposeTHESENUTS = press;
-    yankTHESENUTS = pressureAlt(exposeTHESENUTS);
+    if(Serial) {
+      Serial.print("Barometer Setup Complete, starting pressure at P = : ");
+      float press = BMP_a.readPressure();
+      Serial.println(String(press));
+    }
+    // exposeTHESENUTS = press;
+    // yankTHESENUTS = pressureAlt(exposeTHESENUTS);
     
   int status = IMU_a.init();
   if (status < 0) {
@@ -152,12 +154,12 @@ void ExternalSensors::calibrateOffsets(){
     accOffsets[axis] = sumAcc[axis] / ((float)CALIBRATION_LOOPS);
   }
 #else//if def STATIC_OFFSETS
-  gyroOffsets[0] = 0.193225101;
-  gyroOffsets[1] = 0.798162818;
-  gyroOffsets[2] = 0.757739246;
-  accOffsets[0] =  0.033792432;
-  accOffsets[1] =  0.009087305;
-  accOffsets[2] = -0.119937062;
+  gyroOffsets[0] = -0.511730969;
+  gyroOffsets[1] = 2.964481354;
+  gyroOffsets[2] = 1.213780522;
+  accOffsets[0] =  0.008502246;
+  accOffsets[1] = -0.016868262;
+  accOffsets[2] = -0.126601100;
 #endif //STATIC_OFFSETS
   
 }

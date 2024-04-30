@@ -1,23 +1,23 @@
 #include <Arduino.h>
 #include "RocketRTOS.hh"
 #include "InterruptingStepper.hh"
-//#include "SDLogger.hh"
+#include "SDLogger.hh"
 #include "Control.hh"
 #include "QuickSilver.hh"
 #include "Filter.hh"
 #include "StateMachine.hh"
 #include "ExternalSensors.hh"
 // #include "SimulinkData.hh"
-#include "SDSpoofer.hh"
+// #include "SDSpoofer.hh"
 #include <IntervalTimer.h>
 #include <climits>
 
 #define FLAP_OPEN_PIN 22
 #define FLAP_CLOSE_PIN 23
 
-//#define BUZZ_PIN 6
+#define BUZZ_PIN 6
 // #define BUZZ_PIN 38 //To disable the buzzer so I can code in public :)
-#define BUZZ_PIN 5 //screw disabling, make the blinkenlight blinken
+// #define BUZZ_PIN 5 //screw disabling, make the blinkenlight blinken
 #define BUZZ_TIME 125000 //0.125 sec
 #define PAUSE_SHORT 500000 //0.5 sec
 #define PAUSE_LONG 5000000 //5.0 sec
@@ -32,8 +32,8 @@
 #define G_TO_M_S2 9.8f
 
 InterruptingStepper stepper;
-//SDLogger sd;
-SDSpoofer sd;
+SDLogger sd;
+// SDSpoofer sd;
 // SimulinkFile simIn;
 StateMachine state;
 ExternalSensors sensors;
@@ -69,7 +69,7 @@ float a_raw[3] = {0.0f, 0.0f, 0.0f};
 float a_filtered[3] = {0.0f, 0.0f, 0.0f};
 float g_raw[3] = {0.0f, 0.0f, 0.0f};
 float g_filtered[3] = {0.0f, 0.0f, 0.0f};
-float dt = 0.001;
+float dt = 0.01;
 float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
 
 #define BACK_ACC_LENGTH 1000
@@ -89,9 +89,9 @@ pt1Filter accFilters[3];
 pt1Filter hFilter;
 
 void setup(){
-  Serial.begin(115200);
-   while(!Serial);
-   Serial.println("Serial Connected");
+  // Serial.begin(115200);
+  //  while(!Serial);
+  //  Serial.println("Serial Connected");
 
 
   pinMode(FLAP_CLOSE_PIN, INPUT);
@@ -99,10 +99,10 @@ void setup(){
 
   // initialize the filteres
   for (int axis = 0; axis < 3; axis++) {
-    gyroFilters[axis].init(10.0, dt); // dt fed in here should be the rate at which we read new acc data
-    accFilters[axis].init(5.0, dt);
+    gyroFilters[axis].init(1.0, dt); // dt fed in here should be the rate at which we read new acc data
+    accFilters[axis].init(1.0, dt);
   }
-  //hFilter.init(1.0, dt_h);
+  hFilter.init(1.0, dt_h);
 
   attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
@@ -205,7 +205,7 @@ void logging_RUN(){
   // String log = String("Vel: ") + String(vel) + String(", IntA: ") + String(intA) + String(", DiffH: ") + String(diffH);
   // String log =String(simTime) + String(", ") + String(rocketState) + String(", ") + String(ang) + String(", ") + String(desiredH) + String(", ") + String(predictedH) + String(", ") 
   // + String(burnoutTime) + String(", ") + String(burnoutMicros) + String(", ") + String(micros());
-  //sd.writeLine(log);
+  sd.writeLine(log);
 }
 void logging_CLOSE(){
   //Serial.println("log close");
@@ -293,17 +293,17 @@ inline void prvReadSensors(){
   //read h and calculate diffH when a new value of h is ready
   if( (micros() - altimeterMicros) > 23000){ //19.5 ms is the typical pressure read case. Worst case is 22.5 ms. Standby is 0.5 ms
     sensors.readAltitude(h_raw);
-    float P=0.0f;//sensors.ExternalSensors::exposeTHESENUTS;
+    // float P=0.0f;//sensors.ExternalSensors::exposeTHESENUTS;
     
-    sensors.readPressure(P);
+    //sensors.readPressure(P);
 
 
-    Serial.print("P raw: ");
-    Serial.println(P);
-    Serial.print("h raw: ");
-    Serial.println(h_raw);
+    // Serial.print("P raw: ");
+    // Serial.println(P);
+    // Serial.print("h raw: ");
+    // Serial.println(h_raw);
     
-    delay(2000);
+    // delay(2000);
     h_raw -= h_groundLevel;
 
     oldH = h_filtered;
