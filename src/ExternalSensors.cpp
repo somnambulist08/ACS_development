@@ -47,7 +47,7 @@ void ExternalSensors::startupTasks(){
   delayMicroseconds(100);
  
   //Manually Set 16G range
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
   digitalWrite(NCSa, 0);
   SPI.transfer(28); //register 28: Accel Config 1
   SPI.transfer(0x18); //16G mode
@@ -56,7 +56,7 @@ void ExternalSensors::startupTasks(){
   SPI.endTransaction(); 
 
   //Manually Set 2000dps range //WARNING: Removes DLPF work //TODO: figure out what value the Fchoice_b bit should be
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE1));
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
   digitalWrite(NCSa, 0);
   SPI.transfer(27); //register 27: Gyro Config
   SPI.transfer(0x18); //2000dps mode
