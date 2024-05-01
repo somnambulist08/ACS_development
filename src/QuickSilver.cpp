@@ -5,7 +5,7 @@
 #include <Arduino.h>
 // acc should be in units of g's and gyro in rad/s
 // acc should be filtered at this point
-void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO potentially add a vay to disable acc entirely during some parts of flight
+void QuickSilver::update_estimate(float acc[], float gyro[], float dt, bool doFusion) { // TODO potentially add a vay to disable acc entirely during some parts of flight
     float pitch_delta = gyro[PITCH] * dt * DEG_TO_RAD;
     float roll_delta = gyro[ROLL] * dt * DEG_TO_RAD;
     float yaw_delta = gyro[YAW] * dt * DEG_TO_RAD;
@@ -55,12 +55,14 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt) { // TODO
 
 
     // not doing sqrt to save a little cpu
-    float acc_mag_squared = acc[VEC_X] * acc[VEC_X] + acc[VEC_Y] * acc[VEC_Y] + acc[VEC_Z] * acc[VEC_Z];
-    // acc_mag_squared = 0; //disable acc fusing
-    if (acc_mag_squared < 1.1 && acc_mag_squared > 0.9) { // todo test to see if this window is too small
-        for (int axis = 0; axis < 3; axis++) {
-            // slowly fuse the estimate towards the acc reading
-            gravity_vector[axis] += beta * (acc[axis] - gravity_vector[axis]);
+    if(doFusion){
+        float acc_mag_squared = acc[VEC_X] * acc[VEC_X] + acc[VEC_Y] * acc[VEC_Y] + acc[VEC_Z] * acc[VEC_Z];
+        // acc_mag_squared = 0; //disable acc fusing
+        if (acc_mag_squared < 1.01 && acc_mag_squared > 0.99) { // todo test to see if this window is too small
+            for (int axis = 0; axis < 3; axis++) {
+                // slowly fuse the estimate towards the acc reading
+                gravity_vector[axis] += beta * (acc[axis] - gravity_vector[axis]);
+            }
         }
     }
 

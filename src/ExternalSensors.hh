@@ -22,11 +22,11 @@
 
 //sensor pins
 //GY-91a
-#define CSBa (int8_t)20 //bmp280
-#define NCSa (uint8_t)21 //MPU9250
+#define CSBa 20 //bmp280
+#define NCSa 21 //MPU9250
 //GY-91b
-#define CSBb (int8_t)40 //bmp280
-#define NCSb (uint8_t)41 //MPU9250
+#define CSBb 40 //bmp280
+#define NCSb 41 //MPU9250
 //SPI
 #define MOSI 11
 #define MISO 12
@@ -40,22 +40,21 @@
 class ExternalSensors : public GetData
 {
 public:
-    // personal
-    ExternalSensors();
-    // inherited
-    virtual void startupTasks() override;
-    virtual void readAcceleration(float &x, float &y, float &z) override;
-    virtual void readMagneticField(float &x, float &y, float &z) override;
-    virtual void readGyroscope(float &x, float &y, float &z) override;
-    virtual void readTemperature(float &T) override;
-    virtual void readAltitude(float &H) override;
-    virtual void readPressure(float &P) override;
-    void calibrateOffsets();
-    private:
-    float gyroOffsets[3];
-    float accOffsets[3];
-    //Adafruit_BMP280 BMP_a;
-    //Adafruit_BMP280 BMP_b(CSB_b);
+  ExternalSensors();
+  virtual void startupTasks() override;
+  virtual void readAcceleration(float &x, float &y, float &z) override;
+  virtual void readMagneticField(float &x, float &y, float &z) override;
+  virtual void readGyroscope(float &x, float &y, float &z) override;
+  virtual void readTemperature(float &T) override;
+  virtual void readAltitude(float &H) override;
+  virtual void readPressure(float &P) override;
+  void calibrateOffsets();
+  ~ExternalSensors();
+private:
+  float gyroOffsets[3];
+  float accOffsets[3];
+  Adafruit_BMP280 *BMP_a;
+  MPU9250_WE *IMU_a;
 };
 
 #endif
