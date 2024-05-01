@@ -36,21 +36,21 @@
 class ExternalSensors : public GetData
 {
 public:
-    // personal
-    ExternalSensors();
-    // inherited
-    virtual void startupTasks() override;
-    virtual void readAcceleration(float &x, float &y, float &z) override;
-    virtual void readMagneticField(float &x, float &y, float &z) override;
-    virtual void readGyroscope(float &x, float &y, float &z) override;
-    virtual void readTemperature(float &T) override;
-    virtual void readAltitude(float &H) override;
-    virtual void readPressure(float &P) override;
-    void calibrateOffsets();
+  // personal
+  ExternalSensors();
+  // inherited
+  virtual void startupTasks() override;
+  virtual void readAcceleration(float &x, float &y, float &z) override;
+  virtual void readMagneticField(float &x, float &y, float &z) override;
+  virtual void readGyroscope(float &x, float &y, float &z) override;
+  virtual void readTemperature(float &T) override;
+  virtual void readAltitude(float &H) override;
+  virtual void readPressure(float &P) override;
+  void calibrateOffsets();
 
 private:
-    float gyroOffsets[3];
-    float accOffsets[3];
+  float gyroOffsets[3];
+  float accOffsets[3];
 
   Adafruit_BMP280 BMP_a=Adafruit_BMP280((int8_t)CSBa);
   MPU9250_WE IMU_a = MPU9250_WE(&SPI, NCSa,true);
