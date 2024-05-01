@@ -49,36 +49,36 @@ static unsigned long burnoutMicros = 0;
 static unsigned long buzzMicros = 0;
 static unsigned long altimeterMicros = 0;
 static float burnoutTime=0; //time since burnout
-static float simTime = 0;
-static float newAcc=0;
-static float vel=0;
-static float h_raw=0;
-static float oldH=0;
-static float ang=0;
-static float h_groundLevel=0;
-static float intA=0;
-static float diffH=0;
-static float h_filtered=0;
+float simTime = 0;
+float newAcc=0;
+float vel=0;
+float h_raw=0;
+float oldH=0;
+float ang=0;
+float h_groundLevel=0;
+float intA=0;
+float diffH=0;
+float h_filtered=0;
 
-static float integralOfAccel = 0;
+float integralOfAccel = 0;
 
-static int h_resetCounter=0;
+int h_resetCounter=0;
 
-static float a_raw[3] = {0.0f, 0.0f, 0.0f};
-static float a_filtered[3] = {0.0f, 0.0f, 0.0f};
-static float g_raw[3] = {0.0f, 0.0f, 0.0f};
-static float g_filtered[3] = {0.0f, 0.0f, 0.0f};
-static float dt = 0.01; //configured to run at 0.001, but in practice only run at 0.01
-static float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
+float a_raw[3] = {0.0f, 0.0f, 0.0f};
+float a_filtered[3] = {0.0f, 0.0f, 0.0f};
+float g_raw[3] = {0.0f, 0.0f, 0.0f};
+float g_filtered[3] = {0.0f, 0.0f, 0.0f};
+float dt = 0.01; //configured to run at 0.001, but in practice only run at 0.01
+float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
 
 #define BACK_ACC_LENGTH 1000
-static float backAcc[BACK_ACC_LENGTH] = {0};
-static float backDt[BACK_ACC_LENGTH] = {0};
-static bool backCalcDone = false;
-static int backCalcIndex = 0;
+float backAcc[BACK_ACC_LENGTH] = {0};
+float backDt[BACK_ACC_LENGTH] = {0};
+bool backCalcDone = false;
+int backCalcIndex = 0;
 
-static float desiredH = 0;
-static float predictedH = 0;
+float desiredH = 0;
+float predictedH = 0;
 
 //pt1Filter acc_filter[3];
 QuickSilver attitude_estimate;
