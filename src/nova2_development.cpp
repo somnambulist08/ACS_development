@@ -1,19 +1,20 @@
 #include <Arduino.h>
+
 #include "RocketRTOS.hh"
 #include "InterruptingStepper.hh"
-#include "SDLogger.hh"
 #include "Control.hh"
 #include "QuickSilver.hh"
 #include "Filter.hh"
 #include "StateMachine.hh"
 #include "ExternalSensors.hh"
 // #include "SimulinkData.hh"
+#include "SDLogger.hh"
 // #include "SDSpoofer.hh"
-#include <IntervalTimer.h>
+// #include <IntervalTimer.h>
 #include <climits>
 
-#define FLAP_OPEN_PIN 22
-#define FLAP_CLOSE_PIN 23
+// #define FLAP_OPEN_PIN 22
+// #define FLAP_CLOSE_PIN 23
 
 #define BUZZ_PIN 6
 // #define BUZZ_PIN 38 //To disable the buzzer so I can code in public :)
@@ -49,37 +50,37 @@ static unsigned long testStartMicros = 0;
 static unsigned long burnoutMicros = 0;
 static unsigned long buzzMicros = 0;
 static unsigned long altimeterMicros = 0;
-float burnoutTime=0; //time since burnout
-float simTime = 0;
-float newAcc=0;
-float vel=0;
-float h_raw=0;
-float oldH=0;
-float ang=0;
-float h_groundLevel=-1.0f;
-float intA=0;
-float diffH=-1.0f;
-float h_filtered=-1.0f;
+static float burnoutTime=0; //time since burnout
+static float simTime = 0;
+static float newAcc=0;
+static float vel=0;
+static float h_raw=0;
+static float oldH=0;
+static float ang=0;
+static float h_groundLevel=-1.0f;
+static float intA=0;
+static float diffH=-1.0f;
+static float h_filtered=-1.0f;
 
-float integralOfAccel = 0;
+static float integralOfAccel = 0;
 
-int h_resetCounter=0;
+static int h_resetCounter=0;
 
-float a_raw[3] = {0.0f, 0.0f, 0.0f};
-float a_filtered[3] = {0.0f, 0.0f, 0.0f};
-float g_raw[3] = {0.0f, 0.0f, 0.0f};
-float g_filtered[3] = {0.0f, 0.0f, 0.0f};
-float dt = 0.01;
-float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
+static float a_raw[3] = {0.0f, 0.0f, 0.0f};
+static float a_filtered[3] = {0.0f, 0.0f, 0.0f};
+static float g_raw[3] = {0.0f, 0.0f, 0.0f};
+static float g_filtered[3] = {0.0f, 0.0f, 0.0f};
+static float dt = 0.01;
+static float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
 
 #define BACK_ACC_LENGTH 1000
-float backAcc[BACK_ACC_LENGTH] = {0};
-float backDt[BACK_ACC_LENGTH] = {0};
-bool backCalcDone = false;
-int backCalcIndex = 0;
+static float backAcc[BACK_ACC_LENGTH] = {0};
+static float backDt[BACK_ACC_LENGTH] = {0};
+static bool backCalcDone = false;
+static int backCalcIndex = 0;
 
-float desiredH = 0;
-float predictedH = 0;
+static float desiredH = 0;
+static float predictedH = 0;
 
 
 //pt1Filter acc_filter[3];
@@ -90,12 +91,12 @@ pt1Filter hFilter;
 
 void setup(){
   // Serial.begin(115200);
-  //  while(!Serial);
-  //  Serial.println("Serial Connected");
+  // while(!Serial);
+  // Serial.println("Serial Connected");
 
 
-  pinMode(FLAP_CLOSE_PIN, INPUT);
-  pinMode(FLAP_OPEN_PIN, INPUT);
+  // pinMode(FLAP_CLOSE_PIN, INPUT);
+  // pinMode(FLAP_OPEN_PIN, INPUT);
 
   // initialize the filteres
   for (int axis = 0; axis < 3; axis++) {
@@ -111,6 +112,7 @@ void setup(){
   //simIn.printData();
 
   sensors.startupTasks();
+  sensors.readAltitude(h_groundLevel);
   
 
   //initializeBuzzer();
@@ -199,12 +201,13 @@ void logging_RUN(){
   // String log = String("GyroX:") + String(sums[0]/((float)count)) + String(", GyroY:") + String(sums[1]/((float)count)) + String(", GyroZ:") + String(sums[2]/((float)count));
   // String log = String("GravX:") + String(attitude_estimate.getGravityVector()[0]) + String(", GravY:") + String(attitude_estimate.getGravityVector()[1]) + String(", GravZ:") + String(attitude_estimate.getGravityVector()[2]);
   // String log1 = String("AccX:") + String(a_raw[0]) + String(", AccY:") + String(a_raw[1]) + String(", AccZ:") + String(a_raw[2]);
-  // String log = log1 + String("; ") + log2;
+  // String log = log1 + String(";\t") + log2;
   // String log = String("VertAcc: ") + String(newAcc);
   // String log = String(a_raw[0]) + String(", ") + String(a_raw[1]) + String(", ") + String(a_raw[2]) + String(", ") + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]);
   // String log = String("Vel: ") + String(vel) + String(", IntA: ") + String(intA) + String(", DiffH: ") + String(diffH);
   // String log =String(simTime) + String(", ") + String(rocketState) + String(", ") + String(ang) + String(", ") + String(desiredH) + String(", ") + String(predictedH) + String(", ") 
   // + String(burnoutTime) + String(", ") + String(burnoutMicros) + String(", ") + String(micros());
+  // String log = String("Alt:") + String(h_filtered);
   sd.writeLine(log);
 }
 void logging_CLOSE(){
@@ -224,31 +227,32 @@ void stepper_CLOSE(){
   stepper.setStepsTarget(zeroStepGlobal);
 }
 void stepper_IDLE(){
-  bool close = digitalReadFast(FLAP_CLOSE_PIN);
-  bool open = digitalReadFast(FLAP_OPEN_PIN);
-  // Serial.print("close: ");
-  // Serial.print(close);
-  // Serial.print(", open: ");
-  // Serial.print(open);
-  // Serial.print(", Steps Target: ");
-  // Serial.print(stepsTargetGlobal);
-  // Serial.print(", Zero: ");
-  // Serial.println(zeroStepGlobal);
+  digitalWriteFast(ENABLE_PIN, MOTOR_DISABLE);
+  // bool close = digitalReadFast(FLAP_CLOSE_PIN);
+  // bool open = digitalReadFast(FLAP_OPEN_PIN);
+  // // Serial.print("close: ");
+  // // Serial.print(close);
+  // // Serial.print(", open: ");
+  // // Serial.print(open);
+  // // Serial.print(", Steps Target: ");
+  // // Serial.print(stepsTargetGlobal);
+  // // Serial.print(", Zero: ");
+  // // Serial.println(zeroStepGlobal);
 
-  if(!(open || close)){
-    // stepper.disable();
-    digitalWriteFast(ENABLE_PIN, MOTOR_DISABLE);
-    // digitalWriteFast(ENABLE_PIN, MOTOR_ENABLE);  
-  } else {
-    stepper.enable();
-    if(open){
-      directionGlobal = 1;
-      stepper.stepOnce();
-    } else {
-      directionGlobal = 0;
-      stepper.stepOnce();
-    }
-  }
+  // if(!(open || close)){
+  //   // stepper.disable();
+  //   digitalWriteFast(ENABLE_PIN, MOTOR_DISABLE);
+  //   // digitalWriteFast(ENABLE_PIN, MOTOR_ENABLE);  
+  // } else {
+  //   stepper.enable();
+  //   if(open){
+  //     directionGlobal = 1;
+  //     stepper.stepOnce();
+  //   } else {
+  //     directionGlobal = 0;
+  //     stepper.stepOnce();
+  //   }
+  // }
 }
 
 void buzz_PRE(){
@@ -281,8 +285,8 @@ void buzz_IDLE(){
 
 
 inline void prvReadSensors(){
-  //sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
-  //sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
+  sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
   //Apply Filters
   for (int axis = 0; axis < 3; axis++) {
     a_filtered[axis] = accFilters[axis].apply(a_raw[axis]);
@@ -295,7 +299,7 @@ inline void prvReadSensors(){
     sensors.readAltitude(h_raw);
     // float P=0.0f;//sensors.ExternalSensors::exposeTHESENUTS;
     
-    //sensors.readPressure(P);
+    // sensors.readPressure(P);
 
 
     // Serial.print("P raw: ");
