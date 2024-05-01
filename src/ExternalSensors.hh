@@ -48,12 +48,14 @@ public:
   virtual void readPressure(float &P) override;
   void calibrateOffsets();
 
+  ~ExternalSensors();
+
 private:
   float gyroOffsets[3];
   float accOffsets[3];
 
-  Adafruit_BMP280 BMP_a=Adafruit_BMP280((int8_t)CSBa);
-  MPU9250_WE IMU_a = MPU9250_WE(&SPI, NCSa,true);
+  Adafruit_BMP280 *BMP_a;
+  MPU9250_WE *IMU_a;
 };
 
 #endif

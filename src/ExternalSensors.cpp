@@ -1,6 +1,12 @@
 #include "ExternalSensors.hh"
 
 ExternalSensors::ExternalSensors(){
+  BMP_a = new Adafruit_BMP280((int8_t)(CSBa), &SPI);
+  IMU_a = new MPU9250_WE(&SPI, (int)(NCSa), true);
+}
+ExternalSensors::~ExternalSensors(){
+  delete BMP_a;
+  delete IMU_a;
 }
 void ExternalSensors::startupTasks(){
   for(int i=0; i<3; i++){
@@ -8,25 +14,24 @@ void ExternalSensors::startupTasks(){
     ExternalSensors::accOffsets[i] = 0;
   }
 
-  if (!BMP_a.begin()) {
+  if (!BMP_a->begin()) {
     if(Serial) Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
                       "try a different address!"));
     while (1) delay(10);
   }
-    BMP_a.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+    BMP_a->setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
                   Adafruit_BMP280::SAMPLING_X1,     /* Temp. oversampling */
                   Adafruit_BMP280::SAMPLING_X8,    /* Pressure oversampling */
                   Adafruit_BMP280::FILTER_X2,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_1); /* Standby time. */
     if(Serial) {
       Serial.print("Barometer Setup Complete, starting pressure at P = : ");
-      float press = BMP_a.readPressure();
+      float press = BMP_a->readPressure();
       Serial.println(String(press));
     }
     // exposeTHESENUTS = press;
     // yankTHESENUTS = pressureAlt(exposeTHESENUTS);
-    
-  int status = IMU_a.init();
+  int status = IMU_a->init();
   if (status < 0) {
     if(Serial) Serial.println("IMU initialization unsuccessful");
     if(Serial) Serial.println("Check IMU wiring or try cycling power");
@@ -35,15 +40,15 @@ void ExternalSensors::startupTasks(){
     while(1) {}
   }
 
-//   IMU_a.autoOffsets();
-  IMU_a.setMagOpMode(AK8963_PWR_DOWN);
-  IMU_a.enableGyrDLPF();
-  IMU_a.setGyrDLPF(MPU9250_DLPF_0);
-  IMU_a.enableAccDLPF(true);
-  IMU_a.setAccDLPF(MPU9250_DLPF_0);
-  IMU_a.setSampleRateDivider(8);
-  IMU_a.setAccRange(MPU9250_ACC_RANGE_16G);
-  IMU_a.setGyrRange(MPU9250_GYRO_RANGE_2000);
+//   IMU_a->autoOffsets();
+  IMU_a->setMagOpMode(AK8963_PWR_DOWN);
+  IMU_a->enableGyrDLPF();
+  IMU_a->setGyrDLPF(MPU9250_DLPF_0);
+  IMU_a->enableAccDLPF(true);
+  IMU_a->setAccDLPF(MPU9250_DLPF_0);
+  IMU_a->setSampleRateDivider(8);
+  IMU_a->setAccRange(MPU9250_ACC_RANGE_16G);
+  IMU_a->setGyrRange(MPU9250_GYRO_RANGE_2000);
 
 
   delayMicroseconds(100);
@@ -97,7 +102,7 @@ void ExternalSensors::startupTasks(){
 
 }
 void ExternalSensors::readAcceleration(float &x, float &y, float &z){
-    xyzFloat acc = IMU_a.getGValues();
+    xyzFloat acc = IMU_a->getGValues();
     x = -acc.x ;/// 8.0f; //I think it's reporting in m/s2 so this is to convert to G
     y = -acc.y ;/// 8.0f; //OR maybe it is just not scaling properly and we need to divide by 8 because 
     // z = -(acc.z - 1.0f);/// 8.0f; //we went from 2G to 16G range? //ALso, there is a bais on this axis
@@ -107,11 +112,11 @@ void ExternalSensors::readAcceleration(float &x, float &y, float &z){
     z -= accOffsets[2];
 }
 void ExternalSensors::readAltitude(float &H){
-    H=pressureAlt(BMP_a.readPressure());
+    H=pressureAlt(BMP_a->readPressure());
 }
 
 void ExternalSensors::readGyroscope(float &x, float &y, float &z){
-    xyzFloat gyr = IMU_a.getGyrValues();
+    xyzFloat gyr = IMU_a->getGyrValues();
     x=gyr.x ;/// 8.0f; //the gyros also seem to be having a problem with the increased resolution
     y=gyr.y ;/// 8.0f;
     z=gyr.z ;/// 8.0f;  
@@ -126,10 +131,10 @@ void ExternalSensors::readMagneticField(float &x, float &y, float &z){
     z = -1; 
 }
 void ExternalSensors::readPressure(float &P){
-  P = BMP_a.readPressure();
+  P = BMP_a->readPressure();
 }
 void ExternalSensors::readTemperature(float &T){
-    T=BMP_a.readTemperature();
+    T=BMP_a->readTemperature();
 }
 
 void ExternalSensors::calibrateOffsets(){
