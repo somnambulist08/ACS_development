@@ -7,18 +7,18 @@
 #include "Filter.hh"
 #include "StateMachine.hh"
 #include "ExternalSensors.hh"
-// #include "SimulinkData.hh"
-#include "SDLogger.hh"
-// #include "SDSpoofer.hh"
+#include "SimulinkData.hh"
+//#include "SDLogger.hh"
+#include "SDSpoofer.hh"
 // #include <IntervalTimer.h>
 #include <climits>
 
 // #define FLAP_OPEN_PIN 22
 // #define FLAP_CLOSE_PIN 23
 
-#define BUZZ_PIN 6
+//#define BUZZ_PIN 6
 // #define BUZZ_PIN 38 //To disable the buzzer so I can code in public :)
-// #define BUZZ_PIN 5 //screw disabling, make the blinkenlight blinken
+ #define BUZZ_PIN 5 //screw disabling, make the blinkenlight blinken
 #define BUZZ_TIME 125000 //0.125 sec
 #define PAUSE_SHORT 500000 //0.5 sec
 #define PAUSE_LONG 5000000 //5.0 sec
@@ -33,9 +33,9 @@
 #define G_TO_M_S2 9.8f
 
 InterruptingStepper stepper;
-SDLogger sd;
-// SDSpoofer sd;
-// SimulinkFile simIn;
+//SDLogger sd;
+SDSpoofer sd;
+SimulinkFile simIn;
 StateMachine state;
 ExternalSensors sensors;
 inline void prvReadSensors();
@@ -51,36 +51,37 @@ static unsigned long burnoutMicros = 0;
 static unsigned long buzzMicros = 0;
 static unsigned long altimeterMicros = 0;
 static float burnoutTime=0; //time since burnout
-static float simTime = 0;
-static float newAcc=0;
-static float vel=0;
-static float h_raw=0;
-static float oldH=0;
-static float ang=0;
-static float h_groundLevel=-1.0f;
-static float intA=0;
-static float diffH=-1.0f;
-static float h_filtered=-1.0f;
+bool burnoutReset = false;
+ float simTime = 0;
+ float newAcc=0;
+ float vel=0;
+ float h_raw=0;
+ float oldH=0;
+ float ang=0;
+ float h_groundLevel=-1.0f;
+ float intA=0;
+ float diffH=-1.0f;
+ float h_filtered=-1.0f;
 
-static float integralOfAccel = 0;
+ float integralOfAccel = 0;
 
-static int h_resetCounter=0;
+ int h_resetCounter=0;
 
-static float a_raw[3] = {0.0f, 0.0f, 0.0f};
-static float a_filtered[3] = {0.0f, 0.0f, 0.0f};
-static float g_raw[3] = {0.0f, 0.0f, 0.0f};
-static float g_filtered[3] = {0.0f, 0.0f, 0.0f};
-static float dt = 0.01;
-static float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
+ float a_raw[3] = {0.0f, 0.0f, 0.0f};
+ float a_filtered[3] = {0.0f, 0.0f, 0.0f};
+ float g_raw[3] = {0.0f, 0.0f, 0.0f};
+ float g_filtered[3] = {0.0f, 0.0f, 0.0f};
+ float dt = 0.01;
+ float dt_h = 0.023; //baro runs at 50 Hz (x8 oversampling -> 22.5 ms (19.5 ms typ) read time + 0.5 ms standby setting) //from datasheet :)
 
 #define BACK_ACC_LENGTH 1000
-static float backAcc[BACK_ACC_LENGTH] = {0};
-static float backDt[BACK_ACC_LENGTH] = {0};
-static bool backCalcDone = false;
-static int backCalcIndex = 0;
+float backAcc[BACK_ACC_LENGTH] = {0};
+float backDt[BACK_ACC_LENGTH] = {0};
+bool backCalcDone = false;
+int backCalcIndex = 0;
 
-static float desiredH = 0;
-static float predictedH = 0;
+float desiredH = 0;
+float predictedH = 0;
 
 
 //pt1Filter acc_filter[3];
@@ -90,9 +91,9 @@ pt1Filter accFilters[3];
 pt1Filter hFilter;
 
 void setup(){
-  // Serial.begin(115200);
-  // while(!Serial);
-  // Serial.println("Serial Connected");
+   Serial.begin(115200);
+   while(!Serial);
+   Serial.println("Serial Connected");
 
 
   // pinMode(FLAP_CLOSE_PIN, INPUT);
@@ -107,8 +108,8 @@ void setup(){
 
   attitude_estimate.initialize(0.05); // TODO tune beta to a reasonable value
 
-  // Serial.println("Reading from simulation file");
-  // simIn.startupTasks("TEST16.CSV");
+  Serial.println("Reading from simulation file");
+  simIn.startupTasks("TEST15.CSV");
   //simIn.printData();
 
   sensors.startupTasks();
@@ -122,7 +123,11 @@ void setup(){
   digitalWrite(BUZZ_PIN, 0);
 
 
-  sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, IntegralOfA, dt, 1/dt, dt_h, 1/dt_h, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
+  //sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, IntegralOfA, dt, 1/dt, dt_h, 1/dt_h, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
+  sd.openFile("h_filtered, vel, newAcc, simTime, burnoutTime, rocketState");
+  
+  //String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
+ //           + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState)
   // sd.openFile("AX, AY, AZ, GX, GY, GZ");
   // sd.openFile("t, state, ang, desired, predicted, burnoutTime, burnoutMicros, micros");
 
@@ -133,24 +138,6 @@ void setup(){
   startRocketRTOS();
 
 }
-/*static unsigned long oldMicros = 0;
-void loop(){
-        if((micros() - oldMicros) >= 5000000){
-          float P = 0.0f;
-          sensors.readPressure(P);
-          float H = 0.0f;
-          sensors.readAltitude(H);
-
-              Serial.print("Pressure: ");
-    Serial.println(P);
-    Serial.print("Altitude: ");
-    Serial.println(H);        
-          
-
-            oldMicros = micros();
-        }
-    }*/
-
 void determineState(){
   state.updateState(h_filtered, vel, newAcc);
 }
@@ -165,12 +152,15 @@ void sensorAndControl_PRE(){
   }
 }
 void sensorAndControl_LAUNCH(){
-//  unsigned long rightnow=micros();
-  burnoutMicros = micros(); //TODO: what to do if overflow during this? Overflow occurs just over an hour after power-on
+
   prvReadSensors();
   prvIntegrateAccel();
 }
 void sensorAndControl_FULL(){
+    if(!burnoutReset){
+    burnoutMicros = micros(); //TODO: what to do if overflow during this? Overflow occurs just over an hour after power-on
+    burnoutReset=true;
+    }
   prvReadSensors();
   prvIntegrateAccel();
   prvDoControl();
@@ -180,7 +170,7 @@ void logging_RUN(){
   //Serial.println("log run");
   //sd.writeLog(newAcc, vel, h, ang, simTime, burnoutTime, rocketState);
   // sd.writeLog(String("A: ") + String(newAcc) + String(", V:") + String(vel) + String(", H: ") + String(h) + String(", Ang:") + String(ang) + String(", simTime:") + String(simTime) + String(", burnoutTime") + String(burnoutTime) + String(", State:") + String(rocketState) + String(", H_d:") + String(desiredH) + String(", H_p:") + String(predictedH));
-  String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
+  /*String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
             + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState) + String(", ") 
             + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") + String(integralOfAccel) + String(", ")
             + String(dt) + String(", ") + String((1.0f/dt)) + String(", ")  + String(dt_h) + String(", ") + String(1.0f/dt_h) + String(", ")
@@ -189,6 +179,7 @@ void logging_RUN(){
             + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]) + String(", ") 
             + String(g_filtered[0]) + String(", ") + String(g_filtered[1]) + String(", ") + String(g_filtered[2]) + String(", ")
             + String(attitude_estimate.getGravityVector()[0]) + String(", ") + String(attitude_estimate.getGravityVector()[1]) + String(", ") + String(attitude_estimate.getGravityVector()[2]);
+            */
   // static float sums[3] = {0.0,0.0,0.0};
   // static int count = 0;
 
@@ -196,6 +187,7 @@ void logging_RUN(){
   //   sums[axis] += g_raw[axis];
   // }
   // count++;
+  String log = String(h_filtered) + String(", ") + String(vel)+ String(", ")+ String(newAcc)+String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") +String(testStartMicros) + String(", ") + String(burnoutMicros) + String(", ") + String(rocketState);
   
   // String log2 = String("GyroX:") + String(g_raw[0]) + String(", GyroY:") + String(g_raw[1]) + String(", GyroZ:") + String(g_raw[2]);
   // String log = String("GyroX:") + String(sums[0]/((float)count)) + String(", GyroY:") + String(sums[1]/((float)count)) + String(", GyroZ:") + String(sums[2]/((float)count));
@@ -297,17 +289,7 @@ inline void prvReadSensors(){
   //read h and calculate diffH when a new value of h is ready
   if( (micros() - altimeterMicros) > 23000){ //19.5 ms is the typical pressure read case. Worst case is 22.5 ms. Standby is 0.5 ms
     sensors.readAltitude(h_raw);
-    // float P=0.0f;//sensors.ExternalSensors::exposeTHESENUTS;
-    
-    // sensors.readPressure(P);
 
-
-    // Serial.print("P raw: ");
-    // Serial.println(P);
-    // Serial.print("h raw: ");
-    // Serial.println(h_raw);
-    
-    // delay(2000);
     h_raw -= h_groundLevel;
 
     oldH = h_filtered;
@@ -321,10 +303,10 @@ inline void prvReadSensors(){
   burnoutTime = ((float)( micros() - burnoutMicros )) / 1000000.0f;
 
 
-  // h_filtered = simIn.getInterpolatedAltitude(simTime);
-  // newAcc = simIn.getInterpolatedAcceleration(simTime);
-  // diffH = (h_filtered - oldH) / dt;
-  // oldH = h_filtered;
+   h_filtered = simIn.getInterpolatedAltitude(simTime);
+   newAcc = simIn.getInterpolatedAcceleration(simTime);
+   diffH = (h_filtered - oldH) / dt;
+   oldH = h_filtered;
   
   microsNow = micros();
   //calculate dt but catch any overflow error
@@ -342,10 +324,10 @@ inline void prvReadSensors(){
   // attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
   // float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
   // newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
-  //Using FIltered
-  attitude_estimate.update_estimate(a_filtered, g_filtered, dt, rocketState==ROCKET_PRE); //Only fuse acc if rocket is in pre-flight state //WARNING: ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
-  newAcc = attitude_estimate.vertical_acceleration_from_acc(a_filtered);
-  newAcc *= G_TO_M_S2;
+  //Using Filtered
+  //attitude_estimate.update_estimate(a_filtered, g_filtered, dt, rocketState==ROCKET_PRE); //Only fuse acc if rocket is in pre-flight state //WARNING: ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
+  //newAcc = attitude_estimate.vertical_acceleration_from_acc(a_filtered);
+  //newAcc *= G_TO_M_S2;
 
   //update old variables
   microsOld = microsNow;
