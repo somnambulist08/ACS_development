@@ -6,6 +6,9 @@
 #define VEC_Y 1
 #define VEC_Z 2
 
+#define ACC_FUSION_BOUND 0.05
+
+
 class QuickSilver {
 public:
     void update_estimate(float acc[], float gyro[], float dt, bool fuseAcc);

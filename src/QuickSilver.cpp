@@ -57,7 +57,7 @@ void QuickSilver::update_estimate(float acc[], float gyro[], float dt, bool fuse
         // not doing sqrt to save a little cpu
         float acc_mag_squared = acc[VEC_X] * acc[VEC_X] + acc[VEC_Y] * acc[VEC_Y] + acc[VEC_Z] * acc[VEC_Z];
         // acc_mag_squared = 0; //disable acc fusing
-        if (acc_mag_squared < 1.1 && acc_mag_squared > 0.9) { // todo test to see if this window is too small
+        if (acc_mag_squared < (1 + ACC_FUSION_BOUND) && acc_mag_squared > (1 - ACC_FUSION_BOUND)) { // todo test to see if this window is too small
             for (int axis = 0; axis < 3; axis++) {
                 // slowly fuse the estimate towards the acc reading
                 gravity_vector[axis] += beta * (acc[axis] - gravity_vector[axis]);
