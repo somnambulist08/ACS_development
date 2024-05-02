@@ -1,17 +1,23 @@
 #include <Arduino.h>
 
+//#define SIMULINK_TESTING
+
+
 #include "RocketRTOS.hh"
 #include "InterruptingStepper.hh"
 #include "Control.hh"
 #include "QuickSilver.hh"
 #include "Filter.hh"
 #include "StateMachine.hh"
-#include "ExternalSensors.hh"
-// #include "SimulinkData.hh"
-#include "SDLogger.hh"
-// #include "SDSpoofer.hh"
-// #include <IntervalTimer.h>
 #include <climits>
+
+#ifdef SIMULINK_TESTING
+  #include "SimulinkData.hh"
+  #include "SDSpoofer.hh"
+#else //NOT simulink testing
+  #include "ExternalSensors.hh"
+  #include "SDLogger.hh"
+#endif //SIMULINK_TESTING
 
 #define BUZZ_PIN 6
 // #define BUZZ_PIN 5 //re-route buzzer to LED
@@ -29,11 +35,15 @@
 #define G_TO_M_S2 9.8f
 
 InterruptingStepper stepper;
-SDLogger sd;
-// SDSpoofer sd;
-// SimulinkFile simIn;
 StateMachine state;
-ExternalSensors sensors;
+
+#ifdef SIMULINK_TESTING
+  SimulinkFile simIn;
+  SDSpoofer sd;
+#else
+  ExternalSensors sensors;
+  SDLogger sd;
+#endif
 
 inline void prvReadSensors();
 inline void prvIntegrateAccel();
@@ -87,9 +97,11 @@ pt1Filter accFilters[3];
 pt1Filter hFilter;
 
 void setup(){
-  // Serial.begin(115200);
-  // while(!Serial);
-  // Serial.println("Serial Connected");
+#ifdef SIMULINK_TESTING
+  Serial.begin(115200);
+  while(!Serial);
+  Serial.println("Serial Connected");
+#endif
 
   // initialize the filteres
   for (int axis = 0; axis < 3; axis++) {
@@ -100,21 +112,27 @@ void setup(){
 
   attitude_estimate.initialize(0.005); // TODO tune beta to a reasonable value
 
-  // Serial.println("Reading from simulation file");
-  // simIn.startupTasks("TEST15.CSV");
+#ifdef SIMULINK_TESTING
+  Serial.println("Reading from simulation file");
+  simIn.startupTasks("TEST15.CSV");
   //simIn.printData();
+#endif
 
+#ifndef SIMULINK_TESTING
   sensors.startupTasks();
   sensors.readAltitude(h_groundLevel);
-  
+#endif
   //initializeBuzzer();
   pinMode(BUZZ_PIN, OUTPUT);
   digitalWrite(BUZZ_PIN, 1);
   delay(1000);
   digitalWrite(BUZZ_PIN, 0);
 
+#ifndef SIMULINK_TESTING
   sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, IntegralOfA, dt, 1/dt, dt_h, 1/dt_h, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
-  // sd.openFile("t, state, ang, desired, predicted, burnoutTime, burnoutMicros, micros");
+#else
+  sd.openFile("t, state, ang, desired, predicted, burnoutTime, burnoutMicros, testStartMicros, micros");
+#endif
 
   stepper.start();
   testStartMicros = micros();
@@ -146,6 +164,7 @@ void sensorAndControl_FULL(){
 }
 
 void logging_RUN(){
+#ifndef SIMULINK_TESTING
   String log = String(newAcc) + String(", ") + String(vel) + String(", ") + String(h_raw) + String(", ") + String(h_filtered) + String(", ") + String(h_groundLevel) + String(", ") 
             + String(ang) + String(", ") + String(simTime) + String(", ") + String(burnoutTime) + String(", ") + String(rocketState) + String(", ") 
             + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(intA) + String(", ") + String(diffH) + String(", ") + String(integralOfAccel) + String(", ")
@@ -155,6 +174,9 @@ void logging_RUN(){
             + String(g_raw[0]) + String(", ") + String(g_raw[1]) + String(", ") + String(g_raw[2]) + String(", ") 
             + String(g_filtered[0]) + String(", ") + String(g_filtered[1]) + String(", ") + String(g_filtered[2]) + String(", ")
             + String(attitude_estimate.getGravityVector()[0]) + String(", ") + String(attitude_estimate.getGravityVector()[1]) + String(", ") + String(attitude_estimate.getGravityVector()[2]);
+#else 
+  String log = String(simTime) + String(", ") + String(rocketState) + String(", ") + String(ang) + String(", ") + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(burnoutTime) + String(", ") + String(burnoutMicros) + String(", ") + String(testStartMicros) + String(", ") + String(microsNow);
+#endif
 
   sd.writeLine(log);
 }
@@ -175,7 +197,7 @@ void stepper_CLOSE(){
   stepper.setStepsTarget(zeroStepGlobal);
 }
 void stepper_IDLE(){
-  digitalWriteFast(ENABLE_PIN, MOTOR_DISABLE);
+  digitalWriteFast(ENABLE_PIN, MOTOR_ENABLE);
 }
 
 void buzz_PRE(){
@@ -208,38 +230,10 @@ void buzz_IDLE(){
 
 
 inline void prvReadSensors(){
-  sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
-  sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
-  //Apply Filters
-  for (int axis = 0; axis < 3; axis++) {
-    a_filtered[axis] = accFilters[axis].apply(a_raw[axis]);
-    g_filtered[axis] = gyroFilters[axis].apply(g_raw[axis]);
-  }
-
-
-  //read h and calculate diffH when a new value of h is ready
-  if( (micros() - altimeterMicros) > 23000){ //19.5 ms is the typical pressure read case. Worst case is 22.5 ms. Standby is 0.5 ms
-    sensors.readAltitude(h_raw);
-
-    h_raw -= h_groundLevel;
-
-    oldH = h_filtered;
-    h_filtered = hFilter.apply(h_raw);
-    dt_h = (micros() - altimeterMicros) / 1000000.0f;
-    altimeterMicros = micros();
-    diffH = (h_filtered - oldH) / dt_h;
-  }
-
-  simTime = ((float)( micros() - testStartMicros)) / 1000000.0f;
-  burnoutTime = ((float)( micros() - burnoutMicros )) / 1000000.0f;
-
-
-  //  h_filtered = simIn.getInterpolatedAltitude(simTime);
-  //  newAcc = simIn.getInterpolatedAcceleration(simTime);
-  //  diffH = (h_filtered - oldH) / dt;
-  //  oldH = h_filtered;
-  
   microsNow = micros();
+  simTime = ((float)( microsNow - testStartMicros)) / 1000000.0f;
+  burnoutTime = ((float)( microsNow - burnoutMicros )) / 1000000.0f;
+
   //calculate dt but catch any overflow error
   if(microsNow > microsOld){
     deltaMicros = (microsNow - microsOld);
@@ -247,21 +241,45 @@ inline void prvReadSensors(){
     deltaMicros = (ULONG_MAX - microsOld) - microsNow;
   }
 
-  dt = ((float)deltaMicros) / 1000000.0f;
+  dt = ((float)deltaMicros) / 1000000.0f;\
 
+  microsOld = microsNow;
 
-  //Attitude Determination
-  //Using Raw
-  // attitude_estimate.update_estimate(a_raw, g_raw, dt); // TODO ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
-  // float a_m_s[3] = {a_raw[0] * G_TO_M_S2, a_raw[1] * G_TO_M_S2, a_raw[2] * G_TO_M_S2};
-  // newAcc = attitude_estimate.vertical_acceleration_from_acc(a_m_s); // TODO a_m_s here should be in m/^2, ensure that it is
-  //Using Filtered
+#ifndef SIMULINK_TESTING
+  sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
+
+  //Apply Filters
+  for (int axis = 0; axis < 3; axis++) {
+    a_filtered[axis] = accFilters[axis].apply(a_raw[axis]);
+    g_filtered[axis] = gyroFilters[axis].apply(g_raw[axis]);
+  }
+
+  //Update attitude estimate and extract vertical acceleration
   attitude_estimate.update_estimate(a_filtered, g_filtered, dt, rocketState==ROCKET_PRE); //Only fuse acc if rocket is in pre-flight state //WARNING: ensure that a_raw is in G's and that g_raw is in rad/s, and that dt is in seconds
   newAcc = attitude_estimate.vertical_acceleration_from_acc(a_filtered);
   newAcc *= G_TO_M_S2;
+#else
+   newAcc = simIn.getInterpolatedAcceleration(simTime);
 
-  //update old variables
-  microsOld = microsNow;
+#endif
+
+
+  //read h and calculate diffH when a new value of h is ready
+  if( (micros() - altimeterMicros) > 23000){ //19.5 ms is the typical pressure read case. Worst case is 22.5 ms. Standby is 0.5 ms
+#ifndef SIMULINK_TESTING
+    sensors.readAltitude(h_raw);
+    h_raw -= h_groundLevel;
+#else
+    h_raw = simIn.getInterpolatedAltitude(simTime);
+#endif
+
+    oldH = h_filtered;
+    h_filtered = hFilter.apply(h_raw);
+    dt_h = (micros() - altimeterMicros) / 1000000.0f;
+    altimeterMicros = micros();
+    diffH = (h_filtered - oldH) / dt_h;
+  }
 
   //fill back-calculation list
   backAcc[backCalcIndex] = newAcc;
@@ -288,7 +306,6 @@ inline void prvIntegrateAccel(){
 inline void prvDoControl(){
   desiredH = getDesired(burnoutTime);
   predictedH = predictAltitude(h_filtered,vel);
-  // ang = getControl(getDesired(burnoutTime), predictAltitude(h,vel), dt);
   ang = getControl(desiredH, predictedH, dt);
   stepper.setStepsTarget(microStepsFromFlapAngle(ang));
 }
