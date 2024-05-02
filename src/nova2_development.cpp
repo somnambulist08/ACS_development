@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 //#define SIMULINK_TESTING
+// #define WAIT_FOR_SERIAL
 
 
 #include "RocketRTOS.hh"
@@ -97,7 +98,7 @@ pt1Filter accFilters[3];
 pt1Filter hFilter;
 
 void setup(){
-#ifdef SIMULINK_TESTING
+#ifdef WAIT_FOR_SERIAL
   Serial.begin(115200);
   while(!Serial);
   Serial.println("Serial Connected");
