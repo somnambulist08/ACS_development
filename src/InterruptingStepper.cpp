@@ -1,25 +1,18 @@
 #include "InterruptingStepper.hh"
 
 #include <Arduino.h>
-volatile int stepsTargetGlobal = 0;
-volatile int currentStepGlobal = 0;
-volatile int directionGlobal = 0;
-volatile int zeroStepGlobal = 0;
-static volatile bool doStep = false;
-//volatile bool printStepLow = false;
-//volatile bool printStepHigh = false;
 
 IntervalTimer tickerHigh;
 IntervalTimer tickerLow;
 IntervalTimer tickerOneshot;
 
+volatile StepperVars stepperVars = {0};
+
 InterruptingStepper::InterruptingStepper(){
-    stepsTargetGlobal = 0;
-    currentStepGlobal = 0;
-    directionGlobal = 0;
-    doStep = false;
-    //printStepLow = false;
-    //printStepHigh = false;
+    stepperVars.stepsTarget = 0;
+    stepperVars.currentStep = 0;
+    stepperVars.direction = 0;
+    stepperVars.doStep = false;
 }
 void InterruptingStepper::start(){
     pinMode(DIRECTION_PIN, OUTPUT);
@@ -35,21 +28,9 @@ void InterruptingStepper::start(){
     tickerOneshot.begin(startPullLow, pw_on);
 }
 void InterruptingStepper::setStepsTarget(int newTarget){
-    stepsTargetGlobal = newTarget - zeroStepGlobal;
-    directionGlobal = (currentStepGlobal < stepsTargetGlobal) ? 1 : 0 ;
-    digitalWrite(DIRECTION_PIN, directionGlobal);
-}
-void InterruptingStepper::setZero(int newZero){
-    int oldZero = zeroStepGlobal;
-    zeroStepGlobal = newZero;
-    setStepsTarget(stepsTargetGlobal+oldZero);
-}
-void InterruptingStepper::stepOnce(){
-    if(directionGlobal){
-        setZero(zeroStepGlobal+STEPS_PER_STEP_ONCE);
-    } else {
-        setZero(zeroStepGlobal-STEPS_PER_STEP_ONCE);
-    }
+    stepperVars.stepsTarget = newTarget;
+    stepperVars.direction = (stepperVars.currentStep < stepperVars.stepsTarget) ? 1 : 0 ;
+    digitalWrite(DIRECTION_PIN, stepperVars.direction);
 }
 void InterruptingStepper::enable(){
     digitalWrite(ENABLE_PIN, MOTOR_ENABLE);
@@ -59,28 +40,28 @@ void InterruptingStepper::disable(){
 }
 
 void stepperPullHigh(){
-    if(directionGlobal){
-        doStep = currentStepGlobal < stepsTargetGlobal;
+    if(stepperVars.direction){
+        stepperVars.doStep = stepperVars.currentStep < stepperVars.stepsTarget;
     } else {
-        doStep = currentStepGlobal > stepsTargetGlobal;
+        stepperVars.doStep = stepperVars.currentStep > stepperVars.stepsTarget;
     }
-    if(doStep){
+    if(stepperVars.doStep){
         //printStepHigh = true;
-        //doStep = true;
+        //stepperVars.doStep = true;
         //ODR |= 1 << STEP_PIN;
         digitalWriteFast(STEP_PIN, 1);
     }
 }
 void stepperPullLow(){
-    if(doStep){
+    if(stepperVars.doStep){
         //printStepLow = true;
         //ODR &= ~( 1 << STEP_PIN );
         digitalWriteFast(STEP_PIN, 0);
-        doStep = false;
-        if(directionGlobal){
-            currentStepGlobal++;
+        stepperVars.doStep = false;
+        if(stepperVars.direction){
+            stepperVars.currentStep++;
         } else {
-            currentStepGlobal--;
+            stepperVars.currentStep--;
         }
     }
 }

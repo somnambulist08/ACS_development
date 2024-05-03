@@ -30,23 +30,21 @@ void startPullLow();
 #define TIMER_INTERRUPT_PRIORITY_HIGH 126
 #define TIMER_INTERRUPT_PRIORITY_EXTRA_HIGH 125
 
-//duplicates of these variables so they'll run faster in interrupt context.
-extern volatile int currentStepGlobal;
-extern volatile int stepsTargetGlobal;
-extern volatile int directionGlobal;
-extern volatile int zeroStepGlobal;
-//extern volatile bool printStepHigh;    
-//extern volatile bool printStepLow;
+struct StepperVars {
+    int currentStep;
+    int stepsTarget;
+    int direction;
+    bool doStep;
+};
+extern volatile StepperVars stepperVars;
 
 class InterruptingStepper{ //: public StepperInterface {
 public:
     InterruptingStepper();
     void start();
-    void stepOnce(void);
     void setStepsTarget(int newTarget);
     void enable();
     void disable();
-    void setZero(int newZero);
 };
 
 
