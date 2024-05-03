@@ -141,6 +141,26 @@ void setup(){
   sensors.readAltitude(h_groundLevel);
 #endif
 
+  // while(1){
+  //   delay(1);
+  //   sensors.readAcceleration(a_raw[0], a_raw[1], a_raw[2]);
+  //   sensors.readGyroscope(g_raw[0], g_raw[1], g_raw[2]);
+    
+  //   Serial.print("GX:");
+  //   Serial.print(g_raw[0]);
+  //   Serial.print(", GY:");
+  //   Serial.print(g_raw[1]);
+  //   Serial.print(", GZ:");  
+  //   Serial.print(g_raw[2]);
+  //   Serial.print(", AX:");
+  //   Serial.print(a_raw[0]);
+  //   Serial.print(", AY:");
+  //   Serial.print(a_raw[1]);
+  //   Serial.print(", AZ:");
+  //   Serial.println(a_raw[2]);
+
+  // }
+
 #ifndef STATIC_OFFSETS
   while(1){
     digitalWrite(BUZZ_PIN, 1);
@@ -154,7 +174,7 @@ void setup(){
     digitalWrite(BUZZ_PIN, 1);
     delay(100);
     digitalWrite(BUZZ_PIN, 0);
-    delay(500);
+    delay(1000);
   }
 #endif
 
