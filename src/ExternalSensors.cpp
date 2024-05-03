@@ -159,12 +159,12 @@ void ExternalSensors::calibrateOffsets(){
     accOffsets[axis] = sumAcc[axis] / ((float)CALIBRATION_LOOPS);
   }
 #else//if def STATIC_OFFSETS
-  gyroOffsets[0] = -2.352180004;
-  gyroOffsets[1] = 0.172564700;
-  gyroOffsets[2] = -1.537059546;
-  accOffsets[0] =  0.011386719;
-  accOffsets[1] = 0.007373389;
-  accOffsets[2] = -0.017821431;
+  gyroOffsets[0] = -0.07457257;
+  gyroOffsets[1] = -0.246435553;
+  gyroOffsets[2] = 1.148041487;
+  accOffsets[0] =  0.020606153;
+  accOffsets[1] = 0.086461306;
+  accOffsets[2] = -0.096222267;
 #endif //STATIC_OFFSETS
   
 }
