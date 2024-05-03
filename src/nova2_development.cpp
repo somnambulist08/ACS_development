@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-//#define SIMULINK_TESTING
+// #define SIMULINK_TESTING
 // #define WAIT_FOR_SERIAL
 
 
@@ -104,10 +104,27 @@ void setup(){
   Serial.println("Serial Connected");
 #endif
 
+  pinMode(BUZZ_PIN, OUTPUT);
+
+//if the rocket will try to calibrate itself, beep 3 times quickly
+#ifndef STATIC_OFFSETS
+  digitalWrite(BUZZ_PIN, 1);
+  delay(100);
+  digitalWrite(BUZZ_PIN, 0);
+  delay(100);
+  digitalWrite(BUZZ_PIN, 1);
+  delay(100);
+  digitalWrite(BUZZ_PIN, 0);
+  delay(100);
+  digitalWrite(BUZZ_PIN, 1);
+  delay(100);
+  digitalWrite(BUZZ_PIN, 0);
+#endif
+
   // initialize the filteres
   for (int axis = 0; axis < 3; axis++) {
     gyroFilters[axis].init(1.0, dt); // dt fed in here should be the rate at which we read new acc data
-    accFilters[axis].init(1.0, dt);
+    accFilters[axis].init(5.0, dt);
   }
   hFilter.init(1.0, dt_h);
 
@@ -123,8 +140,36 @@ void setup(){
   sensors.startupTasks();
   sensors.readAltitude(h_groundLevel);
 #endif
-  //initializeBuzzer();
-  pinMode(BUZZ_PIN, OUTPUT);
+
+#ifndef STATIC_OFFSETS
+  while(1){
+    digitalWrite(BUZZ_PIN, 1);
+    delay(100);
+    digitalWrite(BUZZ_PIN, 0);
+    delay(100);
+    digitalWrite(BUZZ_PIN, 1);
+    delay(100);
+    digitalWrite(BUZZ_PIN, 0);
+    delay(100);
+    digitalWrite(BUZZ_PIN, 1);
+    delay(100);
+    digitalWrite(BUZZ_PIN, 0);
+    delay(500);
+  }
+#endif
+
+  digitalWrite(BUZZ_PIN, 1);
+  delay(1000);
+  digitalWrite(BUZZ_PIN, 0);
+
+  stepper.start();
+  stepper.enable();
+  stepper.setStepsTarget(microStepsFromFlapAngle(0.3));
+  delay(1000);
+  stepper.setStepsTarget(0);
+  delay(500);
+  stepper.disable();
+
   digitalWrite(BUZZ_PIN, 1);
   delay(1000);
   digitalWrite(BUZZ_PIN, 0);
@@ -133,9 +178,9 @@ void setup(){
   sd.openFile("Acc, Vel, h_raw, h_filtered, h_ground, Ang, simT, burnoutT, State, DesiredH, PredictedH, intA, diffH, IntegralOfA, dt, 1/dt, dt_h, 1/dt_h, a_raw[0], a_raw[1], a_raw[2], a_filtered[0], a_filtered[1], a_filtered[2], g_raw[0], g_raw[1], g_raw[2], g_filtered[0], g_filtered[1], g_filtered[2], grav[0], grav[1], grav[2]");
 #else
   sd.openFile("t, state, ang, desired, predicted, burnoutTime, burnoutMicros, testStartMicros, micros");
+  //sd.openFile("t, state, stepsTarget, currentStep, direction");
 #endif
 
-  stepper.start();
   testStartMicros = micros();
   startRocketRTOS();
 
@@ -177,6 +222,7 @@ void logging_RUN(){
             + String(attitude_estimate.getGravityVector()[0]) + String(", ") + String(attitude_estimate.getGravityVector()[1]) + String(", ") + String(attitude_estimate.getGravityVector()[2]);
 #else 
   String log = String(simTime) + String(", ") + String(rocketState) + String(", ") + String(ang) + String(", ") + String(desiredH) + String(", ") + String(predictedH) + String(", ") + String(burnoutTime) + String(", ") + String(burnoutMicros) + String(", ") + String(testStartMicros) + String(", ") + String(microsNow);
+  //String log = String(simTime) + String(", ") + String(rocketState) + String(", ") + String(stepperVars.stepsTarget) + String(", ") + String(stepperVars.currentStep) + String(", ") + String(stepperVars.direction);
 #endif
 
   sd.writeLine(log);
@@ -195,10 +241,10 @@ void stepper_RUN(){
 }
 void stepper_CLOSE(){
   //stepper.enable(); //we can assume that it went through run before getting to close, so no need to re-enable
-  stepper.setStepsTarget(zeroStepGlobal);
+  stepper.setStepsTarget(0);
 }
 void stepper_IDLE(){
-  digitalWriteFast(ENABLE_PIN, MOTOR_ENABLE);
+  digitalWriteFast(ENABLE_PIN, MOTOR_DISABLE);
 }
 
 void buzz_PRE(){
@@ -242,7 +288,7 @@ inline void prvReadSensors(){
     deltaMicros = (ULONG_MAX - microsOld) - microsNow;
   }
 
-  dt = ((float)deltaMicros) / 1000000.0f;\
+  dt = ((float)deltaMicros) / 1000000.0f;
 
   microsOld = microsNow;
 
