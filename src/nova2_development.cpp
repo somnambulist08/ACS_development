@@ -20,8 +20,8 @@
   #include "SDLogger.hh"
 #endif //SIMULINK_TESTING
 
-//#define BUZZ_PIN 6
-#define BUZZ_PIN 5 //re-route buzzer to LED
+#define BUZZ_PIN 6
+//#define BUZZ_PIN 5 //re-route buzzer to LED
 #define BUZZ_TIME 125000 //0.125 sec
 #define PAUSE_SHORT 500000 //0.5 sec
 #define PAUSE_LONG 5000000 //5.0 sec
